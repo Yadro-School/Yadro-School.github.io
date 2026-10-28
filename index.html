@@ -5428,7 +5428,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   window.__yadroCard = function(){
     var u = USER; if(!u) return '<div class="au-card"><h3>Аккаунт</h3><p>' + (window.__yadroErr ? "Ошибка: " + esc(window.__yadroErr) : "Загружаем…") + '</p><button type="button" class="tgm-btn" data-yd-out>Выйти из аккаунта</button></div>';
     return '<div class="au-card au-me"><span class="au-av">' + esc((u.name || "?").charAt(0)) + '</span><div class="au-mi"><b>' + esc(u.name) + '</b><span>' + esc(u.email) + ' · ' + esc(ROLES[u.role] || u.role) + '</span></div></div>' +
-      '<div class="au-card"><h3>Вход по ключу доступа</h3><p>' + (u.hasPasskey ? "Ключ уже включён. Можно добавить ещё одно устройство." : "Face ID, отпечаток или Windows Hello вместо кода из письма.") + '</p><button type="button" class="tgm-btn pri" data-yd-pk>' + (u.hasPasskey ? "Добавить это устройство" : "Включить на этом устройстве") + '</button><p class="cf-e" id="yd-pkerr" hidden></p></div>' +
+      '<div class="au-card"><h3>Вход по ключу доступа</h3><p>' + (u.hasPasskey ? "Ключ уже включён. Можно добавить ещё одно устройство." : "Face ID, отпечаток или Windows Hello вместо кода из письма.") + '</p><button type="button" class="tgm-btn pri" data-yd-pk>' + (u.hasPasskey ? "Добавить это устройство" : "Включить на этом устройстве") + '</button>' + (u.hasPasskey ? '<button type="button" class="tgm-btn" data-yd-pkdel style="margin-left:8px">Удалить все мои ключи</button>' : '') + '<p class="cf-e" id="yd-pkerr" hidden></p></div>' +
       (u.role === "admin" ? '<div class="au-card"><h3>Пользователи</h3><p>Кто зарегистрировался в Ядре. Назначьте роль каждому.</p><div id="yd-users" class="yd-users">Загружаем…</div></div>' : "") +
       '<div class="au-card"><button type="button" class="tgm-btn" data-yd-out>Выйти из аккаунта</button></div>';
   };
@@ -5452,6 +5452,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   new MutationObserver(function(){ var b = document.getElementById("yd-users"); if(b && !b.dataset.l){ b.dataset.l = "1"; loadUsers(); } }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener("click", function(e){
     if(e.target.closest("[data-yd-out]")){ logout(); return; }
+    if(e.target.closest("[data-yd-pkdel]")){ call("pk_clear").then(function(){ location.reload(); }).catch(function(x){ var er = document.getElementById("yd-pkerr"); if(er){ er.textContent = (x && x.message) || "Не получилось"; er.hidden = false; } }); return; }
     if(e.target.closest("[data-yd-pk]")){ var er = document.getElementById("yd-pkerr"); if(er) er.hidden = true;
       pkRegister().then(function(){ location.reload(); }).catch(function(x){ var er2 = document.getElementById("yd-pkerr"); if(er2){ er2.textContent = (x && x.message) || "Не получилось включить"; er2.hidden = false; } }); }
   });
