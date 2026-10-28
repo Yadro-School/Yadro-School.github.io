@@ -5328,18 +5328,26 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
       '<div class="c"><h1>Ядро</h1><p id="yd-sub">Войдите, чтобы увидеть дневник</p><div id="yd-body"></div></div>';
     document.body.appendChild(el); return el;
   }
+  var YA_ID = "38704efbddc840edaaa1cbce336da23c", YA_REDIR = "https://yadro-ed.ru/";
+  function yaStart(){
+    var st = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    try { sessionStorage.setItem("yd-ys", st); } catch(e) {}
+    location.href = "https://oauth.yandex.ru/authorize?response_type=code&client_id=" + YA_ID + "&redirect_uri=" + encodeURIComponent(YA_REDIR) + "&state=" + st;
+  }
   function loginUI(){
     var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "";
     var err = function(t){ var e = body.querySelector(".e"); if(e) e.textContent = t || ""; };
     function stepEmail(){
       sub.textContent = "Войдите, чтобы увидеть дневник";
       body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username webauthn" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код на почту</button>' +
+        (location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
         (pkOk ? '<button class="g" id="yd-pk">Войти по ключу доступа</button>' : "") + '<p class="s">Пароли не нужны: пришлём одноразовый код</p>';
       var em = body.querySelector("#yd-em"); em.value = email; em.focus();
       var go = body.querySelector("#yd-go");
       function send(){ email = em.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
         call("code_send", { email: email }).then(stepCode).catch(function(e){ err(e.message); go.disabled = false; }); }
       go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
+      var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = yaStart;
       var pk = body.querySelector("#yd-pk"); if(pk) pk.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось войти по ключу"); }); };
     }
     function stepCode(){
@@ -5362,6 +5370,14 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
       } else location.reload();
     }
     window.__ydDone = done;
+    var qs = new URLSearchParams(location.search), qc = qs.get("code"), qst = qs.get("state"), want = "";
+    try { want = sessionStorage.getItem("yd-ys") || ""; } catch(e) {}
+    if(qc || qs.get("error")){ try { history.replaceState(null, "", location.pathname); sessionStorage.removeItem("yd-ys"); } catch(e) {} }
+    if(qc && qst && want && qst === want){
+      sub.textContent = "Входим через Яндекс…"; body.innerHTML = '<p class="e"></p><p class="s">Секунду…</p>';
+      call("ya_login", { code: qc }).then(function(j){ done(j, true); }).catch(function(e){ stepEmail(); err(e.message || "Не получилось войти через Яндекс"); });
+      return;
+    }
     stepEmail();
   }
 
