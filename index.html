@@ -5422,12 +5422,34 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 
   var ROLES = { admin: "Администратор", student: "Ученик", parent: "Родитель", teacher: "Учитель", methodist: "Методист", zavuch: "Завуч", deputy: "Замдиректора", director: "Директор", controller: "Контролёр" };
   function esc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  var st = document.createElement("style"); st.textContent = ".yd-u{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid rgba(128,128,128,.18)}.yd-u:first-child{border-top:0}.yd-ui{min-width:0;display:flex;flex-direction:column}.yd-ui b{font-weight:600}.yd-ui span{font-size:12.5px;opacity:.65;overflow:hidden;text-overflow:ellipsis}.yd-role{height:36px;border-radius:10px;border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;font:inherit;padding:0 8px;max-width:48%}";
+  document.head.appendChild(st);
   window.__yadroCard = function(){
     var u = USER; if(!u) return '<div class="au-card"><h3>Аккаунт</h3><p>' + (window.__yadroErr ? "Ошибка: " + esc(window.__yadroErr) : "Загружаем…") + '</p><button type="button" class="tgm-btn" data-yd-out>Выйти из аккаунта</button></div>';
     return '<div class="au-card au-me"><span class="au-av">' + esc((u.name || "?").charAt(0)) + '</span><div class="au-mi"><b>' + esc(u.name) + '</b><span>' + esc(u.email) + ' · ' + esc(ROLES[u.role] || u.role) + '</span></div></div>' +
       '<div class="au-card"><h3>Вход по ключу доступа</h3><p>' + (u.hasPasskey ? "Ключ уже включён. Можно добавить ещё одно устройство." : "Face ID, отпечаток или Windows Hello вместо кода из письма.") + '</p><button type="button" class="tgm-btn pri" data-yd-pk>' + (u.hasPasskey ? "Добавить это устройство" : "Включить на этом устройстве") + '</button><p class="cf-e" id="yd-pkerr" hidden></p></div>' +
+      (u.role === "admin" ? '<div class="au-card"><h3>Пользователи</h3><p>Кто зарегистрировался в Ядре. Назначьте роль каждому.</p><div id="yd-users" class="yd-users">Загружаем…</div></div>' : "") +
       '<div class="au-card"><button type="button" class="tgm-btn" data-yd-out>Выйти из аккаунта</button></div>';
   };
+  function loadUsers(){
+    var box = document.getElementById("yd-users"); if(!box || !USER || USER.role !== "admin") return;
+    call("users_list").then(function(j){
+      var us = (j.users || []).slice().sort(function(a, b){ return (a.role === "admin" ? 0 : 1) - (b.role === "admin" ? 0 : 1) || String(a.name).localeCompare(String(b.name)); });
+      box.innerHTML = us.length ? us.map(function(x){
+        return '<div class="yd-u" data-uid="' + esc(x.id) + '"><div class="yd-ui"><b>' + esc(x.name) + '</b><span>' + esc(x.email) + (x.hasPasskey ? " · ключ" : "") + '</span></div>' +
+          '<select class="yd-role" data-yd-role="' + esc(x.id) + '"' + (x.id === USER.id ? " disabled" : "") + '>' +
+          Object.keys(ROLES).map(function(r){ return '<option value="' + r + '"' + (r === x.role ? " selected" : "") + '>' + ROLES[r] + '</option>'; }).join("") + '</select></div>';
+      }).join("") : "Пока никого";
+    }).catch(function(x){ box.textContent = "Ошибка: " + ((x && x.message) || "нет ответа"); });
+  }
+  document.addEventListener("change", function(e){
+    var sel = e.target.closest && e.target.closest("[data-yd-role]"); if(!sel) return;
+    sel.disabled = true;
+    call("user_set", { id: sel.getAttribute("data-yd-role"), role: sel.value }).then(function(){ sel.disabled = false; sel.style.outline = "2px solid #3a9d5d"; setTimeout(function(){ sel.style.outline = ""; }, 1200); })
+      .catch(function(x){ sel.disabled = false; alert((x && x.message) || "Не получилось"); loadUsers(); });
+  });
+  new MutationObserver(function(){ var b = document.getElementById("yd-users"); if(b && !b.dataset.l){ b.dataset.l = "1"; loadUsers(); } }).observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener("click", function(e){
     if(e.target.closest("[data-yd-out]")){ logout(); return; }
     if(e.target.closest("[data-yd-pk]")){ var er = document.getElementById("yd-pkerr"); if(er) er.hidden = true;
