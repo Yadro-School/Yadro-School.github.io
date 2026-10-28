@@ -8917,7 +8917,7 @@ const U_SEED = [
   { id: "u16", role: "teacher", name: "Мария Александровна", email: "", st: "on", v: { subj: "Химия, Биология", cls: "8 «А»", room: "401", hours: "18" } },
   { id: "u12", role: "admin", name: "Администратор платформы", email: "", st: "on", v: { level: "Полный" } },
 ];
-const ADM = { rv: (() => { try { const v = localStorage.getItem("bai-adm-rv"); return ["v1", "v2", "v3"].includes(v) ? v : "v3"; } catch(e) { return "v3"; } })(), pr: "teacher", dir: "", tab: "conn", role: "all", us: "az", grp: new Set(), q: "", form: null, confirmDel: null, anim: false, users: [], perm: {} };
+const ADM = { rv: (() => { try { const v = localStorage.getItem("bai-adm-rv"); return ["v1", "v2", "v3"].includes(v) ? v : "v1"; } catch(e) { return "v1"; } })(), pr: "teacher", dir: "", tab: "conn", role: "all", us: "az", grp: new Set(), q: "", form: null, confirmDel: null, anim: false, users: [], perm: {} };
 const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Object.fromEntries(RES.map((x, i) => [x[0], r.lv[i] || (x[0] === "monitoring" ? r.lv[1] : "n")])), acts: Object.fromEntries(ACTS.map(a => [a[0], r.acts.includes(a[0])])), sc: r.sc }]));
 (function(){
   let u = null, p = null;
