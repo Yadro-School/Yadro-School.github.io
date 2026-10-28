@@ -11115,7 +11115,7 @@ const AIC = { prov: "yandex", msgs: [], ctx: null, busy: false };
 /* агент сам выбирает модель: короткие простые вопросы идут в GigaChat, сложные и длинные — в YandexGPT */
 function aiAuto(q){
   const t = String(q || ""), hard = t.length > 160 || /\d\s*[-+*\/=^]\s*\d|уравнен|докаж|реши|задач|сочинен|эссе|проанализ|сравни|объясни подробно|почему|как найти|вывед/i.test(t);
-  return hard ? "yandex" : "gigachat";
+  return "yandex";
 }
 
 function cfmClose(){ const o = document.getElementById("cfm"); if(!o) return; o.classList.remove("on"); setTimeout(() => o.remove(), 240); }
