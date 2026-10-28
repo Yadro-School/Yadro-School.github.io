@@ -5303,7 +5303,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     var h = { "Content-Type": "application/json" }; if(tok) h.Authorization = "Bearer " + tok;
     return fetch(API, { method: "POST", headers: h, body: JSON.stringify(Object.assign({ a: a }, body || {})) })
       .then(function(r){ return r.json().catch(function(){ return { ok: false, error: "Сервер вернул не тот ответ" }; }); })
-      .then(function(j){ if(!j.ok){ var e = new Error(j.error || "Ошибка"); e.api = true; throw e; } return j; });
+      .then(function(j){ if(!j.ok){ var e = new Error(j.error || j.message || ("Ответ сервера: " + JSON.stringify(j).slice(0, 300))); e.api = true; throw e; } return j; });
   }
   var b64u = {
     enc: function(buf){ var s = "", a = new Uint8Array(buf); for(var i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); },
@@ -5318,12 +5318,12 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   function overlay(){
     var el = document.createElement("div"); el.id = "yd-login";
     el.innerHTML = '<style>#yd-login{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:20px;background:#f6f4ef;color:#1f1d1a;font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}' +
-      '@media(prefers-color-scheme:dark){#yd-login{background:#141311;color:#f2efe8}#yd-login .c{background:#1e1d1a;border-color:#2e2c28}#yd-login input{background:#161513;color:#f2efe8;border-color:#3a3833}#yd-login .g{background:#262522;color:#f2efe8;border-color:#3a3833}}' +
-      '#yd-login .c{width:min(400px,100%);box-sizing:border-box;padding:28px 24px;border-radius:24px;background:#fff;border:1px solid #e4dfd5;box-shadow:0 20px 60px -30px rgba(0,0,0,.35)}' +
+            '#yd-login .c{width:min(400px,100%);box-sizing:border-box;padding:28px 24px;border-radius:24px;background:#fff;border:1px solid #e4dfd5;box-shadow:0 20px 60px -30px rgba(0,0,0,.35)}' +
       '#yd-login h1{margin:0 0 4px;font:500 30px/1.1 Georgia,serif}#yd-login p{margin:0 0 18px;color:#8a8478;font-size:14.5px}' +
       '#yd-login input{width:100%;box-sizing:border-box;height:48px;padding:0 14px;border-radius:14px;border:1px solid #d9d3c7;background:#fff;font:inherit;margin-bottom:10px;color:inherit}#yd-login input:focus{outline:2px solid #d9663d;outline-offset:1px}' +
       '#yd-login button{width:100%;height:48px;border-radius:14px;border:0;font:500 15px system-ui,sans-serif;cursor:pointer;background:#d9663d;color:#fff;margin-bottom:10px}#yd-login button.g{background:#f1ede4;color:#1f1d1a;border:1px solid #ddd6c8}#yd-login button:disabled{opacity:.6;cursor:default}' +
-      '#yd-login .e{color:#c0392b;font-size:13.5px;min-height:18px;margin:0 0 8px}#yd-login .s{color:#8a8478;font-size:13px;margin-top:6px;text-align:center}#yd-login a{color:#d9663d;cursor:pointer}</style>' +
+      '#yd-login .e{color:#c0392b;font-size:13.5px;min-height:18px;margin:0 0 8px}#yd-login .s{color:#8a8478;font-size:13px;margin-top:6px;text-align:center}#yd-login a{color:#d9663d;cursor:pointer}' +
+      '@media(prefers-color-scheme:dark){#yd-login{background:#141311;color:#f2efe8}#yd-login .c{background:#1e1d1a;border-color:#2e2c28}#yd-login input{background:#161513;color:#f2efe8;border-color:#3a3833}#yd-login button.g{background:#262522;color:#f2efe8;border-color:#3a3833}#yd-login p,#yd-login .s{color:#a49d8f}}</style>' +
       '<div class="c"><h1>Ядро</h1><p id="yd-sub">Войдите, чтобы увидеть дневник</p><div id="yd-body"></div></div>';
     document.body.appendChild(el); return el;
   }
@@ -5418,6 +5418,21 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     }
     return { doc: docRef, collection: function(c){ return colRef(c); } };
   }
+
+  var ROLES = { admin: "Администратор", student: "Ученик", parent: "Родитель", teacher: "Учитель", methodist: "Методист", zavuch: "Завуч", deputy: "Замдиректора", director: "Директор", controller: "Контролёр" };
+  function esc(t){ return String(t == null ? "" : t).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  window.__yadroCard = function(){
+    var u = USER; if(!u) return '<div class="au-card"><h3>Аккаунт</h3><p>Загружаем…</p></div>';
+    return '<div class="au-card au-me"><span class="au-av">' + esc((u.name || "?").charAt(0)) + '</span><div class="au-mi"><b>' + esc(u.name) + '</b><span>' + esc(u.email) + ' · ' + esc(ROLES[u.role] || u.role) + '</span></div></div>' +
+      '<div class="au-card"><h3>Вход по ключу доступа</h3><p>' + (u.hasPasskey ? "Ключ уже включён. Можно добавить ещё одно устройство." : "Face ID, отпечаток или Windows Hello вместо кода из письма.") + '</p><button type="button" class="tgm-btn pri" data-yd-pk>' + (u.hasPasskey ? "Добавить это устройство" : "Включить на этом устройстве") + '</button><p class="cf-e" id="yd-pkerr" hidden></p></div>' +
+      '<div class="au-card"><button type="button" class="tgm-btn" data-yd-out>Выйти из аккаунта</button></div>';
+  };
+  document.addEventListener("click", function(e){
+    if(e.target.closest("[data-yd-out]")){ logout(); return; }
+    if(e.target.closest("[data-yd-pk]")){ var er = document.getElementById("yd-pkerr"); if(er) er.hidden = true;
+      pkRegister().then(function(){ location.reload(); }).catch(function(x){ var er2 = document.getElementById("yd-pkerr"); if(er2){ er2.textContent = (x && x.message) || "Не получилось включить"; er2.hidden = false; } }); }
+  });
+  me().then(function(){ try { if(typeof renderAuth === "function") renderAuth(); } catch(x) {} });
 
   var NS = {
     db: function(){ return me().then(mkDb); },
@@ -8360,11 +8375,11 @@ function renderAuth(){
       <button type="button" class="au-opt" data-au-pk ${pkGet() && pkOk() ? "" : "disabled"}>${IC.key}<span><b>Ключ доступа</b>Face ID или отпечаток на этом устройстве</span><small>${pkGet() ? "" : "сначала войдите"}</small></button>
       <button type="button" class="au-opt" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M14 14h2.5v2.5M20.5 14v.01M14 20.5h.01M17 20.5h3.5V18"/></svg><span><b>QR-код с телефона</b>Подтвердите вход в приложении на телефоне</span><small>скоро</small></button>
       <button type="button" class="au-opt" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7.5 8 6 8-6"/></svg><span><b>Ссылка на почту</b>Одноразовая ссылка, срок действия 10 минут</span><small>скоро</small></button></div>`;
-  const ownerCard = (window.claude && window.claude.use) ? "" : OWNER_LOCAL()
+  const ownerCard = window.__yadroCard ? window.__yadroCard() : (window.claude && window.claude.use) ? "" : OWNER_LOCAL()
     ? `<div class="au-card"><h3>Режим владельца</h3><p>Включён: видны «Администратор», «Журнал» и переключатель «Вид».</p><button type="button" class="tgm-btn" data-own-off>Выключить</button></div>`
     : `<div class="au-card"><h3>Режим владельца</h3><p>Временный вход создателя, пока не подключён вход по почте. Введите код.</p><div class="au-row"><input id="own-code" class="tgm-in" type="password" autocomplete="off" placeholder="Код владельца"><button type="button" class="tgm-btn pri" data-own-on>Войти</button></div><p class="cf-e" id="own-err" hidden>Код не подошёл</p></div>`;
   const how = `<div class="au-card au-how"><h3>Как это устроено</h3><ol><li><b>Яндекс ID.</b> Подтверждение личности у Яндекса, пароль в Ядре не хранится.</li><li><b>Код приглашения.</b> Привязывает аккаунт к ученику или учителю и выдаёт роль.</li><li><b>Права.</b> Что видит и может каждая роль, решает администратор.</li></ol></div>`;
-  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Аккаунт</p><h1 class="headline">Авторизация</h1></div></div><div class="au">${body}${ownerCard}${how}</div>`;
+  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Аккаунт</p><h1 class="headline">Авторизация</h1></div></div><div class="au">${window.__yadroCard ? "" : body}${ownerCard}${window.__yadroCard ? "" : how}</div>`;
 }
 document.addEventListener("click", async e => {
   if(e.target.closest("[data-own-off]")){ try { localStorage.removeItem("bai-owner"); } catch(x) {} location.reload(); return; }
