@@ -5314,6 +5314,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   /* ---------- вход ---------- */
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
+  window.yadroTok = function(){ return tok; };
 
   function overlay(){
     var el = document.createElement("div"); el.id = "yd-login";
@@ -7728,7 +7729,7 @@ async function aiChatSend(q){
     const hist = CHAT.msgs.ai.slice(0, idx).filter(m => m.x && !m.err).slice(-10).map(m => ({ role: m.f === "me" ? "user" : "assistant", content: (m.r ? "(в ответ на: «" + String(m.r.x).slice(0, 200) + "») " : "") + m.x }));
     while(hist.length && hist[0].role === "assistant") hist.shift();
     CHAT.ctl = new AbortController(); const tm = setTimeout(() => CHAT.ctl.abort(), 40000);
-    const r = await fetch(AI_PROXY, { signal: CHAT.ctl.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: AIC.prov, messages: hist }) });
+    const r = await fetch(AI_PROXY, { signal: CHAT.ctl.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: AIC.prov, messages: hist, t: window.yadroTok && window.yadroTok() }) });
     clearTimeout(tm);
     const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
     CHAT.msgs.ai[idx].x = j.text; CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
@@ -11154,7 +11155,7 @@ async function aiSend(q){
   AIC.msgs.push({ role: "user", content: q }); aiAdd("user", q); AIC.prov = aiAuto(q);
   const w = aiAdd("bot", "Думаю…", "ai-w");
   try{
-    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await fetch(AI_PROXY, { signal: ac.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: AIC.msgs }) });
+    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await fetch(AI_PROXY, { signal: ac.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t: window.yadroTok && window.yadroTok(), provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: AIC.msgs }) });
     clearTimeout(tm); const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
     AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
   }catch(e){ w.classList.remove("ai-w"); w.classList.add("ai-e"); const net = e instanceof TypeError; if(e.name === "AbortError"){ w.textContent = "Не получилось получить ответ. Модель не отвечает дольше 40 секунд, попробуйте ещё раз."; AIC.msgs.pop(); AIC.busy = false; return; } w.textContent = "Не получилось получить ответ. " + (net ? "Нет связи с сервером ИИ (адрес недоступен или заблокирован страницей)." : "Сервер ответил: " + (e.message || "ошибка")); console.error("AI", e); AIC.msgs.pop(); }
