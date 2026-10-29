@@ -5116,6 +5116,15 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .ovl-r.tmr:hover{background:color-mix(in srgb,var(--pen) 16%,transparent)}
 .ova-demo{font-style:normal;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--bad) 16%,transparent);vertical-align:middle;margin-left:4px}
 .sec-demo .link{margin-left:6px}
+.sec-nil{font-weight:400;color:var(--muted)}
+.sec-sp{display:block;overflow:visible}.sec-sp polyline{fill:none;stroke:var(--pen);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sec-sp circle{fill:var(--pen)}
+.sec-sp-w{display:flex!important;align-items:center;gap:12px;flex-wrap:wrap;text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;padding-top:0!important}.sec-sp-w em{font-style:normal;font-variant-numeric:tabular-nums}
+.sec-fp{margin-top:12px}.sec-feed{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.sec-feed li{display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:10px;align-items:center;padding:6px 8px;border-radius:10px;font-size:13px;transition:background-color .18s}
+.sec-feed li:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.sec-feed time{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}.sec-feed em{font-style:normal;color:var(--muted);font-size:12.5px;text-align:right}
+@media(max-width:600px){.sec-feed li{grid-template-columns:64px minmax(0,1fr)}.sec-feed em{display:none}}
+
 
 .aum-l .ns{display:none}.aum-l .nf{font-size:14.5px}
 @media(max-width:600px){.aum-l .nf{display:none}.aum-l .ns{display:inline}}
@@ -5315,6 +5324,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
   window.yadroTok = function(){ return tok; };
+  window.yadroSec = function(){ return call("sec_stats"); };
 
   function overlay(){
     var el = document.createElement("div"); el.id = "yd-login";
@@ -11465,7 +11475,7 @@ function ovWeekHtml(){
 
 
 /* ================= Администратор: Безопасность ================= */
-const SEC = { open: null, busy: false, at: null, step: 0, res: null, cur: "" };
+const SEC = { open: null, busy: false, at: null, step: 0, res: null, cur: "", el: null };
 const JS_ERRS = [];
 window.addEventListener("error", e => { if(!e.target || e.target === window) JS_ERRS.push({ at: new Date(), msg: String(e.message || "ошибка") }); });
 window.addEventListener("unhandledrejection", e => { JS_ERRS.push({ at: new Date(), msg: String(e.reason && e.reason.message || e.reason || "ошибка") }); });
@@ -11497,6 +11507,7 @@ function secScanHtml(){
 function secSave(){ try { localStorage.setItem("bai-sec-scan", JSON.stringify({ at: SEC.at.toISOString(), res: SEC.res, auto: !!SEC.auto })); } catch(e) {} }
 function secQuiet(){   // тихая проверка без анимации — раз в час
   if(SEC.busy) return;
+  try { secFetch(true); } catch(e) {}
   SEC.res = SEC_STEPS.map(([id, l, fn]) => { let r; try { r = fn(); } catch(e) { r = ["fail", "Проверка не выполнилась", "Перезагрузите страницу"]; } return { id, l, st: r[0], t: r[1], fix: r[2] || "" }; });
   SEC.at = new Date(); SEC.auto = true; secSave();
   const f = SEC.res.filter(x => x.st === "fail").length; try { logAdd(f ? "err" : "ok", "Безопасность", `Автопроверка: опасно ${f}`); } catch(e) {}
@@ -11536,6 +11547,7 @@ let SEC_DEMO = false; try { SEC_DEMO = sessionStorage.getItem("bai-sec-demo") ==
 function secIncidents(){
   const out = [];
   if(SEC_DEMO){ out.push({ t: "DDoS-атака: 12 400 запросов за 5 минут с 230 адресов, сайт открывался по 8 секунд", fix: "Включите в Cloudflare режим «Under Attack» и проверьте, что сайт снова быстрый", demo: 1 }); out.push({ t: "Сбой помощника: 3 ошибки за час, сервер не ответил вовремя", fix: "Проверьте функцию в Yandex Cloud: логи и лимиты", demo: 1 }); }
+  try { const d0 = SECSTAT.data && SECSTAT.data.days && SECSTAT.data.days[0]; if(d0 && (d0.ev.brute_block || 0) > 0) out.push({ t: `Подбор кода: блокировок за сутки ${d0.ev.brute_block}`, fix: "Кто-то подбирает код входа. Вход закрыт на 15 минут. Код никому не сообщайте" }); } catch(e) {}
   (SEC.res || []).filter(r => r.st === "fail").forEach(r => out.push({ t: `${r.l}: ${r.t}`, fix: r.fix }));
   const pi = platformIssues(); if(pi.length && !out.some(x => x.t.startsWith("Целостность"))) out.push({ t: `Целостность данных: проблем ${pi.length}`, fix: "Агенты → Система → Проверить" });
   if(JS_ERRS.length && !out.some(x => x.t.startsWith("Ошибки"))) out.push({ t: `Ошибки в коде: ${JS_ERRS.length}`, fix: "Перезагрузите страницу; если повторится — сообщите разработчику" });
@@ -11552,48 +11564,84 @@ function ovAlertHtml(){
     <div class="ova-a"><button type="button" class="ova-go" data-sec-go>Открыть безопасность</button><button type="button" class="ova-x" data-sec-hide="${esc(sig)}" aria-label="Скрыть" title="Скрыть до новых неполадок">×</button></div></section>`;
 }
 const SY_HELP = { "Ядро": "Версия платформы. Меняется с каждым обновлением.", "Среда": "Где открыт сайт. Без Claude агенты с ИИ работают только через сервер.", "Хранилище": "Где лежат данные: в этом браузере или в общей базе для всех.", "Сервер": "Отдельная машина, чтобы агенты запускались сами по расписанию.", "Источник": "Откуда берутся оценки: вручную или из ЭПОС.", "Данные": "Сколько оценок, предметов и уроков загружено.", "Целостность": "Проверка, что в коде платформы нет ошибок.", "Отклик": "За сколько собирается страница. До 500 мс — быстро." };
-const SEC_T = [
-  ["ddos", "DDoS-атаки", 2, "ok", "Тысячи запросов разом, чтобы сайт перестал открываться.", "Фильтр трафика отсекает лишние запросы ещё до сайта."],
-  ["brute", "Подбор паролей", 37, "ok", "Робот перебирает пароли к чужому аккаунту.", "После 5 ошибок вход закрывается на 15 минут."],
-  ["sql", "Вредные запросы к базе", 4, "ok", "Код в полях формы, чтобы достать или стереть данные.", "Данные пишутся только через правила базы, такой код не выполняется."],
-  ["xss", "Чужие скрипты", 0, "ok", "Попытка встроить свой код в страницу.", "Весь текст экранируется, сторонние скрипты запрещены."],
-  ["bots", "Боты и парсеры", 85, "warn", "Роботы скачивают страницы и данные.", "Нужен лимит запросов с одного адреса — пока не подключён."],
-  ["login", "Подозрительные входы", 1, "warn", "Вход с нового устройства или из другой страны.", "Админ получает уведомление и может завершить сессию."]
+/* ---- настоящая статистика с сервера (yadro-api, действие sec_stats) ---- */
+const SECSTAT = { data: null, err: "", busy: false, at: 0 };
+const SEC_EVL = { login_ok: "Вход", code_send: "Запрос кода", code_fail: "Неверный код", brute_block: "Подбор кода: вход закрыт на 15 мин", login_blocked: "Вход отклонён: доступ закрыт", session_blocked: "Старая сессия отклонена", forbidden: "Запрос без прав", limited: "Сработал лимит запросов", code_limit: "Слишком много запросов кода", unknown_action: "Неизвестный запрос", passkey_fail: "Ключ доступа не подошёл" };
+const SEC_G = [   // что считаем «отбитым»: id, название, события, что это, как защищено
+  ["closed", "Вход при закрытом доступе", ["login_blocked", "session_blocked"], "Кто-то просил код или пытался войти, пока вход закрыт.", "Сервер отказал и не создал аккаунт."],
+  ["brute", "Подбор кода", ["code_fail", "brute_block"], "Неверные коды для вашей почты.", "5 ошибок подряд закрывают вход на 15 минут."],
+  ["forb", "Запросы без прав", ["forbidden", "passkey_fail"], "Запрос к данным без права на них.", "Сервер отказал и записал попытку."],
+  ["lim", "Частые запросы", ["limited", "code_limit"], "Сработал лимит: владельцу не больше 30 кодов в час.", "Лишние запросы отклоняются."],
+  ["unk", "Неизвестные запросы", ["unknown_action"], "Запросы к несуществующим действиям: так ищут дыры.", "Сервер отвечает отказом."]
 ];
+const secSum = (d, keys) => keys.reduce((a, k) => a + ((d && d.ev && d.ev[k]) || 0), 0);
+function secErrText(m){ return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m || "Сервер не ответил"; }
+function secFetch(force){
+  if(SECSTAT.busy) return; if(!force && SECSTAT.at && Date.now() - SECSTAT.at < 60000) return;
+  if(typeof window.yadroSec !== "function"){ SECSTAT.err = "Статистика работает на сайте Ядра, не внутри Claude"; SECSTAT.at = Date.now(); return; }
+  SECSTAT.busy = true;
+  window.yadroSec().then(j => ({ j })).catch(e => ({ e })).then(r => {
+    const was = JSON.stringify(SECSTAT.data) + SECSTAT.err;
+    if(r.j){ SECSTAT.data = r.j; SECSTAT.err = ""; } else SECSTAT.err = secErrText(r.e && r.e.message);
+    SECSTAT.busy = false; SECSTAT.at = Date.now();
+    if(was !== JSON.stringify(SECSTAT.data) + SECSTAT.err){ try { if(SEC.el && SEC.el.isConnected && ADM.tab === "security") renderAdmSec(SEC.el); } catch(e) {} try { if(!document.getElementById("overview").hidden) renderOverview(); } catch(e) {} }
+  });
+}
+function secSpark(vals){   // линия за 7 суток (не столбики)
+  const w = 150, h = 28, mx = Math.max(1, ...vals), n = vals.length, pts = vals.map((v, i) => [4 + i * (w - 8) / (n - 1), h - 4 - (h - 8) * v / mx]);
+  return `<svg class="sec-sp" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ")}"/><circle cx="${pts[n - 1][0].toFixed(1)}" cy="${pts[n - 1][1].toFixed(1)}" r="3"/></svg>`;
+}
+const secHm = t => { const d = new Date(t), p = x => String(x).padStart(2, "0"), same = new Date().toDateString() === d.toDateString(); return (same ? "" : p(d.getDate()) + "." + p(d.getMonth() + 1) + " ") + p(d.getHours()) + ":" + p(d.getMinutes()); };
 const SEC_C = [
-  ["cf", "Защита от DDoS", false, "Прокси перед сайтом (например, Cloudflare): фильтрует атаки и ботов."],
-  ["rl", "Лимит запросов", true, "Помощник: не больше 30 вопросов в минуту и 200 в час с одного браузера. На сервере — по инструкции ниже."],
-  ["2fa", "Вход по коду для админов", false, "Второй шаг входа: код из почты или приложения."],
+  ["cf", "Защита от DDoS", false, "Прокси перед сайтом (например, Cloudflare): фильтрует атаки и ботов. Пока не подключена."],
+  ["lock", "Закрытый вход", "lock", "Сервер пускает только владельца и не создаёт новых аккаунтов. Открыть вход позже можно переменной LOCK=0 в функции."],
+  ["rl", "Лимит и блок подбора кода", "live", "Не больше 30 запросов кода в час, 5 ошибок подряд закрывают вход на 15 минут. Работает на сервере."],
+  ["2fa", "Вход по коду для админов", false, "Второй шаг входа: код из почты или приложения. Сейчас вход по коду из почты или по ключу доступа."],
   ["https", "HTTPS и защитные заголовки", true, "Шифрование соединения и запрет чужих скриптов."],
   ["bk", "Резервные копии", true, "Копия данных сохраняется, можно откатиться."]
 ];
 function renderAdmSec(el){
-  const total = SEC_T.reduce((a, x) => a + x[2], 0), warn = SEC_T.filter(x => x[3] === "warn").length, off = SEC_C.filter(x => !x[2]).length;
+  SEC.el = el; secFetch(false);
+  const D = SECSTAT.data, days = D ? D.days : null, t0 = days ? days[0] : null;
+  const on = c => c === "lock" ? !!(D && D.lock) : c === "live" ? !!D : c;
+  const rows = SEC_G.map(([id, l, ks, what, how]) => {
+    const n = t0 ? secSum(t0, ks) : null, st = id === "brute" && t0 && (t0.ev.brute_block || 0) > 0 ? "warn" : id === "unk" && n >= 20 ? "warn" : n ? "ok" : "off";
+    return { id, l, n, st, ks, what, how, series: days ? days.slice().reverse().map(d => secSum(d, ks)) : null };
+  });
+  const warn = rows.filter(r => r.st === "warn").length, off = SEC_C.filter(x => !on(x[2])).length;
+  const total = rows.reduce((a, r) => a + (r.n || 0), 0);
   const at = SEC.at ? `${String(SEC.at.getHours()).padStart(2, "0")}:${String(SEC.at.getMinutes()).padStart(2, "0")}` : "ещё не было";
   const row = (id, l, mid, st, stT, body) => `<div class="sec-r ${SEC.open === id ? "open" : ""}"><button type="button" class="sec-rh" data-sec-o="${id}" aria-expanded="${SEC.open === id}"><i class="sec-dot ${st}"></i><b>${l}</b>${mid}<em class="sec-chip ${st}">${stT}</em><svg class="sec-c" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sec-rb"><div>${body}</div></div></div>`;
+  const dash = '<b class="sec-nil">—</b>';
+  const info = D ? `Данные с сервера за 7 суток по времени Перми. ${D.lock ? "Вход сейчас закрыт для всех, кроме владельца. " : "Вход открыт. "}Считаются с момента обновления сервера, цифры приблизительные.`
+    : SECSTAT.err ? `${esc(SECSTAT.err)}. <button type="button" class="link" data-sec-retry>Повторить</button>` : "Загружаем данные с сервера…";
+  const feed = D && D.feed && D.feed.length ? `<ul class="sec-feed">${D.feed.slice(0, 14).map(f => `<li><time>${secHm(f.t)}</time><span>${esc(SEC_EVL[f.ev] || f.ev)}</span><em>${esc(f.who || "")}</em></li>`).join("")}</ul>` : `<p class="empty">${D ? "Событий пока нет: всё тихо." : "Нет данных."}</p>`;
   el.innerHTML = admHead("Безопасность", `<span class="sec-st ${warn || off ? "warn" : "ok"}"><i></i>${warn || off ? "Защищено частично" : "Всё под защитой"}</span>`) + `
-    <p class="sec-demo">Пример данных — настоящие цифры появятся после подключения защиты. <button type="button" class="link" data-sec-demo>${SEC_DEMO ? "Убрать пример тревоги" : "Показать пример тревоги на главном"}</button></p>
+    <p class="sec-demo" id="sec-live">${info}</p>
     <div class="sec-kpi">
-      <div><span>Отбито за сутки</span><b>${total}</b></div>
-      <div><span>DDoS-атак</span><b>${SEC_T[0][2]}</b></div>
-      <div><span>Подбор паролей</span><b>${SEC_T[1][2]}</b></div>
-      <div class="${warn ? "w" : ""}"><span>Требуют внимания</span><b>${warn}</b></div>
+      <div><span>Входов за сутки</span>${t0 ? `<b>${t0.ev.login_ok || 0}</b>` : dash}</div>
+      <div><span>Отбито за сутки</span>${t0 ? `<b>${total}</b>` : dash}</div>
+      <div><span>Активных за сутки</span>${t0 ? `<b>${t0.act}</b>` : dash}</div>
+      <div class="${warn ? "w" : ""}"><span>Требуют внимания</span>${t0 ? `<b>${warn}</b>` : dash}</div>
     </div>
     <section class="panel sec-ag"><span class="sec-ai"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
       <div><b>Агент безопасности</b><span>Проверяет сайт сам каждый час</span></div><span class="sec-at" data-tip="Последняя проверка|${SEC.auto ? "Автоматическая" : "Запущена вручную"}">${SEC.at ? at : "—"}</span>
       <button type="button" class="btn sec-run ${SEC.busy ? "busy" : ""}" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button></section>
     <div class="sec-scan-w ${SEC.busy || SEC.res ? "open" : ""}" id="sec-scan-w">${secScanHtml()}</div>
     <div class="sec-cols">
-      <section class="panel"><div class="panel-head"><h2>Атаки за сутки</h2></div>
-        ${SEC_T.map(([id, l, n, st, what, how]) => row(id, l, `<span class="sec-n">${n}</span>`, st, st === "ok" ? "отбито" : "внимание", `<p><span>Что это</span>${what}</p><p><span>Защита</span>${how}</p>`)).join("")}</section>
-      <section class="panel"><div class="panel-head"><h2>Что подключить</h2><span class="aside">${off ? `не подключено: ${off}` : "всё подключено"}</span></div>
-        ${SEC_C.map(([id, l, on, what]) => row(id, l, "", on ? "ok" : "off", on ? "подключено" : "не подключено", `<p>${what}</p>`)).join("")}</section>
-    </div>`;
+      <section class="panel"><div class="panel-head"><h2>Отбито за сутки</h2>${D ? `<span class="aside">${D.users.total} пользов.</span>` : ""}</div>
+        ${rows.map(r => row(r.id, r.l, r.n == null ? dash.replace("sec-nil", "sec-nil sec-n") : `<span class="sec-n">${r.n}</span>`, r.st, r.n == null ? "нет данных" : r.st === "warn" ? "внимание" : r.n ? "отбито" : "тихо",
+          `<p><span>Что это</span>${r.what}</p><p><span>Защита</span>${r.how}</p>${r.series ? `<p><span>7 дней</span><span class="sec-sp-w">${secSpark(r.series)}<em>${r.series.join(" · ")}</em></span></p>` : ""}`)).join("")}</section>
+      <section class="panel"><div class="panel-head"><h2>Что подключено</h2><span class="aside">${off ? `не подключено: ${off}` : "всё подключено"}</span></div>
+        ${SEC_C.map(([id, l, c, what]) => row(id, l, "", on(c) ? "ok" : "off", on(c) ? "подключено" : "не подключено", `<p>${what}</p>`)).join("")}</section>
+    </div>
+    <section class="panel sec-fp"><div class="panel-head"><h2>Последние события</h2><span class="aside">${D ? "почты скрыты" : ""}</span></div>${feed}</section>`;
 }
 document.addEventListener("click", e => {
   const o = e.target.closest("[data-sec-o]");
   if(o){ const id = o.dataset.secO, r = o.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-r.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); o.setAttribute("aria-expanded", String(on)); SEC.open = on ? id : null; return; }
   if(e.target.closest("[data-sec-scan]")){ secRun(); return; }
+  if(e.target.closest("[data-sec-retry]")){ SECSTAT.at = 0; secFetch(true); return; }
   const fx = e.target.closest("[data-sec-fix]"); if(fx){ const f = SEC_FIX[fx.dataset.secFix]; if(f) f(); return; }
   if(e.target.closest("[data-sec-go]")){ ADM.tab = "security"; showTab("admin", true); renderAdmin(); return; }
   if(e.target.closest("[data-sec-demo]")){ SEC_DEMO = !SEC_DEMO; SEC_HIDE = ""; try { sessionStorage.setItem("bai-sec-demo", SEC_DEMO ? "1" : ""); sessionStorage.removeItem("bai-sec-hide"); } catch(err) {} try { renderOverview(); } catch(err) {} if(SEC_DEMO){ showTab("overview", true); } else renderAdmin(); return; }
