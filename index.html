@@ -11619,7 +11619,7 @@ const SEC_G = [   // что считаем «отбитым»: id, назван�
   ["unk", "Неизвестные запросы", ["unknown_action"], "Запросы к несуществующим действиям: так ищут дыры.", "Сервер отвечает отказом."]
 ];
 const secSum = (d, keys) => keys.reduce((a, k) => a + ((d && d.ev && d.ev[k]) || 0), 0);
-function secErrText(m){ return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m || "Сервер не ответил"; }
+function secErrText(m){ m = String(m || ""); if(/Malformed serverless|ProxyIntegration/.test(m)) return "Сервер ответил ошибкой хранилища. Загрузите свежий код функции yadro-api"; if(m.length > 160) m = m.slice(0, 160) + "…"; return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m || "Сервер не ответил"; }
 function secFetch(force){
   if(SECSTAT.busy) return; if(!force && SECSTAT.at && Date.now() - SECSTAT.at < 60000) return;
   if(typeof window.yadroSec !== "function"){ SECSTAT.err = "Статистика работает на сайте Ядра, не внутри Claude"; SECSTAT.at = Date.now(); return; }
@@ -11726,7 +11726,7 @@ function renderAdmSec(el){
   const at = SEC.at ? `${String(SEC.at.getHours()).padStart(2, "0")}:${String(SEC.at.getMinutes()).padStart(2, "0")}` : "ещё не было";
   const row = (id, l, mid, st, stT, body) => `<div class="sec-r ${SEC.open === id ? "open" : ""}"><button type="button" class="sec-rh" data-sec-o="${id}" aria-expanded="${SEC.open === id}"><i class="sec-dot ${st}"></i><b>${l}</b>${mid}<em class="sec-chip ${st}">${stT}</em><svg class="sec-c" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sec-rb"><div>${body}</div></div></div>`;
   const alarm = !!(t0 && (t0.ev.brute_block || t0.ev.code_limit || (t0.ev.unknown_action || 0) >= 20));
-  const info = D ? `Данные с сервера за сутки по времени Перми. ${D.lock ? "Вход сейчас закрыт для всех, кроме владельца. " : "Вход открыт. "}Считаются с момента обновления сервера, цифры приблизительные.`
+  const info = D ? `Данные с сервера за сутки по времени Перми. ${D.lock ? "Вход сейчас закрыт для всех, кроме владельца. " : "Вход открыт. "}Считаются с момента обновления сервера, цифры приблизительные.${D.warn && D.warn.length ? " Не всё удалось прочитать: " + esc(D.warn.join("; ")) : ""}`
     : SECSTAT.err ? `${esc(SECSTAT.err)}. <button type="button" class="link" data-sec-retry>Повторить</button>` : "Загружаем данные с сервера…";
   el.innerHTML = admHead("Безопасность", `<span class="sec-st ${alarm || off ? "warn" : "ok"}"><i></i>${alarm ? "Есть тревога" : off ? "Защищено частично" : "Всё под защитой"}</span>`) + `
     <p class="sec-demo" id="sec-live">${info}</p>
@@ -11751,7 +11751,7 @@ document.addEventListener("click", e => {
   const jr = e.target.closest("[data-sec-j]");
   if(jr){ const li = jr.parentElement, on = !li.classList.contains("open"); document.querySelectorAll(".sec-jl li.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); li.classList.toggle("open", on); jr.setAttribute("aria-expanded", String(on)); SEC_T.fo = on ? jr.dataset.secJ : null; return; }
   if(e.target.closest("[data-sec-scan]")){ secRun(); return; }
-  if(e.target.closest("[data-sec-retry]")){ SECSTAT.at = 0; secFetch(true); return; }
+  if(e.target.closest("[data-sec-retry]")){ SECSTAT.at = 0; SECSTAT.err = ""; try { if(SEC.el) renderAdmSec(SEC.el); } catch(err) {} secFetch(true); return; }
   const fx = e.target.closest("[data-sec-fix]"); if(fx){ const f = SEC_FIX[fx.dataset.secFix]; if(f) f(); return; }
   if(e.target.closest("[data-sec-go]")){ ADM.tab = "security"; showTab("admin", true); renderAdmin(); return; }
   if(e.target.closest("[data-sec-demo]")){ SEC_DEMO = !SEC_DEMO; SEC_HIDE = ""; try { sessionStorage.setItem("bai-sec-demo", SEC_DEMO ? "1" : ""); sessionStorage.removeItem("bai-sec-hide"); } catch(err) {} try { renderOverview(); } catch(err) {} if(SEC_DEMO){ showTab("overview", true); } else renderAdmin(); return; }
