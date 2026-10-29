@@ -4989,7 +4989,7 @@ body.fx-on #schedule .sd-panel.sd-in{animation:sdFade .22s ease both!important}
 .sec-rh b{font-weight:500;font-size:14.5px}.sec-n{font:500 16px var(--f-display);font-variant-numeric:tabular-nums}
 .sec-dot{width:8px;height:8px;border-radius:50%;background:var(--good)}.sec-dot.warn{background:var(--warn)}.sec-dot.off{background:var(--muted)}
 .sec-chip{font-style:normal;font-size:11.5px;font-weight:500;padding:3px 9px;border-radius:99px;white-space:nowrap;background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
-.sec-chip.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}.sec-chip.off{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted)}
+.sec-chip.bad{background:var(--bad);color:#fff}.sec-chip.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}.sec-chip.off{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted)}
 .sec-c{color:var(--muted);transition:transform .25s}.sec-r.open .sec-c{transform:rotate(180deg)}
 .sec-rb{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.3,.9,.3,1)}.sec-r.open .sec-rb,.sec-t.open .sec-rb,.sec-jl li.open .sec-rb{grid-template-rows:1fr}.sec-rb>div{overflow:hidden}
 .sec-rb p{margin:0;padding:2px 10px 6px 30px;font-size:13px;color:var(--muted);display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px}.sec-rb p:only-child{display:block}.sec-rb p:last-child{padding-bottom:10px}
@@ -5133,7 +5133,14 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .sec-th{appearance:none;width:100%;display:grid;gap:3px;text-align:left;border:0;background:none;color:var(--ink);font:inherit;padding:12px 16px;border-radius:18px;cursor:pointer;transition:transform .15s}.sec-th:active{transform:scale(.98)}
 .sec-tl{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--muted)}
 .sec-tn{font:500 32px/1.05 var(--f-display);font-variant-numeric:tabular-nums}.sec-tn.txt{font-size:26px}
-.sec-t.w .sec-tn{color:var(--warn)}.sec-t.g .sec-tn{color:var(--good)}
+.sec-t.r .sec-tn{color:var(--bad)}
+.sec-t.g{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 45%,transparent)}.sec-t.g .sec-tn{color:var(--good)}
+.sec-t.w{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.sec-t.w .sec-tn{color:var(--bad)}
+.sec-hp{padding:0 16px 8px;font-size:13px;line-height:1.45;color:var(--muted)}
+.sec-ch{padding:2px 12px 12px}.sec-ch>span{display:block;padding:0 4px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.sec-chs{width:100%;height:auto;display:block;overflow:visible}.sec-chs .gl{stroke:var(--line);stroke-width:1}.sec-chs .ar{fill:color-mix(in srgb,var(--pen) 12%,transparent)}.sec-chs .ln{fill:none;stroke:var(--pen);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.sec-chs .dt{fill:var(--surface);stroke:var(--pen);stroke-width:2}.sec-chs .dt.now{fill:var(--pen)}.sec-chs text{font:11px var(--f-body);fill:var(--muted)}.sec-chs .vl.now{fill:var(--ink);font-weight:600}
+.sec-t.w .sec-ch,.sec-t.g .sec-ch{display:none}
 .sec-th small{font-size:12.5px;color:var(--muted);min-height:1.2em;text-wrap:balance}
 .sec-t.open .sec-c{transform:rotate(180deg)}
 .sec-t .sec-rb p{padding-left:16px;padding-right:16px}.sec-t .sec-rb p:only-child{display:block}.sec-t .sec-rb>div>p:first-child{padding-top:0}.sec-t .sec-rb p:last-child{padding-bottom:12px}
@@ -5144,7 +5151,11 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .sec-fb:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}.sec-fb:active{transform:scale(.95)}
 .sec-fb.on{background:var(--pen-soft);color:var(--pen);border-color:transparent}.sec-fb i{font-style:normal;opacity:.7;font-variant-numeric:tabular-nums}
 .sec-jl{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:640px;overflow:auto}
-.sec-jl li{border-radius:12px;transition:background-color .18s}.sec-jl li:hover,.sec-jl li.open{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.sec-jl li{border-radius:12px;border-left:3px solid transparent;transition:background-color .18s}.sec-jl li:hover,.sec-jl li.open{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.sec-jl li.r-bad{background:var(--bad-soft);border-left-color:var(--bad)}.sec-jl li.r-bad:hover,.sec-jl li.r-bad.open{background:color-mix(in srgb,var(--bad) 17%,transparent)}
+.sec-jl li.r-bad .sec-ja{color:var(--bad);font-weight:500}.sec-jl li.r-bad .sec-ja .sec-x{color:var(--bad)}
+.sec-jl li.r-ok{background:var(--good-soft);border-left-color:var(--good)}.sec-jl li.r-ok .sec-ja{color:var(--good);font-weight:500}
+.sec-jl li.r-bad .sec-fl{color:var(--bad)}
 .sec-jh{appearance:none;width:100%;display:grid;grid-template-columns:30px minmax(120px,190px) minmax(0,1fr) auto 64px;gap:10px;align-items:center;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:8px 10px;border-radius:12px;cursor:pointer;transition:transform .15s}.sec-jh:active{transform:scale(.99)}
 .sec-fl{position:relative;width:28px;height:20px;border-radius:5px;overflow:hidden;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted)}
 .sec-fl img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -11626,7 +11637,7 @@ function secSpark(vals){   // линия за 7 суток (не столбик�
 }
 const secHm = t => { const d = new Date(t), p = x => String(x).padStart(2, "0"), same = new Date().toDateString() === d.toDateString(); return (same ? "" : p(d.getDate()) + "." + p(d.getMonth() + 1) + " ") + p(d.getHours()) + ":" + p(d.getMinutes()); };
 const SEC_C = [
-  ["cf", "Защита от DDoS", false, "Прокси перед сайтом (например, Cloudflare): фильтрует атаки и ботов. Пока не подключена."],
+  ["cf", "Защита от DDoS", false, "Прокси перед сайтом (Cloudflare, бесплатный тариф) фильтрует атаки и ботов. Пока не подключена. Как включить: 1) зарегистрируйтесь на cloudflare.com и добавьте домен yadro-ed.ru; 2) у регистратора домена замените серверы имён на те, что покажет Cloudflare; 3) в DNS Cloudflare оставьте записи сайта (4 адреса GitHub Pages и CNAME www) с оранжевым облаком; 4) SSL/TLS: режим Full, включите Always Use HTTPS и Bot Fight Mode."],
   ["lock", "Закрытый вход", "lock", "Сервер пускает только владельца и не создаёт новых аккаунтов. Открыть вход позже можно переменной LOCK=0 в функции."],
   ["rl", "Лимит и блок подбора кода", "live", "Не больше 30 запросов кода в час, 5 ошибок подряд закрывают вход на 15 минут. Работает на сервере."],
   ["2fa", "Вход по коду для админов", false, "Второй шаг входа: код из почты или приложения. Сейчас вход по коду из почты или по ключу доступа."],
@@ -11662,10 +11673,16 @@ const secCountry = cc => { try { return cc && SEC_RN ? SEC_RN.of(cc) : cc || "";
 const SEC_GLOBE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.200 3 14.800 0 18M12 3c-3 3.200-3 14.800 0 18"/></svg>';
 const secFlag = cc => `<span class="sec-fl" aria-hidden="true">${SEC_GLOBE}${/^[A-Z]{2}$/.test(cc || "") ? `<img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.2.3/flags/4x3/${cc.toLowerCase()}.svg" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`;
 const SEC_T = { open: null, f: "all", fo: null };
+function secChart(vals, days){   // линия за 7 суток с подписями дней и значений
+  const W = 300, H = 112, L = 10, R = 10, T = 22, B = 24, n = vals.length, mx = Math.max(1, ...vals), x = i => L + i * (W - L - R) / (n - 1), y = v => T + (H - T - B) * (1 - v / mx);
+  const pts = vals.map((v, i) => [x(i), y(v)]), line = pts.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" "), area = `${L},${H - B} ${line} ${W - R},${H - B}`;
+  const lab = days.slice().reverse().map(d => { const m = /(\d+)-(\d+)-(\d+)/.exec(d.d || ""); return m ? m[3] + "." + m[2] : ""; });
+  return `<svg class="sec-chs" viewBox="0 0 ${W} ${H}" role="img" aria-label="Значения за 7 суток: ${vals.join(", ")}"><line class="gl" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><polygon class="ar" points="${area}"/><polyline class="ln" points="${line}"/>${pts.map((q, i) => `<circle class="dt ${i === n - 1 ? "now" : ""}" cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="${i === n - 1 ? 4 : 3}"/><text class="vl ${i === n - 1 ? "now" : ""}" x="${q[0].toFixed(1)}" y="${(q[1] - 8).toFixed(1)}" text-anchor="middle">${vals[i]}</text><text class="xl" x="${q[0].toFixed(1)}" y="${H - 7}" text-anchor="middle">${lab[i]}</text>`).join("")}</svg>`;
+}
 function secTiles(D, t0, days){
   const ev = k => (t0 && t0.ev[k]) || 0, denied = t0 ? secSum(t0, SEC_DENY) : 0, ok = ev("login_ok");
   const all = t0 ? (t0.ev.attempt != null ? t0.ev.attempt : denied + ok + ev("code_send")) : 0;
-  const ser = f => days ? days.slice().reverse().map(f) : null, spark = s => s ? `<p><span>7 дней</span><span class="sec-sp-w">${secSpark(s)}<em>${s.join(" · ")}</em></span></p>` : "";
+  const ser = f => days ? days.slice().reverse().map(f) : null, spark = s => s ? `<div class="sec-ch"><span>За 7 суток</span>${secChart(s, days)}</div>` : "";
   const top = SEC_DENY.map(k => [k, ev(k)]).filter(x => x[1]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(x => `${(SEC_EVL[x[0]] || x[0]).toLowerCase()}: ${x[1]}`).join("; ");
   const al = [];
   if(t0){
@@ -11677,13 +11694,13 @@ function secTiles(D, t0, days){
   const miss = SEC_C.filter(x => x[2] === false).map(x => x[1]);
   const T = [
     ["all", "Попыток зайти", t0 ? all : null, t0 ? (all ? `из них отказано ${denied}` : "сегодня тихо") : "", "Сколько раз за сутки кто-то пытался войти: просил код, вводил его, нажимал «Войти через Яндекс» или использовал ключ доступа. Считаются и ваши входы, и чужие попытки.", s => spark(ser(d => d.ev.attempt != null ? d.ev.attempt : secSum(d, SEC_DENY) + (d.ev.login_ok || 0) + (d.ev.code_send || 0))), ""],
-    ["deny", "Отказано", t0 ? denied : null, t0 ? (top || "отказов нет") : "", "Сколько попыток сервер отбил: вход закрыт для чужих, неверный код, подбор, запрос без прав, слишком частые или несуществующие запросы. Чужой при этом ничего не увидел.", s => spark(ser(d => secSum(d, SEC_DENY))), denied ? "w" : ""],
+    ["deny", "Отказано", t0 ? denied : null, t0 ? (top || "отказов нет") : "", "Сколько попыток сервер отбил: вход закрыт для чужих, неверный код, подбор, запрос без прав, слишком частые или несуществующие запросы. Чужой при этом ничего не увидел.", s => spark(ser(d => secSum(d, SEC_DENY))), denied ? "r" : ""],
     ["ok", "Успешных входов", t0 ? ok : null, t0 ? (ok ? "вошёл владелец" : "входов не было") : "", "Сколько раз за сутки кто-то вошёл на сайт. Пока вход закрыт, это можете быть только вы. Если число больше, чем вы входили, смените SESSION_SECRET.", s => spark(ser(d => d.ev.login_ok || 0)), ""],
     ["who", "Людей на сайте", t0 ? t0.act : null, D ? `всего аккаунтов: ${D.users.total}` : "", "Сколько разных аккаунтов открывали сайт за сутки, уже будучи внутри. Это не попытки входа, а люди, которые реально пользуются платформой.", s => spark(ser(d => d.act || 0)), ""],
     ["state", "Состояние", t0 ? (al.length ? "Тревога" : "Спокойно") : null, t0 ? (al.length ? `причин: ${al.length}` : "тревог нет") : "", "", () => al.length ? al.map(x => `<p class="sec-al"><span>Что</span>${x[0]}</p><p><span>Что делать</span>${x[1]}</p>`).join("") : `<p>Подозрительного за сутки нет.${miss.length ? " Пока не подключено: " + miss.join(", ").toLowerCase() + "." : ""}</p>`, al.length ? "w" : "g"]
   ];
   return T.map(([id, l, n, sub, help, body, cls]) => {
-    const op = SEC_T.open === id, b = id === "state" ? body() : `<p>${help}</p>` + body();
+    const op = SEC_T.open === id, b = id === "state" ? body() : `<div class="sec-hp">${help}</div>` + body();
     return `<div class="sec-t ${cls} ${op ? "open" : ""}"><button type="button" class="sec-th" data-sec-t="${id}" aria-expanded="${op}" data-tip="${op ? "Свернуть" : "Что это значит|Нажмите, чтобы узнать подробнее"}"><span class="sec-tl">${l}<svg class="sec-c" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${n == null ? '<b class="sec-nil sec-tn">—</b>' : `<b class="sec-tn ${typeof n === "string" ? "txt" : ""}">${n}</b>`}<small>${esc(sub)}</small></button><div class="sec-rb"><div>${b}</div></div></div>`;
   }).join("");
 }
@@ -11692,9 +11709,9 @@ function secJr(){
   const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
   const nBad = items.filter(x => x.w.r === "bad").length, nOk = items.filter(x => x.w.r === "ok").length;
   const list = items.filter(x => F === "bad" ? x.w.r === "bad" : F === "ok" ? x.w.r === "ok" : true);
-  const chip = { bad: ["Отказано", "warn"], ok: ["Вошли", "ok"], mid: ["Обычное", "off"] };
+  const chip = { bad: ["Отказано", "bad"], ok: ["Вошли", "ok"], mid: ["Обычное", "off"] };
   const rows = list.map(({ f, w, k }) => { const op = SEC_T.fo === k, c = chip[w.r];
-    return `<li class="${op ? "open" : ""}"><button type="button" class="sec-jh" data-sec-j="${esc(k)}" aria-expanded="${op}">${secFlag(f.cc)}<span class="sec-jw"><b>${esc(f.ip || "IP не определён")}</b><small>${esc([secCountry(f.cc), f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</small></span><span class="sec-ja">${esc(w.t)}${f.n > 1 ? ` <i class="sec-x">×${f.n}</i>` : ""}${w.many ? ' <i class="sec-mn">перебор почт</i>' : ""}</span><em class="sec-chip ${c[1]}">${c[0]}</em><time>${secHm(f.t)}</time></button>
+    return `<li class="r-${w.r} ${op ? "open" : ""}"><button type="button" class="sec-jh" data-sec-j="${esc(k)}" aria-expanded="${op}">${secFlag(f.cc)}<span class="sec-jw"><b>${esc(f.ip || "IP не определён")}</b><small>${esc([secCountry(f.cc), f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</small></span><span class="sec-ja">${esc(w.t)}${f.n > 1 ? ` <i class="sec-x">×${f.n}</i>` : ""}${w.many ? ' <i class="sec-mn">перебор почт</i>' : ""}</span><em class="sec-chip ${c[1]}">${c[0]}</em><time>${secHm(f.t)}</time></button>
       <div class="sec-rb"><div><p><span>Что это</span>${esc(w.why)}</p><p><span>Что делать</span>${esc(w.todo)}</p>${f.a ? `<p><span>Запрос</span>${esc(SEC_ACT[f.a] || f.a)}${f.ua === "script" ? ", из программы" : f.ua === "browser" ? ", из браузера" : ""}</p>` : ""}</div></div></li>`; }).join("");
   const fb = (id, l, n) => `<button type="button" class="sec-fb ${F === id ? "on" : ""}" data-sec-f="${id}">${l}${n != null ? ` <i>${n}</i>` : ""}</button>`;
   return `<div class="panel-head"><h2>Журнал подключений</h2><span class="aside">${D ? (D.geo === false ? "страны отключены" : "почты скрыты") : ""}</span></div>
