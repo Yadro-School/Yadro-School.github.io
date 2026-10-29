@@ -5133,14 +5133,14 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .sec-th{appearance:none;width:100%;display:grid;gap:3px;text-align:left;border:0;background:none;color:var(--ink);font:inherit;padding:12px 16px;border-radius:18px;cursor:pointer;transition:transform .15s}.sec-th:active{transform:scale(.98)}
 .sec-tl{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--muted)}
 .sec-tn{font:500 32px/1.05 var(--f-display);font-variant-numeric:tabular-nums}.sec-tn.txt{font-size:26px}
-.sec-t.r .sec-tn{color:var(--bad)}
-.sec-t.g{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 45%,transparent)}.sec-t.g .sec-tn{color:var(--good)}
-.sec-t.w{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.sec-t.w .sec-tn{color:var(--bad)}
+.sec-t.t-red .sec-tn{color:var(--bad)}
+.sec-t.st-ok{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 45%,transparent)}.sec-t.st-ok .sec-tn{color:var(--good)}
+.sec-t.st-bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 55%,transparent)}.sec-t.st-bad .sec-tn{color:var(--bad)}
 .sec-hp{padding:0 16px 8px;font-size:13px;line-height:1.45;color:var(--muted)}
 .sec-ch{padding:2px 12px 12px}.sec-ch>span{display:block;padding:0 4px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .sec-chs{width:100%;height:auto;display:block;overflow:visible}.sec-chs .gl{stroke:var(--line);stroke-width:1}.sec-chs .ar{fill:color-mix(in srgb,var(--pen) 12%,transparent)}.sec-chs .ln{fill:none;stroke:var(--pen);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .sec-chs .dt{fill:var(--surface);stroke:var(--pen);stroke-width:2}.sec-chs .dt.now{fill:var(--pen)}.sec-chs text{font:11px var(--f-body);fill:var(--muted)}.sec-chs .vl.now{fill:var(--ink);font-weight:600}
-.sec-t.w .sec-ch,.sec-t.g .sec-ch{display:none}
+.sec-ok{color:var(--good)!important}
 .sec-th small{font-size:12.5px;color:var(--muted);min-height:1.2em;text-wrap:balance}
 .sec-t.open .sec-c{transform:rotate(180deg)}
 .sec-t .sec-rb p{padding-left:16px;padding-right:16px}.sec-t .sec-rb p:only-child{display:block}.sec-t .sec-rb>div>p:first-child{padding-top:0}.sec-t .sec-rb p:last-child{padding-bottom:12px}
@@ -5151,10 +5151,10 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .sec-fb:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}.sec-fb:active{transform:scale(.95)}
 .sec-fb.on{background:var(--pen-soft);color:var(--pen);border-color:transparent}.sec-fb i{font-style:normal;opacity:.7;font-variant-numeric:tabular-nums}
 .sec-jl{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:640px;overflow:auto}
-.sec-jl li{border-radius:12px;border-left:3px solid transparent;transition:background-color .18s}.sec-jl li:hover,.sec-jl li.open{background:color-mix(in srgb,var(--ink) 5%,transparent)}
-.sec-jl li.r-bad{background:var(--bad-soft);border-left-color:var(--bad)}.sec-jl li.r-bad:hover,.sec-jl li.r-bad.open{background:color-mix(in srgb,var(--bad) 17%,transparent)}
+.sec-jl li{position:relative;border-radius:12px;transition:background-color .18s}.sec-jl li:hover,.sec-jl li.open{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.sec-jl li.r-bad,.sec-jl li.r-ok{background:var(--bad-soft)}.sec-jl li.r-bad::before,.sec-jl li.r-ok::before{content:"";position:absolute;left:3px;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--bad)}.sec-jl li.r-bad:hover,.sec-jl li.r-bad.open{background:color-mix(in srgb,var(--bad) 17%,transparent)}
 .sec-jl li.r-bad .sec-ja{color:var(--bad);font-weight:500}.sec-jl li.r-bad .sec-ja .sec-x{color:var(--bad)}
-.sec-jl li.r-ok{background:var(--good-soft);border-left-color:var(--good)}.sec-jl li.r-ok .sec-ja{color:var(--good);font-weight:500}
+.sec-jl li.r-ok{background:var(--good-soft)}.sec-jl li.r-ok::before{background:var(--good)}.sec-chip.ok.in{background:var(--good);color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 25%,transparent)}.sec-jl li.r-ok .sec-ja{color:var(--good);font-weight:500}
 .sec-jl li.r-bad .sec-fl{color:var(--bad)}
 .sec-jh{appearance:none;width:100%;display:grid;grid-template-columns:30px minmax(120px,190px) minmax(0,1fr) auto 64px;gap:10px;align-items:center;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:8px 10px;border-radius:12px;cursor:pointer;transition:transform .15s}.sec-jh:active{transform:scale(.99)}
 .sec-fl{position:relative;width:28px;height:20px;border-radius:5px;overflow:hidden;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted)}
@@ -11691,13 +11691,22 @@ function secTiles(D, t0, days){
     if(ev("code_limit")) al.push(["Сработал лимит запросов кода", "Больше 30 писем с кодом за час. Если это не вы, кто-то забивает почту."]);
     if(D && D.feed && D.feed.some(f => f.many)) al.push(["Перебор почт с одного IP", "Кто-то пробует много разных адресов. В журнале справа такие строки помечены."]);
   }
+  const fd = (D && D.feed) || [], lastOk = fd.find(f => f.ev === "login_ok"), lastBad = fd.find(f => secWhat(f).r === "bad");
+  const place = f => [f.ip, secCountry(f.cc)].filter(Boolean).join(", ") || "место неизвестно";
+  const facts = t0 ? [
+    ["Попыток", `${all}, из них отказано ${denied}${all ? " (" + Math.round(denied * 100 / all) + "%)" : ""}`],
+    ["Откуда", t0.ips ? `${t0.ips} разных адресов (IP)` : "адресов в статистике нет"],
+    ["Последний вход", lastOk ? `${secHm(lastOk.t)}, ${place(lastOk)}` : ok ? "время не записано" : "входов не было"],
+    ["Последний отказ", lastBad ? `${secHm(lastBad.t)}, ${place(lastBad)}: ${secWhat(lastBad).t.toLowerCase()}` : denied ? "в журнале не сохранился" : "отказов не было"],
+    ["Чаще всего", top || "ничего"]
+  ].map(x => `<p><span>${x[0]}</span>${esc(x[1])}</p>`).join("") : "";
   const miss = SEC_C.filter(x => x[2] === false).map(x => x[1]);
   const T = [
+        ["state", "Состояние", t0 ? (al.length ? "Тревога" : "Спокойно") : null, t0 ? (al.length ? `причин: ${al.length}` : "тревог нет") : "", "", () => (al.length ? al.map(x => `<p class="sec-al"><span>Что</span>${x[0]}</p><p><span>Что делать</span>${x[1]}</p>`).join("") : `<p class="sec-ok"><span>Итог</span>Подозрительного не видно.</p>`) + facts + (miss.length ? `<p><span>Не защищено</span>${esc(miss.join(", "))}</p>` : ""), al.length ? "st-bad" : "st-ok"],
     ["all", "Попыток зайти", t0 ? all : null, t0 ? (all ? `из них отказано ${denied}` : "сегодня тихо") : "", "Сколько раз за сутки кто-то пытался войти: просил код, вводил его, нажимал «Войти через Яндекс» или использовал ключ доступа. Считаются и ваши входы, и чужие попытки.", s => spark(ser(d => d.ev.attempt != null ? d.ev.attempt : secSum(d, SEC_DENY) + (d.ev.login_ok || 0) + (d.ev.code_send || 0))), ""],
-    ["deny", "Отказано", t0 ? denied : null, t0 ? (top || "отказов нет") : "", "Сколько попыток сервер отбил: вход закрыт для чужих, неверный код, подбор, запрос без прав, слишком частые или несуществующие запросы. Чужой при этом ничего не увидел.", s => spark(ser(d => secSum(d, SEC_DENY))), denied ? "r" : ""],
+    ["deny", "Отказано", t0 ? denied : null, t0 ? (top || "отказов нет") : "", "Сколько попыток сервер отбил: вход закрыт для чужих, неверный код, подбор, запрос без прав, слишком частые или несуществующие запросы. Чужой при этом ничего не увидел.", s => spark(ser(d => secSum(d, SEC_DENY))), denied ? "t-red" : ""],
     ["ok", "Успешных входов", t0 ? ok : null, t0 ? (ok ? "вошёл владелец" : "входов не было") : "", "Сколько раз за сутки кто-то вошёл на сайт. Пока вход закрыт, это можете быть только вы. Если число больше, чем вы входили, смените SESSION_SECRET.", s => spark(ser(d => d.ev.login_ok || 0)), ""],
-    ["who", "Людей на сайте", t0 ? t0.act : null, D ? `всего аккаунтов: ${D.users.total}` : "", "Сколько разных аккаунтов открывали сайт за сутки, уже будучи внутри. Это не попытки входа, а люди, которые реально пользуются платформой.", s => spark(ser(d => d.act || 0)), ""],
-    ["state", "Состояние", t0 ? (al.length ? "Тревога" : "Спокойно") : null, t0 ? (al.length ? `причин: ${al.length}` : "тревог нет") : "", "", () => al.length ? al.map(x => `<p class="sec-al"><span>Что</span>${x[0]}</p><p><span>Что делать</span>${x[1]}</p>`).join("") : `<p>Подозрительного за сутки нет.${miss.length ? " Пока не подключено: " + miss.join(", ").toLowerCase() + "." : ""}</p>`, al.length ? "w" : "g"]
+    ["who", "Людей на сайте", t0 ? t0.act : null, D ? `всего аккаунтов: ${D.users.total}` : "", "Сколько разных аккаунтов открывали сайт за сутки, уже будучи внутри. Это не попытки входа, а люди, которые реально пользуются платформой.", s => spark(ser(d => d.act || 0)), ""]
   ];
   return T.map(([id, l, n, sub, help, body, cls]) => {
     const op = SEC_T.open === id, b = id === "state" ? body() : `<div class="sec-hp">${help}</div>` + body();
@@ -11709,7 +11718,7 @@ function secJr(){
   const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
   const nBad = items.filter(x => x.w.r === "bad").length, nOk = items.filter(x => x.w.r === "ok").length;
   const list = items.filter(x => F === "bad" ? x.w.r === "bad" : F === "ok" ? x.w.r === "ok" : true);
-  const chip = { bad: ["Отказано", "bad"], ok: ["Вошли", "ok"], mid: ["Обычное", "off"] };
+  const chip = { bad: ["Отказано", "bad"], ok: ["Вошли", "ok in"], mid: ["Обычное", "off"] };
   const rows = list.map(({ f, w, k }) => { const op = SEC_T.fo === k, c = chip[w.r];
     return `<li class="r-${w.r} ${op ? "open" : ""}"><button type="button" class="sec-jh" data-sec-j="${esc(k)}" aria-expanded="${op}">${secFlag(f.cc)}<span class="sec-jw"><b>${esc(f.ip || "IP не определён")}</b><small>${esc([secCountry(f.cc), f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</small></span><span class="sec-ja">${esc(w.t)}${f.n > 1 ? ` <i class="sec-x">×${f.n}</i>` : ""}${w.many ? ' <i class="sec-mn">перебор почт</i>' : ""}</span><em class="sec-chip ${c[1]}">${c[0]}</em><time>${secHm(f.t)}</time></button>
       <div class="sec-rb"><div><p><span>Что это</span>${esc(w.why)}</p><p><span>Что делать</span>${esc(w.todo)}</p>${f.a ? `<p><span>Запрос</span>${esc(SEC_ACT[f.a] || f.a)}${f.ua === "script" ? ", из программы" : f.ua === "browser" ? ", из браузера" : ""}</p>` : ""}</div></div></li>`; }).join("");
