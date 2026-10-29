@@ -5323,10 +5323,21 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
       '#yd-login h1{margin:0 0 4px;font:500 30px/1.1 Georgia,serif}#yd-login p{margin:0 0 18px;color:#8a8478;font-size:14.5px}' +
       '#yd-login input{width:100%;box-sizing:border-box;height:48px;padding:0 14px;border-radius:14px;border:1px solid #d9d3c7;background:#fff;font:inherit;margin-bottom:10px;color:inherit}#yd-login input:focus{outline:2px solid #d9663d;outline-offset:1px}' +
       '#yd-login button{width:100%;height:48px;border-radius:14px;border:0;font:500 15px system-ui,sans-serif;cursor:pointer;background:#d9663d;color:#fff;margin-bottom:10px}#yd-login button.g{background:#f1ede4;color:#1f1d1a;border:1px solid #ddd6c8}#yd-login button:disabled{opacity:.6;cursor:default}' +
+      '#yd-login button{transition:transform .15s,filter .2s}#yd-login button:hover:not(:disabled){filter:brightness(.95)}#yd-login button:active:not(:disabled){transform:scale(.97)}#yd-login a{padding:4px 8px;border-radius:8px;transition:background-color .2s}#yd-login a:hover{background:rgba(128,128,128,.14)}html[data-motion="off"] #yd-login button,html[data-motion="off"] #yd-login a{transition:none}' +
       '#yd-login .e{color:#c0392b;font-size:13.5px;min-height:18px;margin:0 0 8px}#yd-login .s{color:#8a8478;font-size:13px;margin-top:6px;text-align:center}#yd-login a{color:#d9663d;cursor:pointer}' +
       '@media(prefers-color-scheme:dark){#yd-login{background:#141311;color:#f2efe8}#yd-login .c{background:#1e1d1a;border-color:#2e2c28}#yd-login input{background:#161513;color:#f2efe8;border-color:#3a3833}#yd-login button.g{background:#262522;color:#f2efe8;border-color:#3a3833}#yd-login p,#yd-login .s{color:#a49d8f}}</style>' +
       '<div class="c"><h1>Ядро</h1><p id="yd-sub">Войдите, чтобы увидеть дневник</p><div id="yd-body"></div></div>';
     document.body.appendChild(el); return el;
+  }
+  /* Вход временно закрыт: пускаем только владельца (сравнение по хешу, сам адрес в коде не хранится). Чтобы открыть вход, поставьте LOCK = false. */
+  var LOCK = true, OWNER_H = "442b0fdf09593f3068f6ecba0808702e143d00b57dbf7b1434a4c509b44c9bd6";
+  function sha(t){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(t).trim().toLowerCase())).then(function(b){ return Array.prototype.map.call(new Uint8Array(b), function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }); }
+  function closed(){
+    try { localStorage.removeItem(TK); } catch(e) {} tok = null;
+    function show(){ var el = overlay(); el.querySelector("#yd-sub").textContent = "Вход временно закрыт";
+      el.querySelector("#yd-body").innerHTML = '<p class="s">Сейчас сайт доступен только владельцу. Он откроется позже.</p><button class="g" id="yd-re">Войти как владелец</button>';
+      el.querySelector("#yd-re").onclick = function(){ location.reload(); }; }
+    if(document.body) show(); else document.addEventListener("DOMContentLoaded", show);
   }
   var YA_ID = "38704efbddc840edaaa1cbce336da23c", YA_REDIR = "https://yadro-ed.ru/";
   function yaStart(){
@@ -5338,25 +5349,28 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "";
     var err = function(t){ var e = body.querySelector(".e"); if(e) e.textContent = t || ""; };
     function stepEmail(){
-      sub.textContent = "Войдите, чтобы увидеть дневник";
+      sub.textContent = LOCK ? "Вход временно закрыт: сейчас только для владельца" : "Войдите, чтобы увидеть дневник";
       body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username webauthn" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код на почту</button>' +
-        (location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
+        (!LOCK && location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
         (pkOk ? '<button class="g" id="yd-pk">Войти по ключу доступа</button>' : "") + '<p class="s">Пароли не нужны: пришлём одноразовый код</p>';
       var em = body.querySelector("#yd-em"); em.value = email; em.focus();
       var go = body.querySelector("#yd-go");
       function send(){ email = em.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
-        call("code_send", { email: email }).then(stepCode).catch(function(e){ err(e.message); go.disabled = false; }); }
+        (LOCK ? sha(email) : Promise.resolve(OWNER_H)).then(function(h){
+          if(h !== OWNER_H){ err("Вход временно закрыт"); go.disabled = false; return; }
+          return call("code_send", { email: email }).then(stepCode);
+        }).catch(function(e){ err(e.message); go.disabled = false; }); }
       go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
       var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = yaStart;
       var pk = body.querySelector("#yd-pk"); if(pk) pk.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось войти по ключу"); }); };
     }
     function stepCode(){
       sub.textContent = "Мы отправили код на " + email;
-      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма"><input id="yd-nm" placeholder="Ваше имя (при первом входе)" autocomplete="name"><p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
+      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма">' + (LOCK ? "" : '<input id="yd-nm" placeholder="Ваше имя (при первом входе)" autocomplete="name">') + '<p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
       var cd = body.querySelector("#yd-cd"); cd.focus();
       var ok = body.querySelector("#yd-ok");
       function verify(){ ok.disabled = true; err("");
-        call("code_verify", { email: email, code: cd.value, name: body.querySelector("#yd-nm").value }).then(function(j){ done(j, true); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
+        call("code_verify", { email: email, code: cd.value, name: (body.querySelector("#yd-nm") || {}).value || "" }).then(function(j){ done(j, true); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
       ok.onclick = verify; cd.onkeydown = function(e){ if(e.key === "Enter") verify(); };
       body.querySelector("#yd-back").onclick = stepEmail;
     }
@@ -5373,7 +5387,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     var qs = new URLSearchParams(location.search), qc = qs.get("code"), qst = qs.get("state"), want = "";
     try { want = sessionStorage.getItem("yd-ys") || ""; } catch(e) {}
     if(qc || qs.get("error")){ try { history.replaceState(null, "", location.pathname); sessionStorage.removeItem("yd-ys"); } catch(e) {} }
-    if(qc && qst && want && qst === want){
+    if(!LOCK && qc && qst && want && qst === want){
       sub.textContent = "Входим через Яндекс…"; body.innerHTML = '<p class="e"></p><p class="s">Секунду…</p>';
       call("ya_login", { code: qc }).then(function(j){ done(j, true); }).catch(function(e){ stepEmail(); err(e.message || "Не получилось войти через Яндекс"); });
       return;
@@ -5412,7 +5426,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   if(!tok){ document.addEventListener("DOMContentLoaded", loginUI); return; }
 
   var meP = null;
-  function me(){ if(!meP) meP = call("me").then(function(j){ if(!j.user){ logout(); return new Promise(function(){}); } USER = j.user; return USER; }); return meP; }
+  function me(){ if(!meP) meP = call("me").then(function(j){ if(!j.user){ logout(); return new Promise(function(){}); } if(LOCK && j.user.role !== "admin"){ closed(); return new Promise(function(){}); } USER = j.user; return USER; }); return meP; }
 
   function mkDb(){
     function docRef(path){
