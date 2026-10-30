@@ -5142,6 +5142,8 @@ a.adm-ph:hover{background:var(--pen-soft);color:var(--pen)}
 .sec-chs .dt{fill:var(--surface);stroke:var(--pen);stroke-width:2}.sec-chs .dt.now{fill:var(--pen)}.sec-chs text{font:11px var(--f-body);fill:var(--muted)}.sec-chs .vl.now{fill:var(--ink);font-weight:600}
 .sec-fa{margin:0 14px 10px;padding:9px 12px;border-radius:12px;background:color-mix(in srgb,var(--surface) 70%,transparent);display:grid;gap:2px}.sec-fa b{font-weight:600;font-size:14px;color:var(--ink)}.sec-fa span{font-size:13px;color:var(--ink);opacity:.8;line-height:1.4}
 .sec-fx{display:grid;gap:9px;padding:2px 16px 14px}.sec-fx div{display:grid;gap:1px}.sec-fx small{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.sec-fx b{font-weight:500;font-size:13.5px;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
+.sec-tgp{margin-bottom:12px}.sec-tgb{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}.sec-st-l{margin:4px 0 6px;padding-left:20px;font-size:13.5px;line-height:1.5;display:grid;gap:4px}.sec-tgp .sec-demo{margin:2px 0 6px}
+.sec-tgd{margin-top:8px;font-size:13px;color:var(--muted)}.sec-tgd summary{cursor:pointer;transition:color .18s}.sec-tgd summary:hover{color:var(--ink)}.sec-tgd p{margin:6px 0 0;line-height:1.5}
 .sec-rc{justify-self:start;margin-top:2px}.sec-rc.ask{background:var(--bad);color:#fff;border-color:transparent}
 .sec-th small{font-size:12.5px;color:var(--muted);min-height:1.2em;text-wrap:balance}
 .sec-t.open .sec-c{transform:rotate(180deg)}
@@ -5371,6 +5373,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   window.yadroLogout = logout;
   window.yadroTok = function(){ return tok; };
   window.yadroSec = function(){ return call("sec_stats"); };
+  window.yadroTg = function(a, b){ return /^tg_/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   window.yadroSecClear = function(what){ return call("sec_clear", { what: what }); };
 
   function overlay(){
@@ -11656,6 +11659,35 @@ const SEC_C = [   // id, название, состояние (true / false / "p
   ["geo", "Блокировка стран и IP", false, "nice", "Закрыть страны, откуда никто не заходит, и отдельные IP-сканеры.", "Cloudflare → Security → WAF → Custom rules: страна не Россия → Block."],
   ["audit", "Журнал действий администраторов", false, "nice", "Видно, кто и что менял в данных, если что-то пропало.", "Раздел «Журнал действий» уже есть во вкладках со статусом «скоро»."]
 ];
+/* ---- Telegram-бот: привязка и настройки ---- */
+const TGS = { d: null, err: "", busy: false, at: 0, link: "", msg: "", ask: false, poll: 0 };
+const tgErr = e => { const m = String(e && e.message || e || ""); return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m.length > 180 ? m.slice(0, 180) + "…" : m || "Сервер не ответил"; };
+function tgRedraw(){ const e = document.getElementById("sec-tg"); if(e) e.innerHTML = tgHtml(); }
+function tgCall(a, b){ return typeof window.yadroTg === "function" ? window.yadroTg(a, b) : Promise.reject(new Error("Работает на сайте Ядра, не внутри Claude")); }
+function tgFetch(force){
+  if(TGS.busy || (!force && TGS.at && Date.now() - TGS.at < 60000)) return;
+  TGS.busy = true;
+  tgCall("tg_status").then(j => { TGS.d = j; TGS.err = ""; }).catch(e => { TGS.err = tgErr(e); }).then(() => { TGS.busy = false; TGS.at = Date.now(); tgRedraw(); });
+}
+function tgPoll(n){   // ждём, пока вы нажмёте Start в Telegram
+  clearTimeout(TGS.poll); if(n > 40 || !TGS.link) return;
+  TGS.poll = setTimeout(() => tgCall("tg_status").then(j => { TGS.d = j; if(j.linked){ TGS.link = ""; TGS.msg = "Готово, Telegram привязан"; tgRedraw(); } else tgPoll(n + 1); }).catch(() => tgPoll(n + 1)), 3000);
+}
+function tgHtml(){
+  const d = TGS.d, head = `<div class="panel-head"><h2>Telegram-бот</h2><span class="aside">${d ? (d.linked ? "привязан" : d.token ? "ждёт привязки" : "не создан") : ""}</span></div>`;
+  if(!d) return head + `<p class="sec-demo">${TGS.err ? esc(TGS.err) + `. <button type="button" class="link" data-tg="retry">Повторить</button>` : "Загружаем…"}</p>`;
+  const tog = (k, l, tip) => `<button type="button" class="sec-fb ${d.on[k] ? "on" : ""}" data-tg="tog:${k}" data-tip="${tip}" aria-pressed="${!!d.on[k]}">${l}: ${d.on[k] ? "вкл" : "выкл"}</button>`;
+  if(!d.token) return head + `<p class="sec-demo">Бот присылает вам в Telegram тревоги, входы на сайт и сводку за сутки. Как создать:</p>
+    <ol class="sec-st-l"><li>В Telegram откройте <b>@BotFather</b>, отправьте <b>/newbot</b>, придумайте имя. Он пришлёт токен.</li><li>В Яндекс Облаке в функции <b>yadro-api</b> добавьте переменную <b>TG_TOKEN</b> и вставьте токен. Больше его никому не показывайте.</li><li>Создайте новую версию функции и нажмите здесь «Проверить».</li></ol>
+    <div class="sec-tgb"><button type="button" class="btn" data-tg="retry">Проверить</button></div>`;
+  if(!d.linked) return head + `<p class="sec-demo">Токен на сервере есть. Осталось привязать ваш Telegram: бот будет писать только вам.</p>
+    <div class="sec-tgb">${TGS.link ? `<a class="btn" href="${esc(TGS.link)}" target="_blank" rel="noopener">Открыть бота в Telegram</a><span class="sec-demo">Нажмите там Start. Ссылка действует 10 минут.</span>` : `<button type="button" class="btn ${TGS.busy ? "busy" : ""}" data-tg="link" ${TGS.busy ? "disabled" : ""}>Привязать Telegram</button>`}</div>${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}`;
+  return head + `<p class="sec-demo">Привязан${d.name ? ": " + esc(d.name) : ""}. Команды в боте: /status — сводка, /help.</p>
+    <div class="sec-fs">${tog("alert", "Тревоги", "Подбор кода, сканеры, лимиты")}${tog("login", "Входы", "Сообщение при каждом входе на сайт")}${tog("daily", "Сводка", "Утренняя сводка за вчера")}</div>
+    <div class="sec-tgb"><button type="button" class="btn" data-tg="test">Отправить тест</button><button type="button" class="sec-fb ${TGS.ask ? "ask sec-clr" : ""}" data-tg="unlink">${TGS.ask ? "Точно отвязать?" : "Отвязать"}</button></div>
+    ${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}
+    <details class="sec-tgd"><summary>Чтобы сводка приходила сама каждое утро</summary><p>В Яндекс Облаке: Cloud Functions → Триггеры → Создать → Таймер. Cron-выражение <b>0 4 * * ? *</b> (это 9:00 по Перми), функция <b>yadro-api</b>, последняя версия. Больше ничего не нужно.</p></details>`;
+}
 const SEC_PR = { crit: ["Критично", "bad"], imp: ["Важно", "warn"], nice: ["Желательно", "off"] };
 const secState = c => c === "lock" ? (SECSTAT.data && SECSTAT.data.lock ? "ok" : "off") : c === "live" ? (SECSTAT.data ? "ok" : "off") : c === "part" ? "part" : c ? "ok" : "off";
 /* ---- плитки слева и журнал подключений справа ---- */
@@ -11745,7 +11777,7 @@ function secJr(){
     ${rows ? `<ul class="sec-jl">${rows}</ul>` : `<p class="empty">${D ? (items.length ? "В этом разделе пусто." : "Подключений пока не было: всё тихо.") : "Нет данных."}</p>`}`;
 }
 function renderAdmSec(el){
-  SEC.el = el; secFetch(false);
+  SEC.el = el; secFetch(false); tgFetch(false);
   const D = SECSTAT.data, days = D ? D.days : null, t0 = days ? days[0] : null;
   const off = SEC_C.filter(x => secState(x[2]) !== "ok").length, rank = { crit: 0, imp: 1, nice: 2 };
   const plan = SEC_C.map((x, i) => [x, i]).sort((a, b) => (secState(a[0][2]) === "ok") - (secState(b[0][2]) === "ok") || rank[a[0][3]] - rank[b[0][3]] || a[1] - b[1]).map(x => x[0]);
@@ -11764,6 +11796,7 @@ function renderAdmSec(el){
       <div><b>Агент безопасности</b><span>Проверяет сайт сам каждый час</span></div><span class="sec-at" data-tip="Последняя проверка|${SEC.auto ? "Автоматическая" : "Запущена вручную"}">${SEC.at ? at : "—"}</span>
       <button type="button" class="btn sec-run ${SEC.busy ? "busy" : ""}" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button></section>
     <div class="sec-scan-w ${SEC.busy || SEC.res ? "open" : ""}" id="sec-scan-w">${secScanHtml()}</div>
+    <section class="panel sec-tgp" id="sec-tg">${tgHtml()}</section>
     <section class="panel"><div class="panel-head"><h2>Что подключить для защиты</h2><span class="aside">${off ? `не закрыто: ${off} из ${SEC_C.length}` : "всё закрыто"}</span></div>
       <p class="sec-demo">Совет агента безопасности. Сверху самое важное, что ещё не сделано.</p>
       <div class="sec-cn">${plan.map(([id, l, c, pr, why, how]) => { const st = secState(c), P = SEC_PR[pr]; return row(id, l, `<em class="sec-chip ${P[1]} sec-pr">${P[0]}</em>`, st === "ok" ? "ok" : st === "part" ? "warn" : "off", st === "ok" ? "подключено" : st === "part" ? "частично" : "не подключено", `<p><span>Зачем</span>${esc(why)}</p><p><span>Как</span>${esc(how)}</p>`); }).join("")}</div></section>`;
@@ -11773,6 +11806,15 @@ document.addEventListener("click", e => {
   if(o){ const id = o.dataset.secO, r = o.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-r.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); o.setAttribute("aria-expanded", String(on)); SEC.open = on ? id : null; return; }
   const tl = e.target.closest("[data-sec-t]");
   if(tl){ const id = tl.dataset.secT, r = tl.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-t.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); tl.setAttribute("aria-expanded", String(on)); SEC_T.open = on ? id : null; return; }
+  const tg = e.target.closest("[data-tg]");
+  if(tg){
+    const k = tg.dataset.tg; TGS.msg = "";
+    if(k === "retry"){ TGS.at = 0; TGS.err = ""; tgRedraw(); tgFetch(true); return; }
+    if(k === "link"){ TGS.busy = true; tgRedraw(); tgCall("tg_link").then(j => { TGS.link = j.url; TGS.busy = false; tgRedraw(); tgPoll(0); }).catch(err => { TGS.busy = false; TGS.msg = tgErr(err); tgRedraw(); }); return; }
+    if(k === "test"){ tgCall("tg_test").then(() => { TGS.msg = "Проверка отправлена, загляните в Telegram"; tgRedraw(); }).catch(err => { TGS.msg = tgErr(err); tgRedraw(); }); return; }
+    if(k === "unlink"){ if(!TGS.ask){ TGS.ask = true; tgRedraw(); setTimeout(() => { if(TGS.ask){ TGS.ask = false; tgRedraw(); } }, 4000); return; } TGS.ask = false; tgCall("tg_unlink").then(() => { TGS.link = ""; TGS.at = 0; tgFetch(true); }).catch(err => { TGS.msg = tgErr(err); tgRedraw(); }); return; }
+    if(k.indexOf("tog:") === 0){ const g = k.slice(4), v = !(TGS.d && TGS.d.on[g]); if(TGS.d) TGS.d.on[g] = v; tgRedraw(); tgCall("tg_set", { k: g, v }).catch(err => { if(TGS.d) TGS.d.on[g] = !v; TGS.msg = tgErr(err); tgRedraw(); }); return; }
+  }
   const cl = e.target.closest("[data-sec-clr]");
   if(cl){
     const what = cl.dataset.secClr, redraw = () => { const w = document.getElementById("sec-jr"); if(w) w.innerHTML = secJr(); const t = document.getElementById("sec-tiles"); if(t){ const D = SECSTAT.data; t.innerHTML = secTiles(D, D && D.days ? D.days[0] : null, D ? D.days : null); } };
