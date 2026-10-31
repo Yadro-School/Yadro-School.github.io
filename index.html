@@ -5412,6 +5412,26 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 .prof-par{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0 0;font-size:12.5px;color:var(--muted)}
 .prof-par .pchip{appearance:none;border:0;cursor:pointer;font:inherit;transition:transform .15s,background-color .2s}.prof-par .pchip:hover{transform:translateY(-1px)}.prof-par .pchip:active{transform:scale(.95)}
 .jp-top{flex-wrap:wrap}.jp-top button.jr-cl1{appearance:none;border:0;font:inherit;cursor:pointer;transition:transform .15s}.jp-top button.jr-cl1:hover{transform:translateY(-1px)}
+
+/* ===== безопасность на телефоне ===== */
+@media(max-width:600px){
+  .sec-ag{display:grid!important;grid-template-columns:auto minmax(0,1fr);gap:10px 12px!important;align-items:center}
+  .sec-ag .sec-at{grid-column:1/-1;justify-self:start}
+  .sec-ag .sec-run{grid-column:1/-1;width:100%}
+  .sec-ag>div b{font-size:16px!important}
+  .sec-rh{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px!important;align-items:start}
+  .sec-rh>b{grid-column:2/4;white-space:normal;overflow-wrap:anywhere}
+  .sec-rh>.sec-chip{grid-column:2;justify-self:start}
+  .sec-rh>.sec-chip+.sec-chip{grid-column:2/3}
+  .sec-rh>.sec-c{grid-column:3;grid-row:1}
+  .sec-rb p{overflow-wrap:anywhere}
+}
+
+/* ===== роли и права: правка только по кнопке ===== */
+#admin:not([data-pm-edit]) [data-px],#admin:not([data-pm-edit]) .px-t td button,#admin:not([data-pm-edit]) .lvs,#admin:not([data-pm-edit]) .pm-sw,#admin:not([data-pm-edit]) .px-t [data-lv],#admin:not([data-pm-edit]) [data-act],#admin:not([data-pm-edit]) .pm-scope,#admin:not([data-pm-edit]) .pm-resetall,#admin:not([data-pm-edit]) [data-adm-reset-role],#admin:not([data-pm-edit]) [data-cust-delrole]{pointer-events:none}
+#admin:not([data-pm-edit]) .pm-resetall,#admin:not([data-pm-edit]) [data-adm-reset-role]{display:none}
+.pm-edit{white-space:nowrap}.pm-edit.on{background:var(--pen);border-color:var(--pen);color:#fff}
+.pm-resetall{display:flex;justify-content:center;margin:18px 0 6px}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -9037,8 +9057,10 @@ function _renderAdmin(){
     ${IMP.open ? importPanelHtml() : ""}
     ${CN.form ? cnFormHtml() : ""}
     ${cats.map(cat => { const l = all.filter(c => c.cat === cat); return `<section class="cn-g"><h2 class="cn-gh">${esc(cat)} <span>${l.length}</span></h2><ul class="reg-list cn-grid">${l.map(row).join("")}</ul></section>`; }).join("")}
+    <section class="panel sec-tgp" id="sec-tg">${tgHtml()}</section>
     ${CN.loaded && !CN.db ? `<p class="muted reg-note">Общее хранилище недоступно в этом окне: свои коннекторы добавлять нельзя.</p>` : ""}
     <section class="panel cn-safe"><b>Где хранятся ключи.</b> Ключи и токены не вводятся на этой странице: её содержимое видят все, кому вы её покажете. Они хранятся только на сервере платформы в переменных окружения. Здесь видно, какой ключ нужен каждому сервису, где его взять и подключён ли сервис.</section>`;
+  try { tgFetch(false); } catch(e) {}
 }
 
 /* ================= Пользователи, роли и доступ ================= */
@@ -9475,7 +9497,7 @@ function rolesV1(){
   const cell = (r, x) => { const l = ADM.perm[r.id].res[x[0]]; return `<td><button class="px lv-${l}" data-px="${r.id}|${x[0]}" aria-label="${r.name}: ${x[1]} — ${LVC[l]}" title="${r.name}: ${LVC[l]}">${LVC[l]}</button></td>`; };
   const acell = (r, a) => { const on = ADM.perm[r.id].acts[a[0]]; return `<td><button class="px ${on ? "lv-e" : "lv-n"}" data-pa="${r.id}|${a[0]}" aria-label="${r.name}: ${a[1]} — ${on ? "можно" : "нельзя"}" title="${r.name}: ${on ? "можно" : "нельзя"}">${on ? "Можно" : "Нельзя"}</button></td>`; };
   return `<div class="pm-v1">
-    <section class="panel"><div class="panel-head"><h2>Кто что видит и может</h2><button class="btn" data-adm-reset>Сбросить к стандартным</button></div>
+    <section class="panel"><div class="panel-head"><h2>Кто что видит и может</h2></div>
       <p class="muted adm-hint">Нажмите на ячейку, чтобы изменить.</p>
       <div class="px-wrap"><table class="px-t"><thead><tr><th>Раздел</th>${ROLES.map(r => `<th><span class="px-rh" style="--rc:${r.c}">${r.name}</span>${r.custom ? `<button type="button" class="px-x" data-cust-delrole="${r.id}" title="Удалить роль" aria-label="Удалить роль">×</button>` : ""}</th>`).join("")}</tr></thead><tbody>
         ${RES.map(x => `<tr><th>${x[1]}</th>${ROLES.map(r => cell(r, x)).join("")}</tr>`).join("")}
@@ -9511,10 +9533,26 @@ const LEG = [
 function rolesLegend(){
   return `<section class="panel adm-leg"><div class="panel-head"><h2>Что значат обозначения</h2></div>${LEG.map(([h, rows]) => `<h3 class="lg-h">${h}</h3><div class="lg-rows">${rows.map(([c, t, d]) => `<div class="lg-r"><span class="px ${c}">${t}</span><span class="lg-d">${d}</span></div>`).join("")}</div>`).join("")}<p class="muted lg-n">Чужие чаты и группы не видит никто, даже администратор платформы: внутри группы права зависят от роли в ней.</p></section>`;
 }
-function rolesBody(){ return (ADM.rv === "v1" ? rolesV1() : rolesV2(ADM.rv === "v3" ? "pm-v3" : "pm-v2")) + rolesLegend(); }
+function rolesBody(){ return (ADM.rv === "v1" ? rolesV1() : rolesV2(ADM.rv === "v3" ? "pm-v3" : "pm-v2")) + rolesLegend() + `<div class="pm-resetall"><button class="btn" data-adm-reset>Сбросить все роли к стандартным</button></div>`; }
+/* режим правки таблицы прав: без него случайно ничего не нажать */
+function pmEditBtn(){ return `<button type="button" class="btn pm-edit ${ADM.edit ? "on" : ""}" data-pm-edit>${ADM.edit ? "Завершить правку" : "Править"}</button>`; }
+function pmEdit(){
+  const el = document.getElementById("admin");
+  if(!ADM.edit){ ADM._snap = JSON.stringify(ADM.perm); ADM.edit = true; renderAdmRoles(el); return; }
+  const changed = JSON.stringify(ADM.perm) !== ADM._snap;
+  if(!changed){ ADM.edit = false; renderAdmRoles(el); return; }
+  const o = tgModal("Применить изменения?", `<p class="adm-cf">Права ролей изменятся для всех пользователей. Вы хотите подтвердить свои действия?</p>`, `<button type="button" class="tgm-btn" data-pm-undo style="margin-right:auto">Отменить правки</button><button type="button" class="tgm-btn" data-cf-no>Продолжить правку</button><button type="button" class="tgm-btn pri" data-cf-ok>Да, применить</button>`);
+  if(!o) return;
+  o.addEventListener("click", e => {
+    if(e.target.closest("[data-cf-ok]")){ tgModalClose(); ADM.edit = false; admSave(); if(VA.role) vaApply(); renderAdmRoles(el); tgToast("Права сохранены"); }
+    else if(e.target.closest("[data-pm-undo]")){ tgModalClose(); try { ADM.perm = JSON.parse(ADM._snap); } catch(_) {} ADM.edit = false; admSave(); renderAdmRoles(el); tgToast("Правки отменены"); }
+    else if(e.target.closest("[data-cf-no]")) tgModalClose();
+  });
+}
 function renderAdmRoles(el){
   const ix = RV_NAMES.findIndex(x => x[0] === ADM.rv);
-  el.innerHTML = admHead("Роли и права", `<div class="adm-hb"><button class="plus" data-cust-role><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить роль</button><button class="plus" data-cust-act><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить право</button></div>`) + `
+  el.toggleAttribute("data-pm-edit", !!ADM.edit);
+  el.innerHTML = admHead("Роли и права", `<div class="adm-hb">${pmEditBtn()}<button class="plus" data-cust-role><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить роль</button><button class="plus" data-cust-act><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить право</button></div>`) + `
     <div id="rv-body" class="adm-body">${rolesBody()}</div>`;
 }
 function admConfirm(title, text, ok, fn, html){
@@ -9734,6 +9772,7 @@ document.addEventListener("click", e => {
   if((x = g("[data-act]"))){ const k = x.dataset.act, v = !ADM.perm[ADM.pr].acts[k]; ADM.perm[ADM.pr].acts[k] = v; x.classList.toggle("on", v); x.setAttribute("aria-checked", String(v)); admSave(); return; }
   const swapPm = () => { const pb = document.getElementById("pm-body"); if(pb){ pb.innerHTML = admPermHtml(); pb.classList.remove("swap"); void pb.offsetWidth; pb.classList.add("swap"); } };
   if((x = g("[data-adm-pr]"))){ ADM.pr = x.dataset.admPr; document.querySelectorAll("[data-adm-pr]").forEach(b => b.setAttribute("aria-pressed", String(b === x))); swapPm(); return; }
+  if(g("[data-pm-edit]")){ pmEdit(); return; }
   if(g("[data-adm-reset-role]")){ const rn = ROLE(ADM.pr).name; admConfirm("Сбросить права роли?", `Права роли «${rn}» вернутся к стандартным. Остальные роли не изменятся.`, "Сбросить", () => { ADM.perm[ADM.pr] = permBase()[ADM.pr]; admSave(); if(VA.role) vaApply(); swapPm(); tgToast(`Права роли «${rn}» сброшены`); }); return; }
   if((x = g("[data-rv]"))){
     const v = x.dataset.rv; if(v === ADM.rv) return;
@@ -12056,7 +12095,7 @@ function renderAdmSec(el){
       <div><b>Агент безопасности</b><span>Проверяет сайт сам каждый час</span></div><span class="sec-at" data-tip="Последняя проверка|${SEC.auto ? "Автоматическая" : "Запущена вручную"}">${SEC.at ? at : "—"}</span>
       <button type="button" class="btn sec-run ${SEC.busy ? "busy" : ""}" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button></section>
     <div class="sec-scan-w ${SEC.busy || SEC.res ? "open" : ""}" id="sec-scan-w">${secScanHtml()}</div>
-    <section class="panel sec-tgp" id="sec-tg">${tgHtml()}</section>
+
     <section class="panel"><div class="panel-head"><h2>Что подключить для защиты</h2><span class="aside">${off ? `не закрыто: ${off} из ${SEC_C.length}` : "всё закрыто"}</span></div>
       <p class="sec-demo">Совет агента безопасности. Сверху самое важное, что ещё не сделано.</p>
       <div class="sec-cn">${plan.map(([id, l, c, pr, why, how]) => { const st = secState(c), P = SEC_PR[pr]; return row(id, l, `<em class="sec-chip ${P[1]} sec-pr">${P[0]}</em>`, st === "ok" ? "ok" : st === "part" ? "warn" : "off", st === "ok" ? "подключено" : st === "part" ? "частично" : "не подключено", `<p><span>Зачем</span>${esc(why)}</p><p><span>Как</span>${esc(how)}</p>`); }).join("")}</div></section>`;
