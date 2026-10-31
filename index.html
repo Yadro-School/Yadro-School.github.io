@@ -5354,6 +5354,21 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .inv-e{margin:8px 0 0;color:#c0392b;font-size:13px}.inv-new{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,#d9663d 12%,transparent)}.inv-new span{font-size:12px;color:var(--muted)}.inv-new b{font:600 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em}
 .inv-l{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:2px}.inv-i{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;padding:9px 2px;border-top:1px solid var(--line,#e4dfd5);font-size:13px}.inv-i.off{opacity:.5}.inv-c{font:600 14px ui-monospace,Menlo,monospace;letter-spacing:.08em}.inv-r{flex:1 1 140px;color:var(--muted)}.inv-s{font-size:12px;color:var(--muted)}
 .inv-i button,.inv-new button{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line,#ddd6c8);background:transparent;color:inherit;font:12px system-ui;cursor:pointer}.inv-i button.x{color:#c0392b}
+
+/* ===== правки главной от 31.10 ===== */
+.top .wrap{display:flex;align-items:center;justify-content:space-between}
+.who{flex-direction:row;align-items:center}
+.hd-prof{appearance:none;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;transition:transform .18s,background-color .2s,border-color .2s,color .2s}
+.hd-prof:hover{background:var(--pen-soft);border-color:color-mix(in srgb,var(--pen) 40%,var(--line));color:var(--pen);transform:translateY(-1px)}.hd-prof:active{transform:scale(.92)}
+.hd-prof:focus-visible{outline:2px solid var(--pen);outline-offset:2px}
+.brand-logo{transform-origin:50% 50%;animation:lgSpin 14s linear infinite}
+.brand:hover .brand-logo{animation-duration:3.5s}
+@keyframes lgSpin{to{transform:rotate(360deg)}}
+.ovnow{align-items:flex-start!important}
+.ovnow .ovm-w{margin-left:0!important;flex:1 1 100%;order:3}
+.ov-top{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
+.ovs{cursor:pointer}.ovs .dl,.ovs [data-lesson]{cursor:default}
+@media(max-width:900px){.ov-top{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -5576,6 +5591,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
       <p class="brand-name">Ядро</p>
     </div>
     <div class="who">
+      <button type="button" class="hd-prof" data-go="profile" data-tip="Профиль" aria-label="Открыть профиль"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 19.5c.9-3.5 3.7-5.2 7.2-5.2s6.3 1.7 7.2 5.2"/></svg></button>
     </div>
   </div>
 </header>
@@ -11198,6 +11214,7 @@ document.addEventListener("click", e => {
   const tab = e.target.closest("[data-tab]"); if(tab){ showTab(tab.dataset.tab, true); if(tab.dataset.tab === "agents" && !SYS.at) sysRun(); if(tab.dataset.tab === "chats") renderChats(); return; }
   const pd = e.target.closest("[data-pf-day]"); if(pd){ showTab("schedule", true); if(pd.dataset.pfDay){ const d = new Date(pd.dataset.pfDay + "T12:00:00"), mon = mondayOf(d); state.weekOffset = Math.round((mon - SCHED_MONDAY) / (7 * DAY)); state.schedIdx = (d.getDay() + 6) % 7; try{ renderSchedule(); }catch(err){} } return; }
   const go = e.target.closest("[data-go]"); if(go){ showTab(go.dataset.go, true); return; }
+  if(e.target.closest(".ovs") && !e.target.closest("[data-lesson],button,a")){ showTab("schedule", true); return; }
   const hvb = e.target.closest("[data-hwview]"); if(hvb){ if((state.hwView || "open") !== hvb.dataset.hwview){ state.hwView = hvb.dataset.hwview; renderHomework("view"); } return; }
   const hwk = e.target.closest("[data-hwweek]"); if(hwk && !hwk.disabled){ hwk.classList.remove("hw-tap"); void hwk.offsetWidth; hwk.classList.add("hw-tap"); hwk.dataset.d = hwk.dataset.hwweek; setTimeout(() => hwk.classList.remove("hw-tap"), 520); const v = +hwk.dataset.hwweek, prev = state.hwWeek; state.hwWeek = v === 0 ? 0 : state.hwWeek + v; state.hwDir = state.hwWeek === prev ? 0 : (state.hwWeek > prev ? 1 : -1);
     renderHomework(true);
