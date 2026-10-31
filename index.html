@@ -5389,6 +5389,17 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .hwd-done:hover{background:color-mix(in srgb,var(--good) 20%,transparent);transform:translateY(-1px)}.hwd-done:active{transform:scale(.96)}
 .hwd-done.is-on{color:var(--muted);background:color-mix(in srgb,var(--ink) 6%,transparent);border-color:var(--line)}
 @media(max-width:600px){.hwr-row{grid-template-columns:minmax(0,1fr) 14px}.hwr-s{grid-column:1}.hwr-t{grid-column:1}.hwr-c{grid-column:2;grid-row:1}.hwr-mk{grid-column:1}}
+
+/* ===== календарь: фильтры, кнопка события, компактная «Зам» ===== */
+.cal-bar{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:0 0 14px}
+.cal-fl{display:flex;gap:6px;flex-wrap:wrap}
+.cal-add{white-space:nowrap}
+#calendar[data-cf=k] .cdc:not(.k),#calendar[data-cf=h] .cdc:not(.h),#calendar[data-cf=n] .cdc:not(.n){display:none}
+.cdc.n{background:color-mix(in srgb,#3FA7D6 18%,transparent);color:#2B8DBE;font-size:9px;padding:2px 5px;border-radius:99px}
+.hwv.h3[data-v="open"] .hwv-pill{transform:none}
+.hwv.h3[data-v="hist"] .hwv-pill{transform:translateX(100%)}
+.hwv.h3[data-v="tests"] .hwv-pill{transform:translateX(200%)}
+@media(max-width:600px){.hwv.h3{display:grid;width:100%;box-sizing:border-box}.hwv.h3 button{padding:8px 4px;font-size:12.5px;gap:4px}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -5650,7 +5661,6 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     <button class="tab" role="tab" id="tab-homework" data-tab="homework" aria-controls="homework"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h11A3 3 0 0 1 19 7.5V20H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#E07A1F" aria-hidden="true"><path d="M5 4.5h11A3 3 0 0 1 19 7.5V20H8a3 3 0 0 1-3-3z" fill="currentColor" fill-opacity=".2"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M12 4.5v5.2l1.6-1.3 1.6 1.3V4.5"/></svg><span class="tl">Домашка</span></button>
     <button class="tab" role="tab" id="tab-monitoring" data-tab="monitoring" aria-controls="monitoring"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="m7 15 4-4 3 3 5-6"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#3FA7D6" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="m7 15 4-4 3 3 5-6"/></svg><span class="tl">Мониторинг</span></button>
     <button class="tab tab-beta" hidden role="tab" id="tab-agents" data-tab="agents" aria-controls="agents"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 3 1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9z"/><path d="m19 15 .8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#C03FD8" aria-hidden="true"><path d="m10.5 3.5 2 5.2 5.2 2-5.2 2-2 5.2-2-5.2-5.2-2 5.2-2z" fill="currentColor" fill-opacity=".2"/><path d="m18.5 14.5.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" fill="currentColor" fill-opacity=".2"/><path d="M19 3v3M17.5 4.5h3" stroke-width="1.5"/></svg><span class="tl">Агенты</span> <span class="beta">бета</span></button>
-    <button class="tab" role="tab" id="tab-tests" data-tab="tests" aria-controls="tests"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4h6v3H9z"/><path d="m9.2 14 2 2 3.8-4"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#16966A" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2.5" fill="currentColor" fill-opacity=".2"/><path d="M9 4.5V3.5h6v1"/><rect x="9" y="3" width="6" height="3.4" rx="1.2" fill="currentColor"/><path d="m8.8 13.2 2 2 4-4.2M8.8 18h6" stroke-width="1.6"/></svg><span class="tl">Контрольные</span></button>
     <button class="tab" role="tab" id="tab-chats" data-tab="chats" aria-controls="chats"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.7 7L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#1FA0D6" aria-hidden="true"><path d="M14.5 4.5h-6a5.5 5.5 0 0 0-5.5 5.5v3a5.5 5.5 0 0 0 5.5 5.5H9l3 3v-3h2.5a5.5 5.5 0 0 0 5.5-5.5v-3a5.5 5.5 0 0 0-5.5-5.5z" fill="currentColor" fill-opacity=".2"/><path d="M8 11.5h.01M11.5 11.5h.01M15 11.5h.01" stroke-width="2.4"/></svg><span class="tl">Чаты</span> </button>
     <button class="tab" role="tab" id="tab-calendar" data-tab="calendar" aria-controls="calendar"><svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#E5484D" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="15.5" cy="15" r="1.8" fill="currentColor"/><path d="M8 15h.01M11.5 15h.01" stroke-width="2.2"/></svg><span class="tl">Календарь</span></button>
       </div>
@@ -6494,7 +6504,7 @@ function renderHomework(partial){
     </section>`;
   }).join("");
   const dir = state.hwDir || 0; state.hwDir = 0;
-  const hv = state.hwView === "hist" ? "hist" : "open";
+  const hv = state.hwView === "hist" ? "hist" : state.hwView === "tests" ? "tests" : "open";
   const doneList = HW.filter(isDone).sort((a, b) => (b.dueD - a.dueD) || (a.s < b.s ? -1 : 1));
   const hkeys = [...new Set(doneList.map(h => key(h.dueD)))];
   const histRow = h => `<li class="hwh">
@@ -6520,13 +6530,13 @@ function renderHomework(partial){
       <button class="chip wk-now" data-hwweek="0" ${state.hwWeek === 0 ? "hidden" : ""}>К ближайшей</button>
     </div>
     <div class="hwlist ${dir > 0 ? "sched-in wk-r" : dir < 0 ? "sched-in wk-l" : ""}">${groups || `<p class="hw-empty">${holidayOf(addDays(mon, 2)) ? noteBr(holidayOf(addDays(mon, 2)).name) : "На этой неделе ничего не задано."}</p>`}</div>`;
-  const segHtml = `<div class="hwv" data-v="${hv}" role="group" aria-label="Режим"><span class="hwv-pill" aria-hidden="true"></span><button type="button" data-hwview="open" aria-pressed="${hv === "open"}">К выполнению</button><button type="button" data-hwview="hist" aria-pressed="${hv === "hist"}">История<i>${doneList.length}</i></button></div>`;
+  const segHtml = `<div class="hwv h3" data-v="${hv}" role="group" aria-label="Режим"><span class="hwv-pill" aria-hidden="true"></span><button type="button" data-hwview="open" aria-pressed="${hv === "open"}">К выполнению</button><button type="button" data-hwview="hist" aria-pressed="${hv === "hist"}">История<i>${doneList.length}</i></button><button type="button" data-hwview="tests" aria-pressed="${hv === "tests"}">Контрольные<i>${TESTS.filter(t => diff(t.d) >= 0).length}</i></button></div>`;
   const html = `
     <div class="view-head">
-      <div class="hello"><p class="eyebrow">${hv === "hist" ? "Выполненные задания" : sub}</p><h1 class="headline">Домашка</h1></div>
+      <div class="hello"><p class="eyebrow">${hv === "hist" ? "Выполненные задания" : hv === "tests" ? "Контрольные и проверочные" : sub}</p><h1 class="headline">Домашка</h1></div>
     </div>
     ${segHtml}
-    <div class="hwbody">${hv === "hist" ? `<div class="hwhist hv-in">${histHtml}</div>` : weekHtml}</div>`;
+    <div class="hwbody">${hv === "hist" ? `<div class="hwhist hv-in">${histHtml}</div>` : hv === "tests" ? `<div class="hwtests hv-in">${testsInner()}</div>` : weekHtml}</div>`;
   const root = document.getElementById("homework"), oldList = root.querySelector(".hwlist");
   if(partial === "view" && root.querySelector(".hwbody")){
     const t = document.createElement("div"); t.innerHTML = html;
@@ -6536,6 +6546,7 @@ function renderHomework(partial){
     const sg = root.querySelector(".hwv"); sg.dataset.v = hv;
     sg.querySelectorAll("[data-hwview]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.hwview === hv)));
     sg.querySelector("[data-hwview=hist] i").textContent = doneList.length;
+    hvStagger(nb.querySelectorAll(".hwtests > *"));
   } else if(partial && oldList && hv === "open"){
     const t = document.createElement("div"); t.innerHTML = html;
     root.querySelector(".hello").innerHTML = t.querySelector(".hello").innerHTML;
@@ -6546,7 +6557,8 @@ function renderHomework(partial){
 }
 
 /* ================= Контрольные ================= */
-function renderTests(){
+function renderTests(){ const el = document.getElementById("tests"); if(el) el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Контрольные и проверочные</p><h1 class="headline">Что впереди</h1></div></div>` + testsInner(); }
+function testsInner(){
   const upcoming = TESTS.filter(t => diff(t.d) >= 0);
   const past = TESTS.filter(t => diff(t.d) < 0).reverse();
   const kind = t => TEST_SHORT[t.type] || "КР";
@@ -6586,9 +6598,7 @@ function renderTests(){
         ${g ? gradeChip(g) : `<span class="tk-ng" title="Оценки пока нет">—</span>`}</li>`;
     }).join("")}</ul>`;
   }
-  document.getElementById("tests").innerHTML = `
-    <div class="view-head"><div class="hello"><p class="eyebrow">Контрольные и проверочные</p><h1 class="headline">Что впереди</h1>
-    <p class="lede">Нажмите на дату — покажу работы этого дня. «Подготовиться» откроет помощника с готовым планом.</p></div></div>
+  return `
     ${testsCalHtml()}
     ${html}`;
 }
@@ -11112,6 +11122,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if(e.key === "Escape"){ jrPopClose(); document.querySelectorAll(".jr-dd.open").forEach(d => d.classList.remove("open")); } });
 function showTab(t, push){
+  if(t === "tests"){ state.hwView = "tests"; t = "homework"; try { renderHomework(); } catch(e) {} }
   if(t === "journal" && typeof jrCan === "function" && jrCan()) renderJournal();
   if(t === "agents"){ if(CN.isAdmin){ ADM.tab = "agents"; t = "admin"; renderAdmin(); if(!SYS.at) sysRun(); } else t = "grades"; }
   const btn = document.getElementById("tab-" + t);
@@ -11470,7 +11481,7 @@ function calChips(mk, scope){
   const t = mk.t.length ? `<u class="cdc k">${TEST_SHORT[mk.t[0].type] || "КР"}${mk.t.length > 1 ? "·" + mk.t.length : ""}</u>` : "";
   if(scope === "tests") return t;
   const ho = mk.h.filter(h => !isDone(h)).length;
-  return t + (mk.h.length ? `<u class="cdc h ${ho ? "" : "dn"}">ДЗ</u>` : "") + (mk.n ? `<u class="cdc n">✎</u>` : "");
+  return t + (mk.h.length ? `<u class="cdc h ${ho ? "" : "dn"}">ДЗ</u>` : "") + (mk.n ? `<u class="cdc n">Зам</u>` : "");
 }
 function calMarks(d){
   const k = key(d), iso = isoDate(d);
@@ -11491,7 +11502,7 @@ function calGridHtml(st, scope){
     <div class="calx-h"><button type="button" data-cal-n="-1" data-cal-s="${scope}" aria-label="Предыдущий месяц">‹</button><b>${MNAME[st.m]} ${st.y}</b><button type="button" data-cal-n="1" data-cal-s="${scope}" aria-label="Следующий месяц">›</button><button type="button" class="calx-td" data-cal-today data-cal-s="${scope}">Сегодня</button></div>
     <div class="calx-w">${["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(x => `<span>${x}</span>`).join("")}</div>
     <div class="calx-g">${cells}</div>
-    <p class="calx-lg">${scope === "tests" ? `<span><u class="cdc k">КР</u>контрольная</span><span><u class="cdc k">ПР</u>проверочная</span>` : `<span><u class="cdc k">КР</u>контрольная, проверочная</span><span><u class="cdc h">ДЗ</u>срок домашки</span><span><u class="cdc n">✎</u>моя заметка</span>`}</p>
+    <p class="calx-lg">${scope === "tests" ? `<span><u class="cdc k">КР</u>контрольная</span><span><u class="cdc k">ПР</u>проверочная</span>` : `<span><u class="cdc k">КР</u>контрольная, проверочная</span><span><u class="cdc h">ДЗ</u>срок домашки</span><span><u class="cdc n">Зам</u>заметка</span>`}</p>
   </div>`;
 }
 function dayNotesHtml(iso){
@@ -11511,10 +11522,33 @@ function calDayHtml(iso){
     ${L.length ? `<div class="cday-b"><b>Уроки</b><ul class="dl">${L.map(x => dayRow(x, true)).join("")}</ul></div>` : ""}
     <div class="cday-b cdn" data-dnotes="${iso}">${dayNotesHtml(iso)}</div>`;
 }
+/* ===== календарь: «Добавить событие» ===== */
+const CAL_EV = ["Событие", "Контрольная", "Диктант", "Проверочная", "Напоминание"];
+function calAddEvent(){
+  const st = { t: 0 }, iso = CAL.sel || isoDate(TODAY);
+  const o = tgModal("Новое событие", `<div class="cf-2"><div><label class="cf-l">Дата</label>${dpHtml("ev-date", iso).replace(/data-min="[^"]*" data-max="[^"]*"/, 'data-min="2026-09-01" data-max="2027-06-30"')}</div><div><label class="cf-l">Название</label><input class="tgm-in" id="ev-title" maxlength="80" placeholder="Что запланировано" autocomplete="off"></div></div>
+    <label class="cf-l">Тип</label><div class="adm-filter cf-base">${CAL_EV.map((t, i) => `<button type="button" class="chip" data-ev-t="${i}" aria-pressed="${i === 0}">${t}</button>`).join("")}</div>
+    <p class="cf-e" id="ev-err" hidden></p>`, `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn pri" data-cf-ok>Добавить</button>`);
+  if(!o) return;
+  o.addEventListener("click", e => {
+    const k = e.target.closest("[data-ev-t]"); if(k){ st.t = +k.dataset.evT; o.querySelectorAll("[data-ev-t]").forEach(x => x.setAttribute("aria-pressed", String(x === k))); return; }
+    if(e.target.closest("[data-cf-no]")){ tgModalClose(); return; }
+    if(!e.target.closest("[data-cf-ok]")) return;
+    const v = o.querySelector("#ev-date").value, ti = o.querySelector("#ev-title").value.trim(), er = o.querySelector("#ev-err");
+    if(!v){ er.textContent = "Выберите дату"; er.hidden = false; return; }
+    if(!ti){ er.textContent = "Напишите название"; er.hidden = false; return; }
+    (CNOTES[v] = CNOTES[v] || []).push(CAL_EV[st.t] + ": " + ti); cnoteSave();
+    const d = isoD(v); CAL.y = d.getFullYear(); CAL.m = d.getMonth(); CAL.sel = v;
+    tgModalClose(); renderCalendar(); tgToast("Событие добавлено: " + d.getDate() + " " + MG[d.getMonth()]);
+  });
+}
 function renderCalendar(){
   const el = document.getElementById("calendar"); if(!el) return;
+  const CF = [["all", "Все"], ["k", "Контрольные"], ["h", "Домашка"], ["n", "Заметки"]];
+  el.dataset.cf = CAL.f || "all";
   el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Календарь</p><h1 class="headline">Весь месяц на одном экране</h1>
     <p class="lede">Нажмите на день: покажу уроки, контрольные, сроки домашки и ваши заметки.</p></div></div>
+    <div class="cal-bar"><div class="cal-fl" role="group" aria-label="Фильтр календаря">${CF.map(([k, t]) => `<button type="button" class="chip" data-calf="${k}" aria-pressed="${(CAL.f || "all") === k}">${t}</button>`).join("")}</div><button type="button" class="plus cal-add" data-cal-add><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить событие</button></div>
     <div class="cal-wrap"><section class="panel cal-main">${calGridHtml(CAL, "calendar")}</section><section class="panel cal-day" id="cal-day">${calDayHtml(CAL.sel)}</section></div>`;
 }
 function testsCalHtml(){
@@ -11549,6 +11583,8 @@ document.addEventListener("click", e => {
   }
   const ct = e.target.closest("[data-cal-test]"); if(ct){ TCAL.sel = ct.dataset.calTest; const d = isoD(TCAL.sel); TCAL.y = d.getFullYear(); TCAL.m = d.getMonth(); showTab("tests", true); renderTests(); return; }
   const nd = e.target.closest("[data-cnote-del]"); if(nd){ const [iso, i] = nd.dataset.cnoteDel.split("|"), it = (CNOTES[iso] || [])[+i], sid = nS(it); (CNOTES[iso] || []).splice(+i, 1); if(!(CNOTES[iso] || []).length) delete CNOTES[iso]; cnoteSave(); notesRefresh(iso, sid); return; }
+  const cf = e.target.closest("[data-calf]"); if(cf){ CAL.f = cf.dataset.calf; renderCalendar(); return; }
+  if(e.target.closest("[data-cal-add]")){ calAddEvent(); return; }
   const ask = e.target.closest("[data-cal-ask]"); if(ask){ calAsk(ask.dataset.calAsk); return; }
   const ov = e.target.closest("[data-ovday]"); if(ov){ calGo(ov.dataset.ovday); return; }
 });
