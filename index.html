@@ -5345,6 +5345,12 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .ovn-i.nw>span:last-child{font-size:12px;color:var(--muted)}
 .ovn-i.nw:hover{transform:translateY(-2px);box-shadow:0 8px 22px -12px rgba(0,0,0,.35)}
 .ovn-i.nw>.ovn-cv{color:#fff!important;font-size:inherit}.ovn-cv svg{width:40px;height:40px;stroke-width:1.6}
+.inv-p{padding:18px 18px 14px;margin:0 0 14px}.inv-h h3{margin:0 0 2px;font:500 19px/1.2 Georgia,serif}.inv-h p,.inv-n{margin:0 0 12px;font-size:13px;color:var(--muted)}.inv-n{margin:10px 0 0}
+.inv-rs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.inv-rs button{height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line,#ddd6c8);background:transparent;color:inherit;font:500 13px system-ui;cursor:pointer;transition:background-color .2s,color .2s,transform .15s}.inv-rs button[aria-pressed=true]{background:var(--ink,#1f1d1a);color:var(--bg,#fff);border-color:transparent}.inv-rs button:active{transform:scale(.96)}
+.inv-fm{display:flex;gap:8px;flex-wrap:wrap}.inv-fm input,.inv-fm select{flex:1 1 150px;min-width:0;height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--line,#ddd6c8);background:transparent;color:inherit;font:inherit;font-size:14px}.inv-go{height:42px;padding:0 18px;border-radius:12px;border:0;background:#d9663d;color:#fff;font:500 14px system-ui;cursor:pointer}.inv-go:disabled{opacity:.5}
+.inv-e{margin:8px 0 0;color:#c0392b;font-size:13px}.inv-new{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,#d9663d 12%,transparent)}.inv-new span{font-size:12px;color:var(--muted)}.inv-new b{font:600 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em}
+.inv-l{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:2px}.inv-i{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;padding:9px 2px;border-top:1px solid var(--line,#e4dfd5);font-size:13px}.inv-i.off{opacity:.5}.inv-c{font:600 14px ui-monospace,Menlo,monospace;letter-spacing:.08em}.inv-r{flex:1 1 140px;color:var(--muted)}.inv-s{font-size:12px;color:var(--muted)}
+.inv-i button,.inv-new button{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line,#ddd6c8);background:transparent;color:inherit;font:12px system-ui;cursor:pointer}.inv-i button.x{color:#c0392b}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -5375,6 +5381,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   window.yadroSec = function(){ return call("sec_stats"); };
   window.yadroTg = function(a, b){ return /^tg_/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   window.yadroSecClear = function(what){ return call("sec_clear", { what: what }); };
+  window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
 
   function overlay(){
     var el = document.createElement("div"); el.id = "yd-login";
@@ -5390,7 +5397,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     document.body.appendChild(el); return el;
   }
   /* Вход временно закрыт: пускаем только владельца (сравнение по хешу, сам адрес в коде не хранится). Чтобы открыть вход, поставьте LOCK = false. */
-  var LOCK = true, OWNER_H = "442b0fdf09593f3068f6ecba0808702e143d00b57dbf7b1434a4c509b44c9bd6";
+  var LOCK = false, OWNER_H = "442b0fdf09593f3068f6ecba0808702e143d00b57dbf7b1434a4c509b44c9bd6";
   function sha(t){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(t).trim().toLowerCase())).then(function(b){ return Array.prototype.map.call(new Uint8Array(b), function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }); }
   function closed(){
     try { localStorage.removeItem(TK); } catch(e) {} tok = null;
@@ -5406,31 +5413,28 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     location.href = "https://oauth.yandex.ru/authorize?response_type=code&client_id=" + YA_ID + "&redirect_uri=" + encodeURIComponent(YA_REDIR) + "&state=" + st;
   }
   function loginUI(){
-    var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "";
+    var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "", invite = "";
     var err = function(t){ var e = body.querySelector(".e"); if(e) e.textContent = t || ""; };
     function stepEmail(){
-      sub.textContent = LOCK ? "Вход временно закрыт: сейчас только для владельца" : "Войдите, чтобы увидеть дневник";
-      body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username webauthn" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код на почту</button>' +
-        (!LOCK && location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
+      sub.textContent = "Войдите, чтобы увидеть дневник";
+      body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username webauthn" placeholder="Почта"><input id="yd-iv" maxlength="9" autocomplete="off" autocapitalize="characters" placeholder="Пригласительный код (при первом входе)"><p class="e"></p><button id="yd-go">Получить код на почту</button>' +
+        (location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
         (pkOk ? '<button class="g" id="yd-pk">Войти по ключу доступа</button>' : "") + '<p class="s">Пароли не нужны: пришлём одноразовый код</p>';
-      var em = body.querySelector("#yd-em"); em.value = email; em.focus();
+      var em = body.querySelector("#yd-em"); em.value = email; em.focus(); var iv = body.querySelector("#yd-iv"); iv.value = invite;
       var go = body.querySelector("#yd-go");
-      function send(){ email = em.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
-        (LOCK ? sha(email) : Promise.resolve(OWNER_H)).then(function(h){
-          if(h !== OWNER_H){ err("Вход временно закрыт"); go.disabled = false; return; }
-          return call("code_send", { email: email }).then(stepCode);
-        }).catch(function(e){ err(e.message); go.disabled = false; }); }
+      function send(){ email = em.value.trim(); invite = iv.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
+        call("code_send", { email: email, invite: invite || undefined }).then(stepCode).catch(function(e){ err(e.message); go.disabled = false; }); }
       go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
-      var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = yaStart;
+      var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = function(){ invite = iv.value.trim(); try { sessionStorage.setItem("yd-inv", invite); } catch(e) {} yaStart(); };
       var pk = body.querySelector("#yd-pk"); if(pk) pk.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось войти по ключу"); }); };
     }
     function stepCode(){
       sub.textContent = "Мы отправили код на " + email;
-      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма">' + (LOCK ? "" : '<input id="yd-nm" placeholder="Ваше имя (при первом входе)" autocomplete="name">') + '<p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
+      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма">' + (invite ? '<input id="yd-nm" placeholder="Ваше имя" autocomplete="name">' : "") + '<p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
       var cd = body.querySelector("#yd-cd"); cd.focus();
       var ok = body.querySelector("#yd-ok");
       function verify(){ ok.disabled = true; err("");
-        call("code_verify", { email: email, code: cd.value, name: (body.querySelector("#yd-nm") || {}).value || "" }).then(function(j){ done(j, true); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
+        call("code_verify", { email: email, code: cd.value, invite: invite || undefined, name: (body.querySelector("#yd-nm") || {}).value || "" }).then(function(j){ done(j, true); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
       ok.onclick = verify; cd.onkeydown = function(e){ if(e.key === "Enter") verify(); };
       body.querySelector("#yd-back").onclick = stepEmail;
     }
@@ -5447,9 +5451,10 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     var qs = new URLSearchParams(location.search), qc = qs.get("code"), qst = qs.get("state"), want = "";
     try { want = sessionStorage.getItem("yd-ys") || ""; } catch(e) {}
     if(qc || qs.get("error")){ try { history.replaceState(null, "", location.pathname); sessionStorage.removeItem("yd-ys"); } catch(e) {} }
-    if(!LOCK && qc && qst && want && qst === want){
+    if(qc && qst && want && qst === want){
       sub.textContent = "Входим через Яндекс…"; body.innerHTML = '<p class="e"></p><p class="s">Секунду…</p>';
-      call("ya_login", { code: qc }).then(function(j){ done(j, true); }).catch(function(e){ stepEmail(); err(e.message || "Не получилось войти через Яндекс"); });
+      var yinv = ""; try { yinv = sessionStorage.getItem("yd-inv") || ""; sessionStorage.removeItem("yd-inv"); } catch(e) {}
+      call("ya_login", { code: qc, invite: yinv || undefined }).then(function(j){ done(j, true); }).catch(function(e){ stepEmail(); err(e.message || "Не получилось войти через Яндекс"); });
       return;
     }
     stepEmail();
@@ -5486,7 +5491,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
   if(!tok){ document.addEventListener("DOMContentLoaded", loginUI); return; }
 
   var meP = null;
-  function me(){ if(!meP) meP = call("me").then(function(j){ if(!j.user){ logout(); return new Promise(function(){}); } if(LOCK && j.user.role !== "admin"){ closed(); return new Promise(function(){}); } USER = j.user; return USER; }); return meP; }
+  function me(){ if(!meP) meP = call("me").then(function(j){ if(!j.user){ logout(); return new Promise(function(){}); } USER = j.user; window.__ydUser = USER; return USER; }); return meP; }
 
   function mkDb(){
     function docRef(path){
@@ -5552,7 +5557,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
     db: function(){ return me().then(mkDb); },
     user: function(){ return me().then(function(u){ var admin = u.role === "admin";
       return { isOwner: function(){ return admin; }, canEdit: function(){ return admin; }, can: function(){ return admin; }, id: function(){ return Promise.resolve(u.id); },
-        me: function(){ return Promise.resolve({ id: u.id, name: u.name, email: u.email, role: u.role }); }, profiles: function(ids){ var o = {}; (ids || []).forEach(function(i){ o[i] = { name: i === u.id ? u.name : "" }; }); return Promise.resolve(o); } }; }); },
+        me: function(){ return Promise.resolve({ id: u.id, name: u.name, email: u.email, role: u.role, owner: !!u.owner, cls: u.cls, classes: u.classes, child: u.child }); }, profiles: function(ids){ var o = {}; (ids || []).forEach(function(i){ o[i] = { name: i === u.id ? u.name : "" }; }); return Promise.resolve(o); } }; }); },
     downloads: function(){ return Promise.resolve({ save: function(o){ var b = o.data instanceof Blob ? o.data : new Blob([o.data]); var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = o.filename || "file"; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000); return Promise.resolve(); } }); }
   };
   window.claude = { use: function(n){ return NS[n] ? NS[n]() : Promise.resolve(null); } };
@@ -9204,12 +9209,63 @@ function admRowsHtml(){
   }).join("");
   return out || `<p class="adm-none">Никого не найдено</p>`;
 }
+
+/* ---------- пригласительные коды (вкладка «Пользователи») ---------- */
+const INV = { list: null, users: [], err: "", busy: false, f: { role: "student", cls: "", classes: "", child: "", name: "" }, fresh: "" };
+const INV_R = [["student", "Ученик"], ["parent", "Родитель"], ["teacher", "Учитель"], ["admin", "Админ"]];
+const INV_RN = { student: "Ученик", parent: "Родитель", teacher: "Учитель", admin: "Администратор" };
+function invLoad(force){
+  if(!window.yadroApi || (INV.list && !force) || INV.busy) return; INV.busy = true;
+  Promise.all([window.yadroApi("invite_list"), window.yadroApi("users_list")]).then(([a, b]) => { INV.list = a.invites || []; INV.users = b.users || []; INV.err = ""; })
+    .catch(e => { INV.err = e.message || "Не удалось загрузить"; INV.list = INV.list || []; })
+    .then(() => { INV.busy = false; invRefresh(); });
+}
+function invRefresh(){ const p = document.getElementById("inv-p"); if(p) p.outerHTML = invHtml(true); }
+function invHtml(inner){
+  if(!window.yadroApi) return "";
+  if(INV.list === null) setTimeout(invLoad, 0);
+  const f = INV.f, st = INV.users.filter(u => u.role === "student");
+  const left = i => { const d = Math.ceil((i.exp - Date.now()) / 864e5); return d <= 0 ? "истёк" : "ещё " + d + " дн."; };
+  const row = i => {
+    const who = i.used ? "использован" : i.revoked ? "отозван" : left(i), off = i.used || i.revoked || i.exp < Date.now();
+    const det = [i.cls && "класс " + i.cls, i.classes && i.classes.length && i.classes.join(", "), i.childName && "ребёнок: " + i.childName].filter(Boolean).join(" · ");
+    return `<li class="inv-i${off ? " off" : ""}"><b class="inv-c">${esc(i.c)}</b><span class="inv-r">${INV_RN[i.role] || i.role}${det ? " · " + esc(det) : ""}</span><span class="inv-s">${who}</span>${off ? "" : `<button type="button" data-inv-cp="${esc(i.c)}">Копировать</button><button type="button" data-inv-rv="${esc(i.id)}" class="x">Отозвать</button>`}</li>`;
+  };
+  const extra = f.role === "student" ? `<input data-inv-f="cls" placeholder="Класс, например 8А" value="${esc(f.cls)}" maxlength="10">`
+    : f.role === "teacher" ? `<input data-inv-f="classes" placeholder="Классы через запятую: 8А, 9Б" value="${esc(f.classes)}">`
+    : f.role === "parent" ? `<select data-inv-f="child"><option value="">Выберите ученика…</option>${st.map(u => `<option value="${esc(u.id)}"${f.child === u.id ? " selected" : ""}>${esc(u.name)}${u.cls ? " · " + esc(u.cls) : ""}</option>`).join("")}</select>` : "";
+  const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Пригласительные коды</h3><p>Одноразовые, на одного человека, действуют 7 дней. Роль и права задаёт код.</p></div></div>
+    <div class="inv-rs">${INV_R.map(r => `<button type="button" data-inv-role="${r[0]}" aria-pressed="${f.role === r[0]}">${r[1]}</button>`).join("")}</div>
+    <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button></div>
+    ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
+    ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
+    ${INV.fresh ? `<div class="inv-new"><span>Новый код</span><b>${esc(INV.fresh)}</b><button type="button" data-inv-cp="${esc(INV.fresh)}">Копировать</button></div>` : ""}
+    ${INV.list && INV.list.length ? `<ul class="inv-l">${INV.list.map(row).join("")}</ul>` : `<p class="inv-n">${INV.list ? "Кодов пока нет" : "Загружаем…"}</p>`}
+    <p class="inv-n">Ученик видит своё, родитель — только своего ребёнка, учитель — свои классы.</p></section>`;
+  return html;
+}
+document.addEventListener("input", e => { const x = e.target.closest && e.target.closest("[data-inv-f]"); if(x) INV.f[x.dataset.invF] = x.value; });
+document.addEventListener("change", e => { const x = e.target.closest && e.target.closest("select[data-inv-f]"); if(x) INV.f[x.dataset.invF] = x.value; });
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-inv-role]"))){ INV.f.role = x.dataset.invRole; invRefresh(); return; }
+  if((x = g("[data-inv-cp]"))){ const t = x.dataset.invCp; try { navigator.clipboard.writeText(t); x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1500); } catch(err) {} return; }
+  if((x = g("[data-inv-rv]"))){ window.yadroApi("invite_revoke", { id: x.dataset.invRv }).catch(err => { INV.err = err.message; }).then(() => { INV.list = null; invLoad(true); }); return; }
+  if((x = g("[data-inv-new]"))){
+    const f = INV.f; INV.err = ""; if(f.role === "parent" && !f.child){ INV.err = "Выберите ученика для родителя"; invRefresh(); return; }
+    INV.busy = true; invRefresh();
+    window.yadroApi("invite_create", { role: f.role, name: f.name.trim(), cls: f.cls.trim(), classes: f.classes.split(/[,;]+/).map(t => t.trim()).filter(Boolean), child: f.child })
+      .then(j => { INV.fresh = j.invite.c; INV.f.name = ""; }).catch(err => { INV.err = err.message; }).then(() => { INV.busy = false; INV.list = null; invLoad(true); });
+  }
+});
+
 function renderAdmUsers(el){
   const cur = UA_SORT.find(x => x[0] === ADM.us) || UA_SORT[0];
   el.innerHTML = admHead("Пользователи", `<button class="plus" data-adm-new><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить пользователя</button>`) + `
     <div class="adm-body adm-2"><div class="adm-nw">
     <div class="ua-bar"><label class="adm-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adm-q" type="text" inputmode="search" placeholder="Найти по имени, роли, классу" autocomplete="off" value="${esc(ADM.q)}"></label>
       <div class="jr-dd" data-dd="us"><button type="button" class="jr-ddb" data-jr-dd="us" aria-haspopup="listbox"><span>Сортировка</span><b>${cur[1]}</b><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><ul class="jr-ddm jr-ddr" role="listbox">${UA_SORT.map(([k, t]) => `<li><button type="button" role="option" class="${k === cur[0] ? "on" : ""}" data-adm-us="${k}">${t}</button></li>`).join("")}</ul></div></div>
+    ${invHtml()}
     <section class="panel reg ug-p" id="adm-groups">${admRowsHtml()}</section>
     <p class="muted reg-note">Заблокированный пользователь не может войти в платформу и не получает уведомлений, а его данные сохраняются; доступ можно вернуть значком замка. Пока список хранится в этом браузере: когда появится сервер платформы, пользователей можно будет загружать из ЭПОС и входить по почте или через Госуслуги.</p></div>${admSide()}</div>`;
 }
@@ -9559,6 +9615,8 @@ document.addEventListener("submit", e => {
 
 /* ================= Профиль ученика ================= */
 const PROF = { me: null };
+/* имя в шапке и профиле — из аккаунта, а не «Александр» у всех (владелец сохраняет своё) */
+(async () => { try { const u = await window.claude?.use?.("user"); const m = u && await u.me(); if(m){ PROF.me = m; if(!m.owner && m.name){ DATA.studentName = m.name; if(typeof renderAll === "function") renderAll(); } } } catch(e) {} })();
 (async () => {
   try { const u = await window.claude?.use?.("user"); if(u){ PROF.me = await u.me(); renderProfile(); } } catch(e) {}
 })();
