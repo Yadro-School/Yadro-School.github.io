@@ -9040,6 +9040,15 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
       localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-roster2", "1");
     }
   } catch(e) {}
+  /* примеры родителей: зарегистрированные и нет (демо) */
+  try {
+    if(!localStorage.getItem("bai-adm-par")){
+      [["p1", "Барабанова Ирина Сергеевна", "Мама", "Барабанова Мария, 8 «А»", "on"], ["p2", "Борисов Игорь Петрович", "Папа", "Борисов Арсений, 8 «А»", "on"], ["p3", "Бабушкина Наталья Викторовна", "Мама", "Бабушкин Евгений, 8 «Б»", "on"],
+       ["p4", "Бартоломей Леонид Андреевич", "Папа", "Бартоломей Александра, 8 «А»", "no"], ["p5", "Богатырева Светлана Игоревна", "Мама", "Богатырева Ольга, 8 «Б»", "no"], ["p6", "Агафонова Елена Павловна", "Мама", "Агафонов Егор, 8 «В»", "no"]
+      ].forEach(([id, name, rel, kids, reg]) => { if(!ADM.users.some(x => x.id === id)) ADM.users.push({ id, role: "parent", name, email: "", st: "on", v: { kids, rel, how: "Telegram", reg } }); });
+      localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-par", "1");
+    }
+  } catch(e) {}
   /* педагоги лицея (perm.hse.ru/lyceum/staff): один раз заменяем демо-записи реальными */
   try {
     if(!localStorage.getItem("bai-adm-staff")){
@@ -9191,7 +9200,7 @@ function admUserRow(u){
   const ph = u.v && u.v.phone;
   return `<li class="adm-u ${u.st === "off" ? "blocked" : ""} ${tch ? "is-t" : ""}">
     <span class="adm-av sm" style="background:${r.c}">${esc(initials(u.name))}</span>
-    <div class="adm-um"><div class="aum-l">${stu ? `<button type="button" class="adm-nm" data-adm-prof="${u.id}" title="Открыть профиль ученика">${nm}</button>` : `<button type="button" class="adm-nm" data-adm-edit="${u.id}" title="Открыть карточку">${nm}</button>`}${cls ? `<span class="aum-c">${esc(cls)}</span>` : ""}${(u.v && u.v.head && tch) ? `<em class="adm-cur" data-tip="Куратор класса|Классный руководитель: отвечает за класс ${esc(u.v.head)}"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>Куратор ${esc(u.v.head)}</em>` : ""}${u.st === "off" ? `<span class="adm-rb off" title="Вход закрыт: пользователь не может войти в платформу. Данные сохранены.">заблокирован</span>` : ""}</div>${sm ? `<span class="adm-us">${sm}</span>` : ""}${tch ? admTeach(u) : ""}</div>
+    <div class="adm-um"><div class="aum-l">${stu ? `<button type="button" class="adm-nm" data-adm-prof="${u.id}" title="Открыть профиль ученика">${nm}</button>` : `<button type="button" class="adm-nm" data-adm-edit="${u.id}" title="Открыть карточку">${nm}</button>`}${cls ? `<span class="aum-c">${esc(cls)}</span>` : ""}${par ? (u.v && u.v.reg === "no" ? `<span class="aum-c" style="color:var(--margin)" data-tip="Не зарегистрирован|Родитель ещё не вошёл в Ядро: нужен код приглашения">Не зарегистрирован</span>` : `<span class="aum-c" style="color:var(--good)">Зарегистрирован</span>`) : ""}${(u.v && u.v.head && tch) ? `<em class="adm-cur" data-tip="Куратор класса|Классный руководитель: отвечает за класс ${esc(u.v.head)}"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>Куратор ${esc(u.v.head)}</em>` : ""}${u.st === "off" ? `<span class="adm-rb off" title="Вход закрыт: пользователь не может войти в платформу. Данные сохранены.">заблокирован</span>` : ""}</div>${sm ? `<span class="adm-us">${sm}</span>` : ""}${tch ? admTeach(u) : ""}</div>
     <div class="ua">
       ${ib(`data-adm-edit="${u.id}"`, LV_ICO.e, "Изменить")}
       ${ib(`data-adm-block="${u.id}"`, u.st === "off" ? UA_IC.unlock : UA_IC.lock, u.st === "off" ? "Вернуть доступ" : "Заблокировать")}
