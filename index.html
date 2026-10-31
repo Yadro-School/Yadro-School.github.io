@@ -5400,6 +5400,15 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .hwv.h3[data-v="hist"] .hwv-pill{transform:translateX(100%)}
 .hwv.h3[data-v="tests"] .hwv-pill{transform:translateX(200%)}
 @media(max-width:600px){.hwv.h3{display:grid;width:100%;box-sizing:border-box}.hwv.h3 button{padding:8px 4px;font-size:12.5px;gap:4px}}
+
+/* ===== чат: материалы ===== */
+.md-f{margin:0 0 10px}
+.tgm-mdl{display:grid;gap:6px}
+.tgm-md{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;background:color-mix(in srgb,var(--ink) 4%,transparent);color:var(--ink);text-decoration:none;transition:background-color .18s,transform .15s;min-width:0}
+a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:active{transform:scale(.98)}
+.tgm-md b{font-weight:500;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tgm-md small{margin-left:auto;color:var(--muted);font-size:12px;flex:none}
+.tgm-md img{width:40px;height:40px;border-radius:10px;object-fit:cover;flex:none}
+.tgm-mi{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--pick);color:var(--pen);flex:none}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -8421,16 +8430,35 @@ function tgInfo(){
     ${cur.custom && canF ? `<button type="button" class="tgm-btn bad full" data-in-del>${IC.x}<span>${grp ? "Удалить группу" : "Удалить чат"}</span></button>` : ""}`;
   const mems = g ? `<div id="in-mem">${memAll()}</div>` : "";
   const perms = g && canF ? `${pcard("m","Участникам разрешено",`${yn("m", "msg", "Отправлять сообщения")}${yn("m", "voice", "Отправлять голосовые")}${yn("m", "media", "Отправлять фото и видео")}${yn("m", "file", "Отправлять файлы")}${yn("m", "save", "Сохранять изображения и видео")}${yn("m", "invite", "Добавлять участников")}`)}${pcard("a","Администраторам разрешено",`${yn("a", "edit", "Изменять профиль группы")}${yn("a", "pin", "Закреплять сообщения")}${yn("a", "del", "Удалять чужие сообщения")}${yn("a", "invite", "Добавлять и убирать участников")}`)}` : "";
-  const tabs = g ? `<div class="tgm-seg tgm-tabs"><button type="button" class="on" data-in-tab="main">Основное</button><button type="button" data-in-tab="mem" id="in-tmem">Участники · ${st.members.length + 1}</button>${canF ? `<button type="button" data-in-tab="perm">Права</button>` : ""}</div>` : "";
+  const tabs = g ? `<div class="tgm-seg tgm-tabs"><button type="button" class="on" data-in-tab="main">Основное</button><button type="button" data-in-tab="mem" id="in-tmem">Участники · ${st.members.length + 1}</button>${canF ? `<button type="button" data-in-tab="perm">Права</button>` : ""}<button type="button" data-in-tab="media">Материалы</button></div>` : `<div class="tgm-seg tgm-tabs"><button type="button" class="on" data-in-tab="main">Основное</button><button type="button" data-in-tab="media">Материалы</button></div>`;
+  /* материалы чата: фото и видео, ссылки, голосовые, файлы */
+  const mediaItems = () => {
+    const out = [];
+    (chatMsgs(cur.id) || []).forEach(m => {
+      (m.a || []).forEach(a => out.push({ f: a.k === "img" || a.k === "vid" ? "media" : a.k === "vo" ? "voice" : "file", a, m }));
+      (String(m.x || "").match(/https?:\/\/[^\s<]+/g) || []).forEach(u => out.push({ f: "link", u, m }));
+    });
+    return out.reverse();
+  };
+  const mediaHtml = () => {
+    const F = [["all", "Все"], ["media", "Фото и видео"], ["link", "Ссылки"], ["voice", "Голосовые"], ["file", "Файлы"]], f = st.mdf || "all", all = mediaItems(), L = all.filter(x => f === "all" || x.f === f);
+    const cnt = k => k === "all" ? all.length : all.filter(x => x.f === k).length;
+    const row = x => x.f === "link" ? `<a class="tgm-md" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer"><b>${esc(x.u.replace(/^https?:\/\//, "").slice(0, 46))}</b><small>Ссылка</small></a>`
+      : x.f === "media" ? `<div class="tgm-md">${x.a.src ? `<img src="${esc(x.a.src)}" alt="" loading="lazy">` : `<span class="tgm-mi">▶</span>`}<b>${esc(x.a.name || "Фото")}</b></div>`
+      : x.f === "voice" ? `<div class="tgm-md"><span class="tgm-mi">♪</span><b>Голосовое сообщение</b></div>`
+      : `<div class="tgm-md"><span class="tgm-mi">▤</span><b>${esc(x.a.name || "Файл")}</b>${x.a.size ? `<small>${Math.max(1, Math.round(x.a.size / 1024))} КБ</small>` : ""}</div>`;
+    return `<div class="tm-fc md-f">${F.map(([k, t]) => `<button type="button" class="tgm-chip ${f === k ? "on" : ""}" data-in-mdf="${k}">${t}${cnt(k) ? " · " + cnt(k) : ""}</button>`).join("")}</div><div class="tgm-mdl">${L.length ? L.map(row).join("") : `<p class="hwm-hint" style="text-align:center;padding:18px 0">Здесь пока ничего нет</p>`}</div>`;
+  };
   const o = document.createElement("div"); o.className = "tg-info tgm-c";
   o.innerHTML = `<header class="tg-head"><button type="button" class="tg-ib" data-in-back aria-label="Назад">${IC.back}</button><span class="tg-hm"><b>${grp ? "Профиль группы" : "Редактировать чат"}</b></span><button type="button" class="tgm-btn pri" data-in-ok>Сохранить</button></header>
-    <div class="tgm-b">${tabs}<div class="tgm-pn" data-pn="main">${main1}</div>${g ? `<div class="tgm-pn" data-pn="mem" hidden>${mems}</div>${canF ? `<div class="tgm-pn" data-pn="perm" hidden>${perms}</div>` : ""}` : ""}</div>`;
+    <div class="tgm-b">${tabs}<div class="tgm-pn" data-pn="main">${main1}</div>${g ? `<div class="tgm-pn" data-pn="mem" hidden>${mems}</div>${canF ? `<div class="tgm-pn" data-pn="perm" hidden>${perms}</div>` : ""}` : ""}<div class="tgm-pn" data-pn="media" hidden id="in-media">${mediaHtml()}</div></div>`;
   main.appendChild(o); void o.offsetWidth; main.classList.add("info-open"); o.classList.add("on");
   o.querySelectorAll("[data-pm-cnt]").forEach(c => { const v = Object.values(st.perm[c.dataset.pmCnt]); c.textContent = `${v.filter(Boolean).length} из ${v.length}`; });
   const redraw = () => { const m = o.querySelector("#in-mem"); if(m){ const q = m.querySelector("#in-mq"), f = q && document.activeElement === q; m.innerHTML = memAll(); if(f){ const n = m.querySelector("#in-mq"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); } } };
   o.addEventListener("input", e => { if(e.target.id === "in-mq"){ st.mq = e.target.value; const r = o.querySelector("#in-mrows"); if(r) r.innerHTML = memRows(); } });
   o.addEventListener("click", e => {
     if(e.target.closest("[data-in-back]")){ tgInfoClose(); return; }
+    const mf = e.target.closest("[data-in-mdf]"); if(mf){ st.mdf = mf.dataset.inMdf; const pn = o.querySelector("#in-media"); if(pn) pn.innerHTML = mediaHtml(); return; }
     const tb = e.target.closest("[data-in-tab]");
     if(tb){ o.querySelectorAll("[data-in-tab]").forEach(x => x.classList.toggle("on", x === tb)); o.querySelectorAll(".tgm-pn").forEach(x => { const on = x.dataset.pn === tb.dataset.inTab; x.hidden = !on; if(on){ x.style.animation = "none"; void x.offsetWidth; x.style.animation = ""; } }); return; }
     const pmCount = () => o.querySelectorAll("[data-pm-cnt]").forEach(c => { const gk = c.dataset.pmCnt, v = Object.values(st.perm[gk]); c.textContent = `${v.filter(Boolean).length} из ${v.length}`; });
