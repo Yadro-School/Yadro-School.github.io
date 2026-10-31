@@ -5381,6 +5381,14 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 @media(min-width:1101px){.jr-u{grid-template-columns:minmax(0,1fr) 330px!important}}
 @media(max-width:1100px){.jr-u .jr-aside{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:700px){.jr-u .jr-aside{grid-template-columns:minmax(0,1fr)!important}}
+
+/* ===== домашка: без квадратиков, кнопка «Выполнено» ===== */
+.hwr-row>.check{display:none}
+.hwr-row{grid-template-columns:140px minmax(0,1fr) auto 14px}
+.hwd-done{appearance:none;display:inline-flex;align-items:center;gap:8px;font:500 13.5px var(--f-body);color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent);border:1px solid color-mix(in srgb,var(--good) 35%,transparent);border-radius:99px;padding:7px 14px;cursor:pointer;transition:transform .15s,background-color .2s,border-color .2s}
+.hwd-done:hover{background:color-mix(in srgb,var(--good) 20%,transparent);transform:translateY(-1px)}.hwd-done:active{transform:scale(.96)}
+.hwd-done.is-on{color:var(--muted);background:color-mix(in srgb,var(--ink) 6%,transparent);border-color:var(--line)}
+@media(max-width:600px){.hwr-row{grid-template-columns:minmax(0,1fr) 14px}.hwr-s{grid-column:1}.hwr-t{grid-column:1}.hwr-c{grid-column:2;grid-row:1}.hwr-mk{grid-column:1}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -6445,6 +6453,7 @@ function renderHomework(partial){
       const wd = test ? test.d : h.dueD;
       info.push(`<div class="di di-act"><span class="di-l">Напоминание</span><span><span class="hwd-act is-soon" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M9 3.5v4M15 3.5v4M12 13v4M10 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span><b>Добавить в календарь</b><small>${esc(kind)} · ${fmtShort(wd)}</small></span><span class="soon">скоро</span></span></span></div>`);
     }
+    info.unshift(`<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>${done ? "Вернуть в работу" : "Выполнено"}</button></span></div>`);
     const tb = TEXTBOOKS[h.s];
     info.push(`<div class="di di-act"><span class="di-l">Онлайн-учебник</span><span class="hwd-tb">
       ${tb ? `<a class="hwd-act" href="${esc(tb.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(tb.title)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗</i></a>`
@@ -11244,6 +11253,7 @@ document.addEventListener("click", e => {
     return; }
   const stp = e.target.closest("[data-hwstep]"); if(stp){ stp.classList.toggle("open"); return; }
   const fold = e.target.closest("[data-hwfold]"); if(fold){ const g = fold.closest(".hwg"); g.querySelectorAll(".hwr.open").forEach(x => { x.classList.remove("open"); x.querySelector(".hwr-row").setAttribute("aria-expanded", "false"); }); g.classList.remove("has-open"); return; }
+  const hd = e.target.closest("[data-hwdone]"); if(hd){ const hid = hd.dataset.hwdone, was = doneMap[hid]; setDone(hid, !was); try { renderAll(); } catch(_) {} tgToast(was ? "Возвращено в работу" : "Отмечено выполненным"); return; }
   const hr = e.target.closest(".hwr-row"); if(hr && !e.target.closest(".check")){ const li = hr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); hr.setAttribute("aria-expanded", on); const g = li.closest(".hwg"); if(g) g.classList.toggle("has-open", !!g.querySelector(".hwr.open")); return; }
   const lr = e.target.closest(".dr-row"); if(lr && lr.closest(".dr-flat")) return; if(lr){ const li = lr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); lr.setAttribute("aria-expanded", on); return; }
   const sdb = e.target.closest("[data-sday]"); if(sdb){ pickSchedDay(+sdb.dataset.sday); return; }
