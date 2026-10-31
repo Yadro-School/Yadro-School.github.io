@@ -578,6 +578,9 @@ h2 .beta{margin-left:8px;vertical-align:2px}
 .rs-list{display:grid;gap:2px;padding:4px 0 2px}
 .rs-i{appearance:none;width:100%;display:flex;align-items:center;gap:10px;text-align:left;font:inherit;color:var(--muted);background:none;border:0;border-radius:99px;padding:8px 14px;cursor:pointer;opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .3s cubic-bezier(.3,.9,.3,1.05),background-color .2s,color .2s}
 #rs-group.open .rs-i,.rs-s.open .rs-i{opacity:1;transform:none}
+.rs-who{display:grid;gap:2px;max-height:240px;overflow-y:auto;margin-top:4px;padding-top:4px;border-top:1px solid var(--line)}
+.rs-wh{font-size:11px;color:var(--muted);padding:4px 14px 2px}
+.rs-u{padding:6px 14px}
 .rs-i:hover{background:var(--pick);color:var(--ink)}
 .rs-i.is-on{color:var(--ink);background:var(--pick);box-shadow:inset 0 0 0 1px var(--line)}
 .rs-i:focus-visible{outline:2px solid var(--pen);outline-offset:-2px}
@@ -9133,7 +9136,7 @@ const RS_ICO = `<svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" 
 const RS_CH = `<svg class="rs-ch" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 5.2 4 4 4-4"/></svg>`;
 function rsAccHtml(){
   const items = [["", "Администратор", "полный доступ, как сейчас", "var(--pen)"], ...ROLES.filter(r => r.id !== "admin").map(r => [r.id, r.name, r.d, r.c])];
-  return `<div class="rs-acc"><div class="rs-in"><div class="rs-list">${items.map(([id, n, d, c]) => `<button class="rs-i" data-rs="${id}" data-rs-id="${id}"><span class="rs-d" style="background:${c}"></span><span class="rs-n">${esc(n)}<small>${esc(d)}</small></span><svg class="rs-ok" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="m3 7.5 2.7 2.7L11 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`).join("")}</div></div></div>`;
+  return `<div class="rs-acc"><div class="rs-in"><div class="rs-list">${items.map(([id, n, d, c]) => `<button class="rs-i" data-rs="${id}" data-rs-id="${id}"><span class="rs-d" style="background:${c}"></span><span class="rs-n">${esc(n)}<small>${esc(d)}</small></span><svg class="rs-ok" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="m3 7.5 2.7 2.7L11 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`).join("")}</div><div class="rs-who" data-rs-who></div></div></div>`;
 }
 function rsBuild(){
   const g = document.getElementById("rs-group"); if(!g || g.dataset.b) return; g.dataset.b = "1";
@@ -9148,6 +9151,8 @@ function rsSync(){
   const r = VA.role ? ROLE(VA.role) : null;
   document.querySelectorAll(".rs-cur").forEach(x => { x.textContent = r ? r.name : "Администратор"; });
   document.querySelectorAll("[data-rs-id]").forEach(b => b.classList.toggle("is-on", b.dataset.rsId === (VA.role || "")));
+  const who = VA.role ? ADM.users.filter(u => u.role === VA.role && u.st !== "off").sort((a, b) => ((a.v && a.v.cls || admCls(a)) === "8 «А»" ? 0 : 1) - ((b.v && b.v.cls || admCls(b)) === "8 «А»" ? 0 : 1) || a.name.localeCompare(b.name, "ru")) : [];
+  document.querySelectorAll("[data-rs-who]").forEach(w => { w.innerHTML = who.length > 1 ? `<div class="rs-wh">Чьими глазами смотреть</div>` + who.map(u => { const c = u.role === "student" ? (u.v && u.v.cls) || "" : u.role === "parent" ? admCls(u) : ""; return `<button class="rs-i rs-u ${u.id === VA.uid ? "is-on" : ""}" data-rs-u="${esc(u.id)}"><span class="rs-n">${esc(fioShort(u.name))}${c && c !== "Без класса" ? `<small>${esc(c)}</small>` : ""}</span></button>`; }).join("") : ""; });
   document.querySelectorAll("#rs-group,.rs-s").forEach(x => { x.classList.toggle("open", RS_OPEN); x.style.setProperty("--rc", r ? r.c : "var(--pen)"); });
   document.querySelectorAll("[data-rs-toggle]").forEach(b => b.setAttribute("aria-expanded", String(RS_OPEN)));
 }
@@ -9155,12 +9160,14 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-rs-toggle]")){ RS_OPEN = !RS_OPEN; rsSync(); return; }
   const it = e.target.closest("[data-rs]");
   if(it){
-    RS_OPEN = false; const r = it.dataset.rs;
-    if(typeof SHEET_OPEN !== "undefined" && SHEET_OPEN) toggleSheet(false);
-    if(!r){ if(VA.role){ VA.role = null; VA.uid = null; vaSave(); vaApply(); } else rsSync(); }
+    const r = it.dataset.rs; RS_OPEN = !!r && ADM.users.filter(x => x.role === r).length > 1;
+    if(!RS_OPEN && typeof SHEET_OPEN !== "undefined" && SHEET_OPEN) toggleSheet(false);
+    if(!r){ if(VA.role) vaExit(); else rsSync(); }
     else { const u = ADM.users.find(x => x.role === r); vaStart(r, u ? u.id : null); }
     return;
   }
+  const wu = e.target.closest("[data-rs-u]");
+  if(wu){ vaStart(VA.role, wu.dataset.rsU); return; }
 });
 /* ---- отрисовка ---- */
 const initials = n => (String(n).trim().charAt(0) || "?").toUpperCase();
