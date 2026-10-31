@@ -5369,6 +5369,18 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .ov-top{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch!important}
 .ovs{cursor:pointer}.ovs .dl,.ovs [data-lesson]{cursor:default}
 @media(max-width:900px){.ov-top{grid-template-columns:minmax(0,1fr)!important}}
+
+/* ===== журнал: боковые плашки не наезжают друг на друга ===== */
+.jr-aside{grid-template-columns:minmax(0,1fr)!important}
+.jr-aside>*{min-width:0}
+.jr-tiles>div,.jr-tiles .jr-tb2{min-width:0;overflow:hidden}
+.jr-tiles span{white-space:normal!important;line-height:1.2;overflow-wrap:normal;font-size:10.5px!important}
+.jr-aside h3,.jr-aside .jr-h,.jr-aside .panel-head h3{white-space:normal;overflow-wrap:anywhere}
+.jr-u .jr-aside{grid-template-columns:minmax(0,1fr)!important}
+.jr-u .jr-aside>.jr-w:nth-child(even){box-shadow:none!important}
+@media(min-width:1101px){.jr-u{grid-template-columns:minmax(0,1fr) 330px!important}}
+@media(max-width:1100px){.jr-u .jr-aside{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:700px){.jr-u .jr-aside{grid-template-columns:minmax(0,1fr)!important}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
