@@ -5409,6 +5409,9 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 .tgm-md b{font-weight:500;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tgm-md small{margin-left:auto;color:var(--muted);font-size:12px;flex:none}
 .tgm-md img{width:40px;height:40px;border-radius:10px;object-fit:cover;flex:none}
 .tgm-mi{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--pick);color:var(--pen);flex:none}
+.prof-par{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 0 0;font-size:12.5px;color:var(--muted)}
+.prof-par .pchip{appearance:none;border:0;cursor:pointer;font:inherit;transition:transform .15s,background-color .2s}.prof-par .pchip:hover{transform:translateY(-1px)}.prof-par .pchip:active{transform:scale(.95)}
+.jp-top{flex-wrap:wrap}.jp-top button.jr-cl1{appearance:none;border:0;font:inherit;cursor:pointer;transition:transform .15s}.jp-top button.jr-cl1:hover{transform:translateY(-1px)}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -9858,7 +9861,19 @@ function renderProfile(){
   const weekLessons = days.reduce((a,x) => a + x.c, 0), weekMins = days.reduce((a,x) => a + x.mins, 0);
   const busiest = days.slice().sort((a,b) => b.c - a.c)[0], maxC = Math.max(1, ...days.map(x => x.c));
   const pastTests = TESTS.filter(t => diff(t.d) < 0), nextTest = TESTS.find(t => diff(t.d) >= 0);
-  const name = (VA.role && VA.kid) || PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Ученик";
+  /* профиль зависит от того, чьими глазами смотрим: ученик, родитель, учитель, руководство */
+  const pw = (() => {
+    const u = VA.role ? (vaUser(VA.uid) || vaFindStud(VA.uid)) : null, kid = vaKid(VA.role ? VA.uid : "u1") || ADM.users.find(x => x.id === "u1"), cl = (kid && kid.v && kid.v.cls) || "8 «А»";
+    const par = ADM.users.filter(x => x.role === "parent" && x.v && x.v.kids && admCls(x) === cl && kid && kid.name.startsWith(admKid(x)));
+    const R = u ? u.role : "student", RN = { student: "Ученик", parent: "Родитель", teacher: "Преподаватель", methodist: "Методист", zavuch: "Завуч", deputy: "Заместитель директора", director: "Директор", controller: "Контролёр", admin: "Администратор" };
+    let sub = `Ученик · ${cl}${DATA.school ? " · " + DATA.school : ""}`, eb = "Мой профиль", own = null;
+    if(R === "parent"){ sub = `Родитель · ребёнок: ${kid ? fioShort(kid.name) : admKid(u)}, ${cl}`; own = u.name; }
+    else if(R === "student" && u){ own = u.name; }
+    else if(["teacher", "methodist", "zavuch", "deputy", "director", "controller"].includes(R)){ const v = u.v || {}; sub = [RN[R], v.subj, v.dir || v.post || v.what, v.cls && "классы: " + v.cls].filter(Boolean).join(" · ") + (DATA.school ? " · " + DATA.school : ""); own = u.name; }
+    else if(R === "admin"){ sub = "Администратор платформы"; }
+    return { sub, eb, own, R, kid, par, cl };
+  })();
+  const name = (VA.role && pw.own) || (VA.role && VA.kid) || PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Ученик";
   const initials = name.split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const fins = rows.map(finalOf).filter(v => v != null), finAvg = fins.length ? fins.reduce((a,v) => a + v, 0) / fins.length : null;
@@ -9906,10 +9921,10 @@ function renderProfile(){
         <div class="prof-id">
           <p class="eyebrow">Мой профиль</p>
           <h1 class="prof-name" id="prof-name"></h1>
-          <p class="prof-sub">${esc(DATA.student)}${DATA.school ? " · " + esc(DATA.school) : ""}</p>
+          <p class="prof-sub">${esc(pw.sub)}</p>${pw.par.length && pw.R === "student" ? `<p class="prof-par"><span>Родители:</span>${pw.par.map(x => `<button type="button" class="pchip" data-par-wr="${esc(x.name)}" data-tip="Написать родителю|${esc(x.name)}">${esc(fioShort(x.name))}</button>`).join("")}</p>` : ""}
           <div class="prof-chips"><span class="pchip">${(() => { const lv = PERIODS.find(p => TODAY >= p.s && TODAY <= p.e); if(!lv) return esc(CUR.name) + " завершена"; const left = Math.max(0, Math.round((lv.e - TODAY) / DAY)); return esc(lv.name) + (left ? " · до конца " + left + " " + plural(left, ["день", "дня", "дней"]) : " · последний день"); })()}</span>${canPII() && PED.v.phone ? `<a class="pchip pc-c" href="tel:${esc(String(PED.v.phone).replace(/[^+\d]/g, ""))}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>${esc(fmtPhone(PED.v.phone))}</a>` : ""}${canPII() && PED.v.email ? `<a class="pchip pc-c" href="mailto:${esc(PED.v.email)}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg>${esc(PED.v.email)}</a>` : ""}</div>
         </div>
-        <div class="pf-ring" title="Средний балл">
+        <div class="pf-ring" title="Средний балл" ${["teacher", "methodist", "zavuch", "deputy", "director", "controller", "admin"].includes(pw.R) && VA.role ? "hidden" : ""}>
           <svg viewBox="0 0 80 80" width="92" height="92" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pick)" stroke-width="7"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pen)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg>
           <span class="pf-rv"><b>${da(overall)}</b><small>средний</small></span>
         </div>
@@ -10893,7 +10908,7 @@ function jrStu(sid){
   const first = stu[1].split(" ").slice(0, 2).join(" ");
   const parents = ADM.users.filter(u => u.role === "parent" && String((u.v || {}).kids || "").includes(first));
   const prow = parents.length ? parents.map(p => `<li><span class="jp-t">${esc((p.v && p.v.rel) || "Родитель")} · ${esc(p.name)}</span><em>${esc((p.v && p.v.how) || "")}${p.email ? " · " + esc(p.email) : ""}</em></li>`).join("") : `<li><span class="jp-t muted">Контакты родителей пока не добавлены</span></li>`;
-  const o = tgModal(stu[1], `<div class="jp-top"><span class="jr-cl1">Класс ${esc(JR.cls || "8 «А»")}</span>${(JR.cls || "8 «А»") === "8 «А»" ? `<span class="jr-cl1 me">Куратор: Ирина Петровна</span>` : ""}${groups.map(g => `<span class="jr-cl1 gr">Группа: ${esc(g)}</span>`).join("")}${sid === "u1" ? `<span class="jr-cl1 me">Подключён к дневнику</span>` : ""}</div>
+  const o = tgModal(stu[1], `<div class="jp-top"><span class="jr-cl1">Класс ${esc(JR.cls || "8 «А»")}</span>${(JR.cls || "8 «А»") === "8 «А»" ? `<span class="jr-cl1 me">Куратор: Ирина Петровна</span>` : ""}${ADM.users.filter(x => x.role === "parent" && x.v && x.v.kids && admCls(x) === (JR.cls || "8 «А»") && stu[1].startsWith(admKid(x))).map(x => `<button type="button" class="jr-cl1 gr" data-par-wr="${esc(x.name)}" data-tip="Написать родителю|${esc(x.name)}">${esc((x.v.rel || "Родитель") + ": " + fioShort(x.name))}</button>`).join("")}${groups.map(g => `<span class="jr-cl1 gr">Группа: ${esc(g)}</span>`).join("")}${sid === "u1" ? `<span class="jr-cl1 me">Подключён к дневнику</span>` : ""}</div>
     <div class="jp-st"><div><span>Средний</span><b>${stt.avg == null ? "–" : da(stt.avg)}</b></div><div><span>Итог</span><b class="${stt.fin != null ? "jn " + band(stt.fin) : ""}">${stt.fin == null ? "н/а" : dv(stt.fin)}</b></div><div><span>Оценок</span><b>${stt.n}</b></div><div><span>Пропусков</span><b>${abs}</b></div><div><span>Место</span><b>${rk ? rk + "/" + ranked.length : "–"}</b></div></div>
     ${(() => { const cols = D.cols.slice().sort((a, b) => jrDt(a) - jrDt(b)), MSx = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
       const items = cols.map(c => ({ c, v: mk[c.id] })).filter(x => x.v != null), heavy = items.filter(x => typeof x.v === "number" && jrW(x.c.k) > 1);
@@ -11292,6 +11307,7 @@ document.addEventListener("click", e => {
     return; }
   const stp = e.target.closest("[data-hwstep]"); if(stp){ stp.classList.toggle("open"); return; }
   const fold = e.target.closest("[data-hwfold]"); if(fold){ const g = fold.closest(".hwg"); g.querySelectorAll(".hwr.open").forEach(x => { x.classList.remove("open"); x.querySelector(".hwr-row").setAttribute("aria-expanded", "false"); }); g.classList.remove("has-open"); return; }
+  const pwr = e.target.closest("[data-par-wr]"); if(pwr){ const nmP = pwr.dataset.parWr; try { tgMakeChat("one", nmP, [nmP], "родитель"); } catch(_) {} showTab("chats", true); return; }
   const hd = e.target.closest("[data-hwdone]"); if(hd){ const hid = hd.dataset.hwdone, was = doneMap[hid]; setDone(hid, !was); try { renderAll(); } catch(_) {} tgToast(was ? "Возвращено в работу" : "Отмечено выполненным"); return; }
   const hr = e.target.closest(".hwr-row"); if(hr && !e.target.closest(".check")){ const li = hr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); hr.setAttribute("aria-expanded", on); const g = li.closest(".hwg"); if(g) g.classList.toggle("has-open", !!g.querySelector(".hwr.open")); return; }
   const lr = e.target.closest(".dr-row"); if(lr && lr.closest(".dr-flat")) return; if(lr){ const li = lr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); lr.setAttribute("aria-expanded", on); return; }
