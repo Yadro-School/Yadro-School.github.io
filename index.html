@@ -5432,6 +5432,20 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 #admin:not([data-pm-edit]) .pm-resetall,#admin:not([data-pm-edit]) [data-adm-reset-role]{display:none}
 .pm-edit{white-space:nowrap}.pm-edit.on{background:var(--pen);border-color:var(--pen);color:#fff}
 .pm-resetall{display:flex;justify-content:center;margin:18px 0 6px}
+
+/* ===== журнал действий ===== */
+.act-f{display:grid;gap:10px;margin-bottom:14px}.act-q{width:100%}.act-hint{margin:0;font-size:12.5px}
+.act-n{margin:0 0 8px;color:var(--muted);font-size:13px}
+.act-g{margin-bottom:12px;padding:14px 16px}.act-g h3{margin:0 0 8px;font:500 16px var(--f-display)}
+.act-l{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.act-l li{display:grid;grid-template-columns:64px auto minmax(0,1fr) auto;gap:4px 10px;align-items:baseline;padding:7px 8px;border-radius:10px;font-size:13.5px;transition:background-color .18s}
+.act-l li:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.act-l time{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+.act-l em{font-style:normal;color:var(--muted);font-size:12.5px;text-align:right}
+.act-x{min-width:0;overflow-wrap:anywhere}
+.act-k{font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);white-space:nowrap}
+.act-k.k-err{background:color-mix(in srgb,var(--toxic) 14%,transparent);color:var(--toxic)}.act-k.k-grade{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}.act-k.k-adm{background:var(--pen-soft);color:var(--pen)}
+@media(max-width:600px){.act-l li{grid-template-columns:auto minmax(0,1fr);}.act-l .act-x{grid-column:1/-1;order:3}.act-l em{text-align:left;grid-column:1/-1;order:4}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -9167,7 +9181,7 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
 function admSave(){ try { localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-perm", JSON.stringify(ADM.perm)); } catch(e) {} }
 function admNav(){
   const t = (id, n) => `<button class="adm-tab" data-adm-tab="${id}" aria-pressed="${ADM.tab === id}">${n}</button>`;
-  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}<button class="adm-tab" disabled>Журнал действий <span class="soon">скоро</span></button></div>`;
+  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
 }
 /* ---- режим «смотреть как» ---- */
 const VA = { role: null, uid: null, from: "admin" };
@@ -9293,6 +9307,7 @@ function admSection(el){
   if(ADM.tab === "users") return renderAdmUsers(el);
   if(ADM.tab === "docs") return renderAdmDocs(el);
   if(ADM.tab === "reports") return renderAdmReports(el);
+  if(ADM.tab === "actlog") return renderAdmActLog(el);
   if(ADM.tab === "security") return renderAdmSec(el);
   if(ADM.tab === "agents"){ el.innerHTML = admHead('Агенты <span class="beta">бета</span>', `<button class="plus" data-ag-new aria-expanded="${AG.wizard}" title="Создать агента"><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Новый агент</button>`) + '<div class="adm-body" id="adm-ag"></div>'; return renderAgents(); }
   return renderAdmRoles(el);
@@ -9735,7 +9750,7 @@ document.addEventListener("click", e => {
   let x;
   if((x = g("[data-adm-tab]"))){
     const nt = x.dataset.admTab; if(nt === ADM.tab) return;
-    const o = ["conn", "users", "roles", "agents", "security", "docs", "reports"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
+    const o = ["conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
     ADM.tab = nt; ADM.form = null; ADM.confirmDel = null; ADM.grp.clear(); DOCS.open = null; ADM.anim = dir; admRerender(); if(nt === "agents" && !SYS.at) sysRun();
     return;
   }
@@ -12369,6 +12384,72 @@ setTimeout(() => regRun(false), 4000);
     }
   }, { passive: true });
 })();
+
+/* ================= Журнал действий ================= */
+const ACT_KEY = "bai-actlog", ACT_MAX = 3000;
+const ACT = { list: (() => { try { const j = JSON.parse(localStorage.getItem(ACT_KEY)); return Array.isArray(j) ? j : []; } catch(e) { return []; } })(), f: "all", q: "", per: "7", who: "all", open: false };
+const ACT_TYPES = [["all", "Все"], ["nav", "Переходы"], ["grade", "Оценки и журнал"], ["hw", "Домашка"], ["chat", "Чаты"], ["adm", "Администрирование"], ["login", "Вход"], ["err", "Ошибки"], ["other", "Другое"]];
+function actKind(t){
+  t = String(t).toLowerCase();
+  if(/ошибк|не получилось|не прошло/.test(t)) return "err";
+  if(/вход|выход|войти/.test(t)) return "login";
+  if(/оценк|журнал|колонк|пропуск|отмечено: не был/.test(t)) return "grade";
+  if(/задани|домаш|выполнен|в работу/.test(t)) return "hw";
+  if(/чат|сообщен|групп|участник|переписк/.test(t)) return "chat";
+  if(/прав|роль|пользовател|доступ|код|коннектор|счётчик|подключени|предупрежден|вид:|смотрит как/.test(t)) return "adm";
+  return "other";
+}
+function actWho(){
+  if(VA.role){ const u = vaUser(VA.uid) || vaFindStud(VA.uid); return (ROLE(VA.role).name) + (u ? " · " + fioShort(u.name) : ""); }
+  return CN.isAdmin ? "Администратор" : "Пользователь";
+}
+function actLog(kind, text, meta){
+  try {
+    ACT.list.push({ t: Date.now(), k: kind || actKind(text), x: String(text).slice(0, 200), w: actWho(), m: meta || "" });
+    if(ACT.list.length > ACT_MAX) ACT.list.splice(0, ACT.list.length - ACT_MAX);
+    clearTimeout(actLog._t); actLog._t = setTimeout(() => { try { localStorage.setItem(ACT_KEY, JSON.stringify(ACT.list)); } catch(e) {} }, 500);
+    if(typeof ADM !== "undefined" && ADM.tab === "actlog" && ACT.open){ const b = document.getElementById("act-body"); if(b && !actLog._r){ actLog._r = 1; setTimeout(() => { actLog._r = 0; const bb = document.getElementById("act-body"); if(bb) bb.innerHTML = actBody(); }, 400); } }
+  } catch(e) {}
+}
+/* перехватываем общие точки: уведомления, переходы, ошибки */
+(function(){
+  const tt = tgToast; tgToast = function(text, undo){ try { actLog(null, text); } catch(e) {} return tt.apply(this, arguments); };
+  const st = showTab; showTab = function(t, push){ const r = st.apply(this, arguments); try { if(state.tab !== actLog._lt){ actLog._lt = state.tab; const nm = (document.querySelector(`.tab[data-tab="${state.tab}"] .tl`) || {}).textContent || state.tab; actLog("nav", "Открыт раздел «" + nm + "»"); } } catch(e) {} return r; };
+  window.addEventListener("error", e => { if(!e.target || e.target === window) actLog("err", "Ошибка скрипта: " + String(e.message || "").slice(0, 120)); });
+})();
+const ACT_PER = [["1", "Час"], ["day", "Сегодня"], ["7", "7 дней"], ["30", "30 дней"], ["all", "Всё время"]];
+function actFiltered(){
+  const now = Date.now(), q = ACT.q.trim().toLowerCase().replace(/ё/g, "е");
+  const from = ACT.per === "1" ? now - 36e5 : ACT.per === "day" ? new Date().setHours(0, 0, 0, 0) : ACT.per === "all" ? 0 : now - (+ACT.per) * 864e5;
+  return ACT.list.filter(a => a.t >= from && (ACT.f === "all" || a.k === ACT.f) && (ACT.who === "all" || a.w === ACT.who) && (!q || (a.x + " " + a.w).toLowerCase().replace(/ё/g, "е").includes(q))).sort((a, b) => b.t - a.t);
+}
+function actBody(){
+  const L = actFiltered(), pad = n => String(n).padStart(2, "0"), tm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()); };
+  const kn = Object.fromEntries(ACT_TYPES), groups = [];
+  L.slice(0, 400).forEach(a => { const d = new Date(a.t), key = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); let g = groups[groups.length - 1]; if(!g || g.key !== key){ g = { key, d, items: [] }; groups.push(g); } g.items.push(a); });
+  return `<p class="act-n">Записей: <b>${L.length}</b>${L.length > 400 ? " · показаны последние 400" : ""}</p>` + (groups.length ? groups.map(g => `<section class="panel act-g"><h3>${g.d.getDate()} ${MG[g.d.getMonth()]} ${g.d.getFullYear()}</h3><ul class="act-l">${g.items.map(a => `<li><time>${tm(a.t)}</time><span class="act-k k-${a.k}">${esc(kn[a.k] || "Другое")}</span><span class="act-x">${esc(a.x)}</span><em>${esc(a.w)}</em></li>`).join("")}</ul></section>`).join("") : `<section class="panel"><p class="empty">По выбранным фильтрам ничего нет.</p></section>`);
+}
+function renderAdmActLog(el){
+  ACT.open = true;
+  const who = [...new Set(ACT.list.map(a => a.w))].sort();
+  el.innerHTML = admHead("Журнал действий", `<div class="adm-hb"><button type="button" class="btn" data-act-csv>Скачать CSV</button><button type="button" class="btn" data-act-clr>Очистить</button></div>`) + `
+    <div class="adm-body">
+    <section class="panel act-f"><input type="text" class="tgm-in act-q" id="act-q" placeholder="Поиск по действиям и людям" autocomplete="off" value="${esc(ACT.q)}">
+      <div class="adm-filter">${ACT_PER.map(([k, t]) => `<button type="button" class="chip" data-act-per="${k}" aria-pressed="${ACT.per === k}">${t}</button>`).join("")}</div>
+      <div class="adm-filter">${ACT_TYPES.map(([k, t]) => `<button type="button" class="chip" data-act-f="${k}" aria-pressed="${ACT.f === k}">${t}</button>`).join("")}</div>
+      ${who.length > 1 ? `<div class="adm-filter"><button type="button" class="chip" data-act-who="all" aria-pressed="${ACT.who === "all"}">Все участники</button>${who.slice(0, 12).map(w => `<button type="button" class="chip" data-act-who="${esc(w)}" aria-pressed="${ACT.who === w}">${esc(w)}</button>`).join("")}</div>` : ""}
+      <p class="muted act-hint">Журнал ведётся на этом устройстве. Общий журнал всех участников появится вместе с серверной частью.</p></section>
+    <div id="act-body">${actBody()}</div></div>`;
+}
+document.addEventListener("input", e => { if(e.target.id === "act-q"){ ACT.q = e.target.value; const b = document.getElementById("act-body"); if(b) b.innerHTML = actBody(); } });
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-act-per]"))){ ACT.per = x.dataset.actPer; renderAdmActLog(document.getElementById("admin")); return; }
+  if((x = g("[data-act-f]"))){ ACT.f = x.dataset.actF; renderAdmActLog(document.getElementById("admin")); return; }
+  if((x = g("[data-act-who]"))){ ACT.who = x.dataset.actWho; renderAdmActLog(document.getElementById("admin")); return; }
+  if(g("[data-act-csv]")){ const q = v => '"' + String(v).replace(/"/g, '""') + '"', rows = [["Время", "Тип", "Действие", "Кто"].map(q).join(";"), ...actFiltered().map(a => [new Date(a.t).toLocaleString("ru-RU"), (Object.fromEntries(ACT_TYPES)[a.k] || a.k), a.x, a.w].map(q).join(";"))]; const bl = new Blob(["﻿" + rows.join("\n")], { type: "text/csv;charset=utf-8" }), l = document.createElement("a"); l.href = URL.createObjectURL(bl); l.download = "journal-actions.csv"; document.body.appendChild(l); l.click(); l.remove(); return; }
+  if(g("[data-act-clr]")){ admConfirm("Очистить журнал действий?", "Все записи журнала на этом устройстве будут удалены без возможности вернуть.", "Очистить", () => { ACT.list.length = 0; try { localStorage.setItem(ACT_KEY, "[]"); } catch(_) {} renderAdmActLog(document.getElementById("admin")); tgToast("Журнал действий очищен"); }); return; }
+});
 </script>
 
 
