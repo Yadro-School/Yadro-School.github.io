@@ -7253,7 +7253,7 @@ function modScan(text, deep){
   return null;
 }
 const modUid = () => (PROF.me && (PROF.me.id || PROF.me.email)) || "me";
-const modName = () => PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Пользователь";
+const modName = () => (VA.role && VA.kid) || PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Пользователь";
 function modRulesModal(){
   tgModal("Правила общения в чатах", `<p class="mod-p"><b>Можно:</b> вопросы по учёбе, домашке и расписанию, организационные сообщения, вежливое обсуждение, шутки без оскорблений.</p><p class="mod-p"><b>Нельзя.</b> Школьные чаты — рабочее пространство, здесь не пишем:</p><ul class="mod-ul">${Object.values(MOD_CATS).map(c => `<li><b>${c.name[0].toUpperCase() + c.name.slice(1)}.</b> ${c.d}</li>`).join("")}</ul><p class="mod-p mut">Агент-модератор проверяет сообщение, пока вы его набираете. Если нарушение пропущено, сообщение будет удалено. При повторном нарушении администрации уходит рапорт.</p>`, `<button type="button" class="tgm-btn pri" data-cf-no>Понятно</button>`).addEventListener("click", e => { if(e.target.closest("[data-cf-no]")) tgModalClose(); });
 }
@@ -9095,8 +9095,38 @@ function vaApply(){
   requestAnimationFrame(() => movePill(true));
 }
 const vaSave = () => { try { if(VA.role) localStorage.setItem("bai-va", JSON.stringify({ role: VA.role, uid: VA.uid })); else localStorage.removeItem("bai-va"); } catch(e) {} };
-function vaStart(role, uid){ VA.role = role; VA.uid = uid || null; vaSave(); vaApply(); }
-function vaExit(){ VA.role = null; VA.uid = null; vaSave(); vaApply(); if(CN.isAdmin){ showTab("admin", true); renderAdmin(); } }
+const ALLG0 = Object.assign({}, ALLG), STUD_ME = "Александр";
+/* ученик, чьи оценки показываем: сам ученик или ребёнок родителя */
+function vaKid(uid){
+  const u = ADM.users.find(x => x.id === uid); if(!u) return null;
+  if(u.role === "student") return u;
+  if(u.role !== "parent") return null;
+  const cl = admCls(u), nm = admKid(u).split(/\s+/);
+  return ADM.users.find(x => x.role === "student" && x.v && x.v.cls === cl && x.name.startsWith(nm.join(" "))) || null;
+}
+function vaData(uid){
+  const st = vaKid(uid); let nm = STUD_ME;
+  Object.keys(ALLG0).forEach(k => { ALLG[k] = ALLG0[k]; });
+  if(st && st.id !== "u1"){
+    const keep = [JR.subj, JR.pi, JR.cls], nw = {};
+    try {
+      JR.cls = st.v.cls; jrSetCls(st.v.cls);
+      Object.entries(DATA.subjects).forEach(([sid, sx]) => {
+        if(sx.graded === false) return; const arr = [];
+        for(let i = 0; i <= CUR_I; i++){ JR.subj = sid; JR.pi = i; const D = jrData(); D.cols.forEach(c => { const v = (D.marks[st.id] || {})[c.id]; if(typeof v === "number"){ const kd = KIND[c.k] || KIND[""]; arr.push({ date: dd(c.d), v, k: c.k, label: kd.label, w: kd.w, about: c.topic || "" }); } }); }
+        nw[sid] = arr.sort((a, b) => a.date - b.date);
+      });
+      Object.assign(ALLG, nw);
+    } catch(e) {}
+    JR.subj = keep[0]; JR.pi = keep[1]; JR.cls = keep[2] || "8 «А»"; jrSetCls(JR.cls);
+    nm = st.name.split(/\s+/)[1] || st.name;
+  }
+  DATA.studentName = nm; VA.kid = st ? st.name : null;
+  STATS.length = 0; statsFor(CUR).forEach(x => STATS.push(x));
+  try { renderAll(); } catch(e) {}
+}
+function vaStart(role, uid){ VA.role = role; VA.uid = uid || null; vaSave(); vaData(uid); vaApply(); }
+function vaExit(){ VA.role = null; VA.uid = null; vaSave(); vaData(null); vaApply(); if(CN.isAdmin){ showTab("admin", true); renderAdmin(); } }
 /* ---- вкладка «Вид сайта» для создателя (в меню под «Администратор») ---- */
 let RS_OPEN = false;
 const RS_ICO = `<svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:#8E7CF0" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="currentColor" fill-opacity=".2"/><circle cx="12" cy="12" r="3" fill="currentColor" fill-opacity=".5"/></svg>`;
@@ -9730,7 +9760,7 @@ function renderProfile(){
   const weekLessons = days.reduce((a,x) => a + x.c, 0), weekMins = days.reduce((a,x) => a + x.mins, 0);
   const busiest = days.slice().sort((a,b) => b.c - a.c)[0], maxC = Math.max(1, ...days.map(x => x.c));
   const pastTests = TESTS.filter(t => diff(t.d) < 0), nextTest = TESTS.find(t => diff(t.d) >= 0);
-  const name = PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Ученик";
+  const name = (VA.role && VA.kid) || PED.v.name || DATA.studentName || (PROF.me && PROF.me.name) || "Ученик";
   const initials = name.split(/\s+/).map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
   const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const fins = rows.map(finalOf).filter(v => v != null), finAvg = fins.length ? fins.reduce((a,v) => a + v, 0) / fins.length : null;
