@@ -5446,6 +5446,35 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 .act-k{font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);white-space:nowrap}
 .act-k.k-err{background:color-mix(in srgb,var(--toxic) 14%,transparent);color:var(--toxic)}.act-k.k-grade{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}.act-k.k-adm{background:var(--pen-soft);color:var(--pen)}
 @media(max-width:600px){.act-l li{grid-template-columns:auto minmax(0,1fr);}.act-l .act-x{grid-column:1/-1;order:3}.act-l em{text-align:left;grid-column:1/-1;order:4}}
+
+/* ===== журнал: правая колонка не зависит от прокрутки и анимаций ===== */
+.jr-u>.jr-aside,.jr-u .jr-aside{position:static!important;align-self:start!important;grid-row:auto!important;grid-template-rows:none!important;grid-auto-rows:auto!important;height:auto!important;align-content:start}
+.jr-aside>*,.jr-aside .jr-w{animation:none!important;opacity:1!important;transform:none!important;position:relative!important;margin:0!important;min-height:0!important}
+.jr-u>.jr-aside>.jr-w-wide:last-child,.jr-u>.jr-aside>.jr-w-wide:last-child .jr-wk{display:block!important;flex:none!important}
+
+/* ===== главная: объявление, неделя в цифрах, совет ===== */
+.ovi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.ovi-p{min-width:0;display:grid;align-content:start;gap:8px}
+.ovi-t{margin:0;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.ovi-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ovi-s{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.ovi-s b{font:500 22px/1.1 var(--f-display);font-variant-numeric:tabular-nums}.ovi-s.good b{color:var(--good)}
+.ovi-s span{font-size:11.5px;color:var(--muted);line-height:1.25}
+.ovi-tl{margin:0;padding:0;list-style:none;display:grid;gap:8px}.ovi-tl li{padding:9px 12px;border-radius:14px;background:var(--pen-soft);font-size:13.5px;line-height:1.4}
+@media(max-width:1000px){.ovi{grid-template-columns:minmax(0,1fr)}}
+[role=tabpanel][hidden]{display:none!important}
+
+.tgm-mat{display:grid;gap:8px;margin:12px 0}.tgm-mat>b{font-weight:500;font-size:13px;color:var(--muted)}
+.tgm-matg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tgm-matb{appearance:none;border:1px solid var(--line);background:none;border-radius:14px;padding:8px 6px;display:grid;gap:1px;justify-items:center;font:inherit;color:var(--ink);cursor:pointer;transition:background-color .18s,transform .15s,border-color .18s}
+.tgm-matb b{font:500 18px/1.1 var(--f-display)}.tgm-matb span{font-size:11px;color:var(--muted);text-align:center;line-height:1.2}
+.tgm-matb:hover{background:var(--pen-soft);border-color:color-mix(in srgb,var(--pen) 35%,var(--line));transform:translateY(-1px)}.tgm-matb:active{transform:scale(.96)}
+@media(max-width:420px){.tgm-matg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.cal-wrap{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media(max-width:900px){.cal-wrap{grid-template-columns:minmax(0,1fr)!important}}
+.cdc.n{font-size:10px;padding:1px 6px}
+.pm-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;color:var(--muted)}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -6432,7 +6461,7 @@ function renderOverview(){
   const soon = [...open.filter(h => diff(h.dueD) >= 0).sort((a, b) => a.dueD - b.dueD), ...open.filter(h => diff(h.dueD) < 0).sort((a, b) => b.dueD - a.dueD)].slice(0, 5);
   const lastG = STATS.map(s => { const g = (ALLG[s.id] || []).slice().sort((a, b) => b.date - a.date)[0]; return g ? { s, g } : null; }).filter(Boolean).sort((a, b) => b.g.date - a.g.date).slice(0, 8);
   const dueTxt = d => { const n = diff(d); return n < 0 ? "просрочено" : n === 0 ? "сегодня" : n === 1 ? "завтра" : n === 2 ? "послезавтра" : `${d.getDate()} ${MS[d.getMonth()]}`; };
-  document.getElementById("overview").innerHTML = `${ovAlertHtml()}${ovNowHtml()}${ovTodayHtml()}
+  document.getElementById("overview").innerHTML = `${ovAlertHtml()}${ovNowHtml()}${ovTodayHtml()}${ovInfoHtml()}
     ${ovNewsHtml()}
     <div class="ovc">
       <section class="panel ovc-p"><div class="panel-head"><h2>Сначала сделать</h2><button class="link" data-go="homework">Все</button></div>
@@ -8464,6 +8493,7 @@ function tgInfo(){
     <div class="tgm-row c">${IC.pin}<span class="tr-t">Закрепить вверху списка</span>${sw("pin", st.pin)}</div>
     <div class="tgm-row c">${IC.bell}<span class="tr-t">Без уведомлений</span>${sw("mute", st.mute)}</div>
     ${grp ? "" : `<div class="tgm-row c">${IC.clock}<span class="tr-t">Автоудаление</span><span class="tgm-seg sm">${[[0, "Выкл."], [24, "24 ч"], [168, "7 дн"]].map(([v, t]) => `<button type="button" class="${st.ttl === v ? "on" : ""}" data-in-ttl="${v}" ${canE ? "" : "disabled"}>${t}</button>`).join("")}</span></div>`}
+    <div class="tgm-mat" id="in-mat"></div>
     ${cur.custom && canF ? `<button type="button" class="tgm-btn bad full" data-in-del>${IC.x}<span>${grp ? "Удалить группу" : "Удалить чат"}</span></button>` : ""}`;
   const mems = g ? `<div id="in-mem">${memAll()}</div>` : "";
   const perms = g && canF ? `${pcard("m","Участникам разрешено",`${yn("m", "msg", "Отправлять сообщения")}${yn("m", "voice", "Отправлять голосовые")}${yn("m", "media", "Отправлять фото и видео")}${yn("m", "file", "Отправлять файлы")}${yn("m", "save", "Сохранять изображения и видео")}${yn("m", "invite", "Добавлять участников")}`)}${pcard("a","Администраторам разрешено",`${yn("a", "edit", "Изменять профиль группы")}${yn("a", "pin", "Закреплять сообщения")}${yn("a", "del", "Удалять чужие сообщения")}${yn("a", "invite", "Добавлять и убирать участников")}`)}` : "";
@@ -8490,11 +8520,14 @@ function tgInfo(){
   o.innerHTML = `<header class="tg-head"><button type="button" class="tg-ib" data-in-back aria-label="Назад">${IC.back}</button><span class="tg-hm"><b>${grp ? "Профиль группы" : "Редактировать чат"}</b></span><button type="button" class="tgm-btn pri" data-in-ok>Сохранить</button></header>
     <div class="tgm-b">${tabs}<div class="tgm-pn" data-pn="main">${main1}</div>${g ? `<div class="tgm-pn" data-pn="mem" hidden>${mems}</div>${canF ? `<div class="tgm-pn" data-pn="perm" hidden>${perms}</div>` : ""}` : ""}<div class="tgm-pn" data-pn="media" hidden id="in-media">${mediaHtml()}</div></div>`;
   main.appendChild(o); void o.offsetWidth; main.classList.add("info-open"); o.classList.add("on");
+  { const all = mediaItems(), n = k => all.filter(x => x.f === k).length, box = o.querySelector("#in-mat");
+    if(box) box.innerHTML = `<b>Материалы чата</b><div class="tgm-matg">${[["media", "Фото и видео"], ["link", "Ссылки"], ["voice", "Голосовые"], ["file", "Файлы"]].map(([k, t]) => `<button type="button" class="tgm-matb" data-in-mat="${k}"><b>${n(k)}</b><span>${t}</span></button>`).join("")}</div>`; }
   o.querySelectorAll("[data-pm-cnt]").forEach(c => { const v = Object.values(st.perm[c.dataset.pmCnt]); c.textContent = `${v.filter(Boolean).length} из ${v.length}`; });
   const redraw = () => { const m = o.querySelector("#in-mem"); if(m){ const q = m.querySelector("#in-mq"), f = q && document.activeElement === q; m.innerHTML = memAll(); if(f){ const n = m.querySelector("#in-mq"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); } } };
   o.addEventListener("input", e => { if(e.target.id === "in-mq"){ st.mq = e.target.value; const r = o.querySelector("#in-mrows"); if(r) r.innerHTML = memRows(); } });
   o.addEventListener("click", e => {
     if(e.target.closest("[data-in-back]")){ tgInfoClose(); return; }
+    const mt = e.target.closest("[data-in-mat]"); if(mt){ st.mdf = mt.dataset.inMat; const pn = o.querySelector("#in-media"); if(pn) pn.innerHTML = mediaHtml(); const tbm = o.querySelector("[data-in-tab=media]"); if(tbm) tbm.click(); return; }
     const mf = e.target.closest("[data-in-mdf]"); if(mf){ st.mdf = mf.dataset.inMdf; const pn = o.querySelector("#in-media"); if(pn) pn.innerHTML = mediaHtml(); return; }
     const tb = e.target.closest("[data-in-tab]");
     if(tb){ o.querySelectorAll("[data-in-tab]").forEach(x => x.classList.toggle("on", x === tb)); o.querySelectorAll(".tgm-pn").forEach(x => { const on = x.dataset.pn === tb.dataset.inTab; x.hidden = !on; if(on){ x.style.animation = "none"; void x.offsetWidth; x.style.animation = ""; } }); return; }
@@ -9548,7 +9581,7 @@ const LEG = [
 function rolesLegend(){
   return `<section class="panel adm-leg"><div class="panel-head"><h2>Что значат обозначения</h2></div>${LEG.map(([h, rows]) => `<h3 class="lg-h">${h}</h3><div class="lg-rows">${rows.map(([c, t, d]) => `<div class="lg-r"><span class="px ${c}">${t}</span><span class="lg-d">${d}</span></div>`).join("")}</div>`).join("")}<p class="muted lg-n">Чужие чаты и группы не видит никто, даже администратор платформы: внутри группы права зависят от роли в ней.</p></section>`;
 }
-function rolesBody(){ return (ADM.rv === "v1" ? rolesV1() : rolesV2(ADM.rv === "v3" ? "pm-v3" : "pm-v2")) + rolesLegend() + `<div class="pm-resetall"><button class="btn" data-adm-reset>Сбросить все роли к стандартным</button></div>`; }
+function rolesBody(){ return `<div class="pm-bar"><span>${ADM.edit ? "Режим правки: меняйте права и нажмите «Завершить правку»" : "Права закрыты от случайных нажатий"}</span>${pmEditBtn()}</div>` + (ADM.rv === "v1" ? rolesV1() : rolesV2(ADM.rv === "v3" ? "pm-v3" : "pm-v2")) + rolesLegend() + `<div class="pm-resetall"><button class="btn" data-adm-reset>Сбросить все роли к стандартным</button></div>`; }
 /* режим правки таблицы прав: без него случайно ничего не нажать */
 function pmEditBtn(){ return `<button type="button" class="btn pm-edit ${ADM.edit ? "on" : ""}" data-pm-edit>${ADM.edit ? "Завершить правку" : "Править"}</button>`; }
 function pmEdit(){
@@ -9567,7 +9600,7 @@ function pmEdit(){
 function renderAdmRoles(el){
   const ix = RV_NAMES.findIndex(x => x[0] === ADM.rv);
   el.toggleAttribute("data-pm-edit", !!ADM.edit);
-  el.innerHTML = admHead("Роли и права", `<div class="adm-hb">${pmEditBtn()}<button class="plus" data-cust-role><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить роль</button><button class="plus" data-cust-act><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить право</button></div>`) + `
+  el.innerHTML = admHead("Роли и права", `<div class="adm-hb"><button class="plus" data-cust-role><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить роль</button><button class="plus" data-cust-act><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить право</button></div>`) + `
     <div id="rv-body" class="adm-body">${rolesBody()}</div>`;
 }
 function admConfirm(title, text, ok, fn, html){
@@ -9995,7 +10028,7 @@ function renderProfile(){
     <div class="pf-row2">
       <section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2><span class="aside">средняя ${da(MON.reduce((a, g) => a + g.v, 0) / MON.length)}</span></div>
         ${(() => { const L = MON.slice().reverse(), row = g => `<tr><td>${g.date.getDate()} ${MS[g.date.getMonth()]}</td><td>${esc(g.c)}</td><td class="mon-rv"><button type="button" class="mon-rb" data-mon-res="${g.c}" data-tip="Посмотреть результат|Баллы, оценка и разбор по заданиям" aria-label="Посмотреть результат"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 12s3.500-6.500 9.500-6.500S21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>Результат</button><button type="button" class="mon-rb" data-mon-review data-tip="Разобрать с помощником · скоро|Покажет ошибки, решения и даст похожие задания" aria-label="Разобрать с помощником"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Разобрать<em>скоро</em></button></td><td>${g.b}</td><td><span class="g ${band(g.v)} sm">${dv(g.v)}</span></td></tr>`;
-          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 3).map(row).join("")}</tbody></table>${L.length > 3 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(3).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Показать все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
+          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 6).map(row).join("")}</tbody></table>${L.length > 6 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(3).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Показать все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
       </section>
       <div class="pf-kpi pf-kpi2 pf-kpi3">${pkTiles(all, heavy, n, tens, low, cnt, common, pct)}</div>
     </div>
@@ -11579,7 +11612,7 @@ function calChips(mk, scope){
   const t = mk.t.length ? `<u class="cdc k">${TEST_SHORT[mk.t[0].type] || "КР"}${mk.t.length > 1 ? "·" + mk.t.length : ""}</u>` : "";
   if(scope === "tests") return t;
   const ho = mk.h.filter(h => !isDone(h)).length;
-  return t + (mk.h.length ? `<u class="cdc h ${ho ? "" : "dn"}">ДЗ</u>` : "") + (mk.n ? `<u class="cdc n">Зам</u>` : "");
+  return t + (mk.h.length ? `<u class="cdc h ${ho ? "" : "dn"}">ДЗ</u>` : "") + (mk.n ? `<u class="cdc n">✎</u>` : "");
 }
 function calMarks(d){
   const k = key(d), iso = isoDate(d);
@@ -11600,7 +11633,7 @@ function calGridHtml(st, scope){
     <div class="calx-h"><button type="button" data-cal-n="-1" data-cal-s="${scope}" aria-label="Предыдущий месяц">‹</button><b>${MNAME[st.m]} ${st.y}</b><button type="button" data-cal-n="1" data-cal-s="${scope}" aria-label="Следующий месяц">›</button><button type="button" class="calx-td" data-cal-today data-cal-s="${scope}">Сегодня</button></div>
     <div class="calx-w">${["Пн","Вт","Ср","Чт","Пт","Сб","Вс"].map(x => `<span>${x}</span>`).join("")}</div>
     <div class="calx-g">${cells}</div>
-    <p class="calx-lg">${scope === "tests" ? `<span><u class="cdc k">КР</u>контрольная</span><span><u class="cdc k">ПР</u>проверочная</span>` : `<span><u class="cdc k">КР</u>контрольная, проверочная</span><span><u class="cdc h">ДЗ</u>срок домашки</span><span><u class="cdc n">Зам</u>заметка</span>`}</p>
+    <p class="calx-lg">${scope === "tests" ? `<span><u class="cdc k">КР</u>контрольная</span><span><u class="cdc k">ПР</u>проверочная</span>` : `<span><u class="cdc k">КР</u>контрольная, проверочная</span><span><u class="cdc h">ДЗ</u>срок домашки</span><span><u class="cdc n">✎</u>моя заметка</span>`}</p>
   </div>`;
 }
 function dayNotesHtml(iso){
@@ -11807,6 +11840,24 @@ function ovNewsHtml(){
 }
 document.addEventListener("click", e => { const ni = e.target.closest("[data-news-i]"); if(ni){ const x = (NEWS.items || []).find(y => y.link === ni.dataset.newsI); if(x){ tgModal(x.src, `<div class="nwm">${x.img ? `<img class="nwm-im" src="${esc(x.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}<span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><h3>${esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}<small>${esc(x.src)} · ${newsAgo(x.date)}</small></div>`, `<button type="button" class="tgm-btn" data-tgm-x>Закрыть</button><a class="tgm-btn pri nwm-a" href="${esc(x.link)}" target="_blank" rel="noopener">Читать на сайте ↗</a>`); } return; }
   if(e.target.closest("[data-news-retry]")){ NEWS.err = ""; newsLoad(true); return; } const b = e.target.closest("[data-news-f]"); if(!b) return; NEWS_F = b.dataset.newsF; const o = document.querySelector("#overview .ovn"); if(o){ const t = document.createElement("div"); t.innerHTML = ovNewsHtml(); o.replaceWith(t.firstElementChild); const g = document.querySelector("#overview .ovn-g"); if(g) g.classList.add("swap"); } });
+/* Главное: объявление, неделя в цифрах, на что обратить внимание */
+function ovInfoHtml(){
+  const all = STATS.flatMap(x => ALLG[x.id] || []), wk = all.filter(g => diff(g.date) >= -7 && diff(g.date) <= 0), avgW = wk.length ? wk.reduce((a, g) => a + g.v, 0) / wk.length : null;
+  const weekHw = HW.filter(h => diff(h.dueD) >= -7 && diff(h.dueD) <= 7), doneW = weekHw.filter(isDone).length;
+  const graded = STATS.filter(x => x.avg != null), overall = graded.length ? graded.reduce((a, x) => a + x.avg, 0) / graded.length : null;
+  const nxt = TESTS.find(t => diff(t.d) >= 0), low = graded.slice().sort((a, b) => a.avg - b.avg)[0], late = HW.filter(h => !isDone(h) && isLate(h)).length;
+  const msgs = (typeof chatMsgs === "function" ? chatMsgs("klass") : []) || [], an = msgs.slice().reverse().find(m => m.f === "them" && m.x), annTxt = an ? an.x : "Новых объявлений нет. Важное от учителей появится здесь.", annWho = an && an.who ? an.who : "Классный руководитель";
+  const stat = (v, l, c) => `<div class="ovi-s ${c || ""}"><b>${v}</b><span>${l}</span></div>`;
+  const tips = [];
+  if(late) tips.push(`Просрочено заданий: ${late}. Начните с самого старого.`);
+  if(nxt) tips.push(`${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. Откройте «Подготовиться» в домашке.`);
+  if(low && low.avg < 5) tips.push(`Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`);
+  if(!tips.length) tips.push("Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.");
+  return `<div class="ovi">
+    <section class="panel ovi-p"><div class="panel-head"><h2>Объявление</h2><button class="link" data-go="chats">Чаты</button></div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
+    <section class="panel ovi-p"><div class="panel-head"><h2>Неделя в цифрах</h2></div><div class="ovi-g">${stat(wk.length, plural(wk.length, ["оценка","оценки","оценок"]) + " за 7 дней")}${stat(avgW == null ? "–" : num(avgW), "средний за неделю", avgW != null && avgW >= 8 ? "good" : "")}${stat(weekHw.length ? doneW + "/" + weekHw.length : "–", "домашек сделано")}${stat(overall == null ? "–" : num(overall), "средний за четверть")}</div></section>
+    <section class="panel ovi-p"><div class="panel-head"><h2>Совет дня</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section></div>`;
+}
 function ovNowHtml(){
   const n = new Date(), left = diff(CUR.e);
   return `<section class="panel ovnow"><div class="ovnow-t"><b id="ov-clock">${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}</b><span>${WDL[TODAY.getDay()]}</span></div>
