@@ -9141,9 +9141,20 @@ function vaKid(uid){
   return rosterStud().find(x => x.v.cls === cl && x.name.startsWith(nm.join(" "))) || null;
 }
 function vaData(uid){
-  const st = vaKid(uid); let nm = STUD_ME;
+  if(VA._busy) return; VA._busy = true;
+  try { vaDataRun(uid); } finally { VA._busy = false; }
+}
+let HW0 = null;
+function vaDataRun(uid){
+  const st0 = vaKid(uid), st = st0 || ADM.users.find(x => x.id === "u1"); let nm = STUD_ME;
   Object.keys(ALLG0).forEach(k => { ALLG[k] = ALLG0[k]; });
-  if(st && st.id !== "u1"){
+  /* домашние задания: общие (8 «А») + выданные в журнале для класса ученика */
+  if(!HW0) HW0 = HW.filter(h => !String(h.id).startsWith("jh"));
+  const hcl = st ? st.v.cls : "8 «А»";
+  HW.length = 0; HW0.forEach(h => HW.push(h));
+  if(hcl !== "8 «А»") HW.length = 0;
+  JHW.forEach(h => { try { if((h.cls || []).includes(hcl) && !HW.some(x => x.id === h.id)) HW.push({ ...h, dueD: dd(h.due), givenD: dd(h.given) }); } catch(_) {} });
+  if(st){
     const keep = [JR.subj, JR.pi, JR.cls], nw = {};
     try {
       JR.cls = st.v.cls; jrSetCls(st.v.cls);
@@ -9155,9 +9166,9 @@ function vaData(uid){
       Object.assign(ALLG, nw);
     } catch(e) {}
     JR.subj = keep[0]; JR.pi = keep[1]; JR.cls = keep[2] || "8 «А»"; jrSetCls(JR.cls);
-    nm = st.name.split(/\s+/)[1] || st.name;
+    nm = st.id === "u1" ? STUD_ME : (st.name.split(/\s+/)[1] || st.name);
   }
-  DATA.studentName = nm; VA.kid = st ? st.name : null;
+  DATA.studentName = nm; VA.kid = st0 && st0.id !== "u1" ? st0.name : null;
   STATS.length = 0; statsFor(CUR).forEach(x => STATS.push(x));
   try { renderAll(); } catch(e) {}
 }
@@ -10455,7 +10466,7 @@ const jrNm3 = f => { const w = f.split(" "); return w.length < 3 ? f : w[0] + " 
 const jrNmIn = f => { const w = f.split(" "); return w.length < 2 ? f : w[0] + " " + w[1][0] + "." + (w.length > 2 ? " " + w[w.length - 1][0] + "." : ""); };
 const jrNmHtml = f => `<span class="jr-nw"><span class="nf">${esc(jrNm3(f))}</span><span class="ni">${esc(jrNmIn(f))}</span></span>`;
 const JD = (() => { try { const j = JSON.parse(localStorage.getItem("bai-journal-v3")); return j && typeof j === "object" ? j : {}; } catch(e) { return {}; } })();
-const jrSave = () => { try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); } catch(e) {} };
+const jrSave = () => { try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); } catch(e) {} clearTimeout(jrSave._t); jrSave._t = setTimeout(() => { try { if(typeof vaData === "function") vaData(VA.uid); } catch(e) {} }, 80); };
 const JR = { subj: null, pop: null, pi: null, att: false, bst: false, flt: null, wk: new Set() };
 const jrLate = () => (jrP().e - TODAY) / 864e5 <= 14;   // итоги «не аттестован» показываем, когда до конца четверти осталось не больше двух недель
 const jrP = () => PERIODS[Math.min(PERIODS.length - 1, JR.pi == null ? (JR.pi = CUR_I) : JR.pi)];
@@ -11028,7 +11039,7 @@ function jrHw(){
     const h = { id: "jh" + Date.now().toString(36), s: st.s, given: fm(TODAY), due: fm(d), text: t, cls: st.cls.slice(), type: JHW_TYPES[st.type], mins: st.mins, files: st.files.slice(), rem: st.rem };
     JHW.push(h); try { localStorage.setItem(JHW_KEY, JSON.stringify(JHW.slice(-200))); } catch(_) {}
     if(h.cls.includes("8 «А»")) HW.push({ ...h, dueD: dd(h.due), givenD: dd(h.given) });
-    tgModalClose(); try { renderHomework(); } catch(_) {}
+    tgModalClose(); try { vaData(VA.uid); } catch(_) { try { renderHomework(); } catch(__) {} }
     tgToast("Задание добавлено: " + h.cls.join(", "));
   });
 }
