@@ -6439,7 +6439,7 @@ function renderHomework(partial){
       info.push(`<div class="di di-prep"><span class="di-l">Подготовка</span><span><b>${esc(kind)} · ${when}</b>${topic ? `<small>${esc(topic)}</small>` : ""}
         <span class="hwd-plan"><em>План от бота</em>${items.map(x => `<button type="button" class="hwd-step" data-hwstep><span class="hwd-step-r"><span class="hwd-step-t"><b>${esc(x.t)}</b><small>${esc(x.sub)}</small></span><span class="soon">скоро</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 3 7.5 6 4.5 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="hwd-step-h"><span>Откроется чат с ботом. Он сразу пришлёт ${esc(x.hint)}. Чат появится скоро.</span></span></button>`).join("")}</span></span></div>`);
     } else {
-      info.push(`<div class="di di-act"><span class="di-l">Помощь бота</span><span><span class="hwd-act${AI_PROXY ? " ai-on" : " is-soon"}" ${AI_PROXY ? `data-ai="${esc(subjName(h.s))}" data-ai-t="${esc(h.text)}" role="button" tabindex="0"` : `aria-disabled="true"`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l1.6 4.2 4.2 1.6-4.2 1.6L12 15.1l-1.6-4.2-4.2-1.6 4.2-1.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>Разобрать тему с ботом</b><small>Объяснение и вопросы по теме задания</small></span>${AI_PROXY ? `<i aria-hidden="true">›</i>` : `<span class="soon">скоро</span>`}</span></span></div>`);
+      info.push(`<div class="di di-act"><span class="di-l">Подготовиться</span><span><span class="hwd-act${AI_PROXY ? " ai-on" : " is-soon"}" ${AI_PROXY ? `data-ai="${esc(subjName(h.s))}" data-ai-t="${esc(h.text)}" data-ai-q="${esc("Помоги подготовиться к уроку по предмету «" + subjName(h.s) + "». Задание: " + h.text + ". Объясни тему простыми словами с примером и задай мне 3 проверочных вопроса.")}" role="button" tabindex="0"` : `aria-disabled="true"`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l1.6 4.2 4.2 1.6-4.2 1.6L12 15.1l-1.6-4.2-4.2-1.6 4.2-1.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>Подготовиться с ботом</b><small>Бот объяснит тему и проверит вас вопросами</small></span>${AI_PROXY ? `<i aria-hidden="true">›</i>` : `<span class="soon">скоро</span>`}</span></span></div>`);
     }
     if(test || prepM){
       const wd = test ? test.d : h.dueD;
@@ -12212,6 +12212,33 @@ function regRun(quiet){
   return res;
 }
 setTimeout(() => regRun(false), 4000);
+
+/* ===== листание свайпом: расписание, домашка, календарь, оценки ===== */
+(function(){
+  let sx = 0, sy = 0, t0 = 0, sec = null;
+  document.addEventListener("touchstart", e => {
+    sec = null; if(e.touches.length !== 1) return;
+    const t = e.target; if(!t.closest) return;
+    if(t.closest("input,textarea,select,.jr-scroll,[data-noswipe],.gl-scroll,.tg-modal,[role=dialog]")) return;
+    sec = t.closest("#schedule,#homework,#calendar,#grades"); if(!sec) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if(!sec) return; const id = sec.id, t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sec = null;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6 || Date.now() - t0 > 700) return;
+    const dir = dx < 0 ? 1 : -1, root = document.getElementById(id), click = el => { if(el){ el.click(); return true; } return false; };
+    if(id === "schedule"){
+      const b = [...root.querySelectorAll("[data-sday]")], i = b.findIndex(x => x.classList.contains("is-on")), n = b[i + dir];
+      if(n) click(n); else click(root.querySelector(`[data-week="${dir}"]`));
+    } else if(id === "homework"){
+      const b = [...root.querySelectorAll("[data-hwview]")], i = b.findIndex(x => x.getAttribute("aria-pressed") === "true"); click(b[i + dir]);
+    } else if(id === "calendar"){
+      click(root.querySelector(`[data-cal-n="${dir}"]`));
+    } else if(id === "grades"){
+      const b = [...root.querySelectorAll("[data-period]")], i = b.findIndex(x => x.classList.contains("on") || x.getAttribute("aria-pressed") === "true" || x.getAttribute("aria-selected") === "true"); if(i >= 0) click(b[i + dir]);
+    }
+  }, { passive: true });
+})();
 </script>
 
 
