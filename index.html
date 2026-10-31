@@ -5475,6 +5475,18 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 @media(max-width:900px){.cal-wrap{grid-template-columns:minmax(0,1fr)!important}}
 .cdc.n{font-size:10px;padding:1px 6px}
 .pm-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+
+/* ===== журнал: плитки строками, заголовки целиком, ползунок внутри таблицы ===== */
+.jr-tiles{grid-template-columns:minmax(0,1fr)!important;gap:6px!important}
+.jr-tiles>div,.jr-tiles .jr-tb2{display:flex!important;align-items:baseline;gap:10px;padding:8px 12px!important;overflow:visible!important;position:relative}
+.jr-tiles b{min-width:56px;flex:none;font-size:20px}
+.jr-tiles span{font-size:12.5px!important;white-space:normal!important;overflow-wrap:normal!important;flex:1;min-width:0}
+.jr-tiles .jr-tf .jr-fi{position:static!important;margin-left:auto;flex:none}
+.jr-aside .jr-w>header{flex-wrap:wrap!important}
+.jr-aside .jr-w>header h3{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+.jr-aside .jr-w>header span{white-space:normal}
+.hs-bar{right:auto}
+.au-card .tgm-btn{display:flex;width:100%;box-sizing:border-box;justify-content:center;margin:8px 0 0}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -6541,8 +6553,8 @@ function renderHomework(partial){
     info.unshift(`<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>${done ? "Вернуть в работу" : "Выполнено"}</button></span></div>`);
     const tb = TEXTBOOKS[h.s];
     info.push(`<div class="di di-act"><span class="di-l">Онлайн-учебник</span><span class="hwd-tb">
-      ${tb ? `<a class="hwd-act" href="${esc(tb.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(tb.title)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗</i></a>`
-      : `<span class="hwd-tb-l">${TB_LIBS.map(l => `<a class="hwd-act" href="${l.url}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(l.name)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗</i></a>`).join("")}</span>`}
+      ${tb ? `<a class="hwd-act" href="${esc(tb.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(tb.title)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗︎</i></a>`
+      : `<span class="hwd-tb-l">${TB_LIBS.map(l => `<a class="hwd-act" href="${l.url}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(l.name)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗︎</i></a>`).join("")}</span>`}
       <span class="hwd-bot" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Читать прямо здесь<span class="soon">скоро</span></span>
     </span></div>`);
     return `<li class="hwr ${done ? "is-done" : ""} ${test && !done ? "has-test" : ""}">
@@ -6843,7 +6855,7 @@ function dynBlock(s){
   const tr = avg(vs.slice(-half)) - avg(vs.slice(0, half));
   const trTxt = Math.abs(tr) < .25 ? "стабильно" : tr > 0 ? "растёт" : "снижается";
   const trCls = Math.abs(tr) < .25 ? "" : tr > 0 ? "up" : "bad";
-  const arrow = Math.abs(tr) < .25 ? "→" : tr > 0 ? "↗" : "↘";
+  const arrow = Math.abs(tr) < .25 ? "→" : tr > 0 ? "↗︎" : "↘︎";
   return `<div class="gblock gdyn"><h4>Динамика</h4>
     <svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Динамика оценок"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--pen)" stop-opacity=".32"/><stop offset="1" stop-color="var(--pen)" stop-opacity="0"/></linearGradient></defs>${grid}<path class="sp-a" d="${area}" fill="url(#${gid})"/><path class="sp-l" d="${line}"/>${pts.map((p, i) => `<circle class="sp-d${i === n-1 ? " last" : ""}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${i === n-1 ? 4 : 3}"/>${lab || i === n-1 ? `<text class="sp-v" x="${p[0].toFixed(1)}" y="${(p[1] - 8).toFixed(1)}" text-anchor="middle">${dv(vs[i])}</text>` : ""}`).join("")}<text class="sp-x" x="${pl}" y="${H - 4}" text-anchor="start">${dfm(gs[0].date)}</text><text class="sp-x" x="${W - pr}" y="${H - 4}" text-anchor="end">${dfm(gs[n-1].date)}</text></svg>
     <div class="dstats"><span><b>${Math.max(...vs)}</b>лучшая</span><span><b>${Math.min(...vs)}</b>худшая</span><span class="${trCls}"><b>${arrow}</b>${trTxt}</span></div></div>`;
@@ -8511,8 +8523,8 @@ function tgInfo(){
     const F = [["all", "Все"], ["media", "Фото и видео"], ["link", "Ссылки"], ["voice", "Голосовые"], ["file", "Файлы"]], f = st.mdf || "all", all = mediaItems(), L = all.filter(x => f === "all" || x.f === f);
     const cnt = k => k === "all" ? all.length : all.filter(x => x.f === k).length;
     const row = x => x.f === "link" ? `<a class="tgm-md" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer"><b>${esc(x.u.replace(/^https?:\/\//, "").slice(0, 46))}</b><small>Ссылка</small></a>`
-      : x.f === "media" ? `<div class="tgm-md">${x.a.src ? `<img src="${esc(x.a.src)}" alt="" loading="lazy">` : `<span class="tgm-mi">▶</span>`}<b>${esc(x.a.name || "Фото")}</b></div>`
-      : x.f === "voice" ? `<div class="tgm-md"><span class="tgm-mi">♪</span><b>Голосовое сообщение</b></div>`
+      : x.f === "media" ? `<div class="tgm-md">${x.a.src ? `<img src="${esc(x.a.src)}" alt="" loading="lazy">` : `<span class="tgm-mi">▶︎</span>`}<b>${esc(x.a.name || "Фото")}</b></div>`
+      : x.f === "voice" ? `<div class="tgm-md"><span class="tgm-mi">♪︎</span><b>Голосовое сообщение</b></div>`
       : `<div class="tgm-md"><span class="tgm-mi">▤</span><b>${esc(x.a.name || "Файл")}</b>${x.a.size ? `<small>${Math.max(1, Math.round(x.a.size / 1024))} КБ</small>` : ""}</div>`;
     return `<div class="tm-fc md-f">${F.map(([k, t]) => `<button type="button" class="tgm-chip ${f === k ? "on" : ""}" data-in-mdf="${k}">${t}${cnt(k) ? " · " + cnt(k) : ""}</button>`).join("")}</div><div class="tgm-mdl">${L.length ? L.map(row).join("") : `<p class="hwm-hint" style="text-align:center;padding:18px 0">Здесь пока ничего нет</p>`}</div>`;
   };
@@ -10726,11 +10738,14 @@ function jrHBar(){
       const up = () => { bar.classList.remove("drag"); bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); };
       bar.addEventListener("pointermove", mv); bar.addEventListener("pointerup", up); e.preventDefault(); }); }
   const can = sc.scrollWidth > sc.clientWidth + 1; bar.classList.toggle("can", can); if(!can) return;
-  bar.style.top = (sc.offsetTop + sc.offsetHeight - 10) + "px";
+  bar.style.top = (sc.offsetTop + sc.offsetHeight - 10) + "px"; bar.style.left = (sc.offsetLeft + 14) + "px"; bar.style.right = "auto"; bar.style.width = Math.max(40, sc.offsetWidth - 28) + "px";
   const th = bar.firstChild, tr = bar.clientWidth, w = Math.max(24, tr * sc.clientWidth / sc.scrollWidth), x = (tr - w) * sc.scrollLeft / (sc.scrollWidth - sc.clientWidth);
   th.style.width = w.toFixed(1) + "px"; th.style.transform = `translateX(${x.toFixed(1)}px)`;
 }
 window.addEventListener("resize", () => { if(state.tab === "journal") jrHBar(); });
+/* ползунок и раскладка журнала пересчитываются сами, без прокрутки */
+(function(){ let ro = null, tm; const kick = () => { clearTimeout(tm); tm = setTimeout(() => { if(state.tab === "journal") jrHBar(); }, 60); };
+  const t = setInterval(() => { const sc = document.getElementById("jr-scroll"); if(sc && typeof ResizeObserver === "function" && !sc._ro){ sc._ro = 1; ro = new ResizeObserver(kick); ro.observe(sc); const w = sc.parentElement; if(w) ro.observe(w); kick(); } else if(sc) kick(); }, 700); })();
 /* анимация переключателей: на 400 мс включаем «fx-on» */
 (function(){ let tm; const go = () => { document.body.classList.add("fx-on"); clearTimeout(tm); tm = setTimeout(() => document.body.classList.remove("fx-on"), 420); };
   document.addEventListener("click", e => { if(e.target.closest(".jr-ddm button,.gfl-c button,.gfl-c .chip,.adm-tab,.adm-nav button,.tg-item,.chip,[data-period],[data-jrq],[data-jr-subj],[data-jr-cls],[data-week],[data-hwf],[data-adm-tab],[data-pf-tab],[data-jr-flt],[data-gflt],[data-adm-us],[data-adm-role],[data-sort],[data-sday]")) setTimeout(go, 0); }, true);
@@ -11836,9 +11851,9 @@ function ovNewsHtml(){
   const list = NEWS_SRC.filter(x => NEWS_F === "all" || x[0] === NEWS_F);
   return `<section class="panel ovn"><div class="panel-head"><h2>Интересное</h2><span class="ovn-ag" data-news-retry data-tip="Агент новостей|${NEWS_URL ? (NEWS.err ? NEWS.err + ". Нажмите — повторю" : "Загружаю новости…") : "Подключите функцию news-func — появятся свежие новости"}"><i></i>Агент новостей · ${NEWS_URL ? (NEWS.err ? "ошибка" : "загружаю") : "ждёт сервер"}</span></div>
     <div class="ovn-f">${Object.entries(NEWS_CAT).map(([k, l]) => `<button type="button" class="${NEWS_F === k ? "on" : ""}" data-news-f="${k}">${l}</button>`).join("")}</div>
-    <div class="ovn-g">${list.map(([c, n, t, u]) => `<a class="ovn-i" href="${u}" target="_blank" rel="noopener"><span class="ovn-c ${c}">${NEWS_CAT[c]}</span><b>${n}</b><span>${t}</span><i>↗</i></a>`).join("")}</div></section>`;
+    <div class="ovn-g">${list.map(([c, n, t, u]) => `<a class="ovn-i" href="${u}" target="_blank" rel="noopener"><span class="ovn-c ${c}">${NEWS_CAT[c]}</span><b>${n}</b><span>${t}</span><i>↗︎</i></a>`).join("")}</div></section>`;
 }
-document.addEventListener("click", e => { const ni = e.target.closest("[data-news-i]"); if(ni){ const x = (NEWS.items || []).find(y => y.link === ni.dataset.newsI); if(x){ tgModal(x.src, `<div class="nwm">${x.img ? `<img class="nwm-im" src="${esc(x.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}<span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><h3>${esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}<small>${esc(x.src)} · ${newsAgo(x.date)}</small></div>`, `<button type="button" class="tgm-btn" data-tgm-x>Закрыть</button><a class="tgm-btn pri nwm-a" href="${esc(x.link)}" target="_blank" rel="noopener">Читать на сайте ↗</a>`); } return; }
+document.addEventListener("click", e => { const ni = e.target.closest("[data-news-i]"); if(ni){ const x = (NEWS.items || []).find(y => y.link === ni.dataset.newsI); if(x){ tgModal(x.src, `<div class="nwm">${x.img ? `<img class="nwm-im" src="${esc(x.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}<span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><h3>${esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}<small>${esc(x.src)} · ${newsAgo(x.date)}</small></div>`, `<button type="button" class="tgm-btn" data-tgm-x>Закрыть</button><a class="tgm-btn pri nwm-a" href="${esc(x.link)}" target="_blank" rel="noopener">Читать на сайте ↗︎</a>`); } return; }
   if(e.target.closest("[data-news-retry]")){ NEWS.err = ""; newsLoad(true); return; } const b = e.target.closest("[data-news-f]"); if(!b) return; NEWS_F = b.dataset.newsF; const o = document.querySelector("#overview .ovn"); if(o){ const t = document.createElement("div"); t.innerHTML = ovNewsHtml(); o.replaceWith(t.firstElementChild); const g = document.querySelector("#overview .ovn-g"); if(g) g.classList.add("swap"); } });
 /* Главное: объявление, неделя в цифрах, на что обратить внимание */
 function ovInfoHtml(){
