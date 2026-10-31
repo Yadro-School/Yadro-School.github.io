@@ -7380,7 +7380,7 @@ document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
   if(g("[data-mod-toggle]")){ MOD.on = !MOD.on; modSave(); renderAgents(); tgToast(MOD.on ? "Модератор включён" : "Модератор выключен"); return; }
   if(g("[data-mod-rules]") && !g(".tgm")){ modRulesModal(); return; }
-  if(g("[data-mod-reset]")){ MOD.strikes = {}; modSave(); tgToast("Предупреждения сброшены"); return; }
+  if(g("[data-mod-reset]")){ admConfirm("Сбросить предупреждения?", "Все предупреждения модератора чатов обнулятся.", "Сбросить", () => { MOD.strikes = {}; modSave(); tgToast("Предупреждения сброшены"); }); return; }
   if((x = g("[data-mod-done]"))){ const r = MOD.reports.find(v => v.id === x.dataset.modDone); if(r){ r.st = "done"; modSave(); if(document.querySelector(".mr-wrap")) admRerender(); else renderAgents(); } return; }
   if(g("[data-mod-test]")){
     const o = tgModal("Проверить текст", `<label class="cf-l">Сообщение</label><input class="tgm-in" id="mod-t" maxlength="200" placeholder="Введите текст для проверки" autocomplete="off"><p class="mod-res" id="mod-r"></p>`, `<button type="button" class="tgm-btn pri" data-cf-no>Закрыть</button>`);
@@ -12078,9 +12078,10 @@ document.addEventListener("click", e => {
   const cl = e.target.closest("[data-sec-clr]");
   if(cl){
     const what = cl.dataset.secClr, redraw = () => { const w = document.getElementById("sec-jr"); if(w) w.innerHTML = secJr(); const t = document.getElementById("sec-tiles"); if(t){ const D = SECSTAT.data; t.innerHTML = secTiles(D, D && D.days ? D.days[0] : null, D ? D.days : null); } };
-    if(SEC_T.clr !== what){ SEC_T.clr = what; redraw(); setTimeout(() => { if(SEC_T.clr === what){ SEC_T.clr = null; redraw(); } }, 4000); return; }
     SEC_T.clr = null;
-    if(typeof window.yadroSecClear === "function") window.yadroSecClear(what).catch(() => {}).then(() => { SECSTAT.at = 0; if(SECSTAT.data){ if(what === "log") SECSTAT.data.feed = []; else SECSTAT.data.days = SECSTAT.data.days.map(d => Object.assign({}, d, { ev: {}, ips: 0, act: 0 })); } redraw(); secFetch(true); });
+    const run = () => { if(typeof window.yadroSecClear === "function") window.yadroSecClear(what).catch(() => {}).then(() => { SECSTAT.at = 0; if(SECSTAT.data){ if(what === "log") SECSTAT.data.feed = []; else SECSTAT.data.days = SECSTAT.data.days.map(d => Object.assign({}, d, { ev: {}, ips: 0, act: 0 })); } redraw(); secFetch(true); tgToast(what === "log" ? "Журнал подключений очищен" : "Счётчики сброшены"); }); };
+    if(what === "log") admConfirm("Очистить журнал подключений?", "Все записи о входах и попытках входа будут удалены без возможности вернуть.", "Очистить", run);
+    else admConfirm("Сбросить счётчики?", "Счётчики событий и подключений обнулятся. Журнал подключений останется.", "Сбросить", run);
     return;
   }
   const jf = e.target.closest("[data-sec-f]");
