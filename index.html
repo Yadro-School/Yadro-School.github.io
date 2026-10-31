@@ -9036,11 +9036,11 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
       localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-roster", "1");
     }
   } catch(e) {}
-  /* списки классов 8–11 (кроме 8 «А»): один раз добавляем учеников */
+  /* списки классов 8–11 лежат в JR_ROST как списки, а не аккаунты: убираем учеников, добавленных пользователями раньше */
   try {
-    if(!localStorage.getItem("bai-adm-roster2")){
-      Object.entries(JR_ROST).forEach(([cl, L]) => { if(cl === "8 «А»") return; L.forEach(([id, nm]) => { if(!ADM.users.some(x => x.id === id)) ADM.users.push({ id, role: "student", name: nm, email: "", st: "on", v: { cls: cl } }); }); });
-      localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-roster2", "1");
+    if(!localStorage.getItem("bai-adm-roster3")){
+      ADM.users = ADM.users.filter(x => !(x.role === "student" && /^k\d+$/.test(x.id)));
+      localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-roster3", "1");
     }
   } catch(e) {}
   /* примеры родителей: зарегистрированные и нет (демо) */
@@ -9099,13 +9099,16 @@ function vaApply(){
 }
 const vaSave = () => { try { if(VA.role) localStorage.setItem("bai-va", JSON.stringify({ role: VA.role, uid: VA.uid })); else localStorage.removeItem("bai-va"); } catch(e) {} };
 const ALLG0 = Object.assign({}, ALLG), STUD_ME = "Александр";
+/* ученики из списков классов (ещё не зарегистрированы на платформе) */
+const rosterStud = () => Object.entries(JR_ROST).flatMap(([cl, L]) => L.map(([id, name]) => ({ id, name, role: "student", v: { cls: cl } })));
+const vaFindStud = id => ADM.users.find(x => x.id === id && x.role === "student") || rosterStud().find(x => x.id === id) || null;
 /* ученик, чьи оценки показываем: сам ученик или ребёнок родителя */
 function vaKid(uid){
-  const u = ADM.users.find(x => x.id === uid); if(!u) return null;
+  const u = ADM.users.find(x => x.id === uid) || vaFindStud(uid); if(!u) return null;
   if(u.role === "student") return u;
   if(u.role !== "parent") return null;
   const cl = admCls(u), nm = admKid(u).split(/\s+/);
-  return ADM.users.find(x => x.role === "student" && x.v && x.v.cls === cl && x.name.startsWith(nm.join(" "))) || null;
+  return rosterStud().find(x => x.v.cls === cl && x.name.startsWith(nm.join(" "))) || null;
 }
 function vaData(uid){
   const st = vaKid(uid); let nm = STUD_ME;
@@ -9151,7 +9154,7 @@ function rsSync(){
   const r = VA.role ? ROLE(VA.role) : null;
   document.querySelectorAll(".rs-cur").forEach(x => { x.textContent = r ? r.name : "Администратор"; });
   document.querySelectorAll("[data-rs-id]").forEach(b => b.classList.toggle("is-on", b.dataset.rsId === (VA.role || "")));
-  const who = VA.role ? ADM.users.filter(u => u.role === VA.role && u.st !== "off").sort((a, b) => ((a.v && a.v.cls || admCls(a)) === "8 «А»" ? 0 : 1) - ((b.v && b.v.cls || admCls(b)) === "8 «А»" ? 0 : 1) || a.name.localeCompare(b.name, "ru")) : [];
+  const who = VA.role ? (VA.role === "student" ? rosterStud() : ADM.users.filter(u => u.role === VA.role && u.st !== "off")).sort((a, b) => ((a.v && a.v.cls || admCls(a)) === "8 «А»" ? 0 : 1) - ((b.v && b.v.cls || admCls(b)) === "8 «А»" ? 0 : 1) || a.name.localeCompare(b.name, "ru")) : [];
   document.querySelectorAll("[data-rs-who]").forEach(w => { w.innerHTML = who.length > 1 ? `<div class="rs-wh">Чьими глазами смотреть</div>` + who.map(u => { const c = u.role === "student" ? (u.v && u.v.cls) || "" : u.role === "parent" ? admCls(u) : ""; return `<button class="rs-i rs-u ${u.id === VA.uid ? "is-on" : ""}" data-rs-u="${esc(u.id)}"><span class="rs-n">${esc(fioShort(u.name))}${c && c !== "Без класса" ? `<small>${esc(c)}</small>` : ""}</span></button>`; }).join("") : ""; });
   document.querySelectorAll("#rs-group,.rs-s").forEach(x => { x.classList.toggle("open", RS_OPEN); x.style.setProperty("--rc", r ? r.c : "var(--pen)"); });
   document.querySelectorAll("[data-rs-toggle]").forEach(b => b.setAttribute("aria-expanded", String(RS_OPEN)));
@@ -9160,10 +9163,10 @@ document.addEventListener("click", e => {
   if(e.target.closest("[data-rs-toggle]")){ RS_OPEN = !RS_OPEN; rsSync(); return; }
   const it = e.target.closest("[data-rs]");
   if(it){
-    const r = it.dataset.rs; RS_OPEN = !!r && ADM.users.filter(x => x.role === r).length > 1;
+    const r = it.dataset.rs; RS_OPEN = !!r && (r === "student" || ADM.users.filter(x => x.role === r).length > 1);
     if(!RS_OPEN && typeof SHEET_OPEN !== "undefined" && SHEET_OPEN) toggleSheet(false);
     if(!r){ if(VA.role) vaExit(); else rsSync(); }
-    else { const u = ADM.users.find(x => x.role === r); vaStart(r, u ? u.id : null); }
+    else { const u = r === "student" ? ADM.users.find(x => x.id === "u1") : ADM.users.find(x => x.role === r); vaStart(r, u ? u.id : null); }
     return;
   }
   const wu = e.target.closest("[data-rs-u]");
