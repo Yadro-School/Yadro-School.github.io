@@ -5487,6 +5487,24 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 .jr-aside .jr-w>header span{white-space:normal}
 .hs-bar{right:auto}
 .au-card .tgm-btn{display:flex;width:100%;box-sizing:border-box;justify-content:center;margin:8px 0 0}
+
+/* ===== панель администратора ===== */
+.ap{display:grid;gap:14px}.ap .panel{margin:0}
+.ap-sh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}.ap-sh h2{margin:0;font:500 18px var(--f-display)}
+.ap-ok{font-size:12.5px;font-weight:500;padding:4px 12px;border-radius:99px;background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}.ap-ok.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.ap-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:10px}
+.ap-t{appearance:none;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 3%,transparent);border-radius:16px;padding:10px 12px;display:grid;gap:2px;justify-items:start;text-align:left;font:inherit;color:var(--ink);cursor:pointer;transition:background-color .18s,transform .15s,border-color .18s}
+.ap-t b{font:500 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}.ap-t span{font-size:12px;color:var(--muted);line-height:1.25}
+.ap-t.warn b{color:var(--warn)}.ap-t.bad b{color:var(--toxic)}
+.ap-t:hover,.ap-l:hover,.ap-a:hover{background:var(--pen-soft);border-color:color-mix(in srgb,var(--pen) 35%,var(--line));transform:translateY(-2px)}.ap-t:active,.ap-l:active,.ap-a:active{transform:scale(.97)}
+.ap-ta{width:100%;box-sizing:border-box;resize:vertical;min-height:70px;font:inherit}.ap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.ap-acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ap-a{appearance:none;border:1px solid var(--line);background:none;border-radius:16px;padding:12px;display:flex;align-items:center;gap:12px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;transition:background-color .18s,transform .15s,border-color .18s}
+.ap-ai{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--pen-soft);color:var(--pen);flex:none}.ap-a b{display:block;font-weight:500;font-size:14px}.ap-a small{color:var(--muted);font-size:12px}
+.ap-links{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.ap-l{appearance:none;border:1px solid var(--line);background:none;border-radius:16px;padding:12px 14px;display:grid;gap:2px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;transition:background-color .18s,transform .15s,border-color .18s}.ap-l b{font-weight:500;font-size:14.5px}.ap-l small{color:var(--muted);font-size:12px}
+.ap-ev{list-style:none;margin:0;padding:0;display:grid;gap:2px}.ap-ev li{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:7px 8px;border-radius:10px;font-size:13.5px}.ap-ev li:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}.ap-ev time{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}.ap-ev em{font-style:normal;color:var(--muted);font-size:12.5px}
+@media(max-width:600px){.ap-ev li{grid-template-columns:44px minmax(0,1fr)}.ap-ev em{display:none}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
 <script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
@@ -9180,7 +9198,7 @@ const U_SEED = [
   { id: "u16", role: "teacher", name: "Мария Александровна", email: "", st: "on", v: { subj: "Химия, Биология", cls: "8 «А»", room: "401", hours: "18" } },
   { id: "u12", role: "admin", name: "Администратор платформы", email: "", st: "on", v: { level: "Полный" } },
 ];
-const ADM = { rv: (() => { try { const v = localStorage.getItem("bai-adm-rv"); return ["v1", "v2", "v3"].includes(v) ? v : "v1"; } catch(e) { return "v1"; } })(), pr: "teacher", dir: "", tab: "conn", role: "all", us: "az", grp: new Set(), q: "", form: null, confirmDel: null, anim: false, users: [], perm: {} };
+const ADM = { rv: (() => { try { const v = localStorage.getItem("bai-adm-rv"); return ["v1", "v2", "v3"].includes(v) ? v : "v1"; } catch(e) { return "v1"; } })(), pr: "teacher", dir: "", tab: "panel", role: "all", us: "az", grp: new Set(), q: "", form: null, confirmDel: null, anim: false, users: [], perm: {} };
 const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Object.fromEntries(RES.map((x, i) => [x[0], r.lv[i] || (x[0] === "monitoring" ? r.lv[1] : "n")])), acts: Object.fromEntries(ACTS.map(a => [a[0], r.acts.includes(a[0])])), sc: r.sc }]));
 (function(){
   let u = null, p = null;
@@ -9226,7 +9244,7 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
 function admSave(){ try { localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-perm", JSON.stringify(ADM.perm)); } catch(e) {} }
 function admNav(){
   const t = (id, n) => `<button class="adm-tab" data-adm-tab="${id}" aria-pressed="${ADM.tab === id}">${n}</button>`;
-  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
+  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("panel", "Панель")}${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
 }
 /* ---- режим «смотреть как» ---- */
 const VA = { role: null, uid: null, from: "admin" };
@@ -9349,6 +9367,7 @@ const initials = n => (String(n).trim().charAt(0) || "?").toUpperCase();
 /* «Фамилия И.»: сокращённый вид имени везде, где не хватает места */
 const fioShort = n => { const t = String(n).trim().split(/\s+/).filter(Boolean); if(t.length < 2) return t[0] || ""; const pat = /(ович|евич|ьич|овна|евна|ична|инична)$/i; return (pat.test(t[1]) && t.length === 2 ? t[0] + " " + t[1].charAt(0) + "." : t[0] + " " + t[1].charAt(0) + "."); };
 function admSection(el){
+  if(ADM.tab === "panel") return renderAdmPanel(el);
   if(ADM.tab === "users") return renderAdmUsers(el);
   if(ADM.tab === "docs") return renderAdmDocs(el);
   if(ADM.tab === "reports") return renderAdmReports(el);
@@ -9795,7 +9814,7 @@ document.addEventListener("click", e => {
   let x;
   if((x = g("[data-adm-tab]"))){
     const nt = x.dataset.admTab; if(nt === ADM.tab) return;
-    const o = ["conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
+    const o = ["panel", "conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
     ADM.tab = nt; ADM.form = null; ADM.confirmDel = null; ADM.grp.clear(); DOCS.open = null; ADM.anim = dir; admRerender(); if(nt === "agents" && !SYS.at) sysRun();
     return;
   }
@@ -11297,7 +11316,7 @@ function showTab(t, push){
   if(t === "monitoring") renderMonitoring();
   if(t === "calendar") renderCalendar();
   if(t === "tests") renderTests();
-  if(t === "admin"){ ADM.pill = null; requestAnimationFrame(() => requestAnimationFrame(admPill)); }
+  if(t === "admin"){ if(!document.querySelector("#admin .adm-nav")){ try { renderAdmin(); } catch(e) {} } ADM.pill = null; requestAnimationFrame(() => requestAnimationFrame(admPill)); }
   if(push){ try { history.replaceState(null, "", "#" + t); } catch(e) {} window.scrollTo({ top: 0 }); }
 }
 
@@ -11861,7 +11880,7 @@ function ovInfoHtml(){
   const weekHw = HW.filter(h => diff(h.dueD) >= -7 && diff(h.dueD) <= 7), doneW = weekHw.filter(isDone).length;
   const graded = STATS.filter(x => x.avg != null), overall = graded.length ? graded.reduce((a, x) => a + x.avg, 0) / graded.length : null;
   const nxt = TESTS.find(t => diff(t.d) >= 0), low = graded.slice().sort((a, b) => a.avg - b.avg)[0], late = HW.filter(h => !isDone(h) && isLate(h)).length;
-  const msgs = (typeof chatMsgs === "function" ? chatMsgs("klass") : []) || [], an = msgs.slice().reverse().find(m => m.f === "them" && m.x), annTxt = an ? an.x : "Новых объявлений нет. Важное от учителей появится здесь.", annWho = an && an.who ? an.who : "Классный руководитель";
+  const msgs = (typeof chatMsgs === "function" ? chatMsgs("klass") : []) || [], an = msgs.slice().reverse().find(m => m.f === "them" && m.x), annTxt0 = an ? an.x : "Новых объявлений нет. Важное от учителей появится здесь.", annWho0 = an && an.who ? an.who : "Классный руководитель", AN = annGet(), annTxt = AN.on && AN.text ? AN.text : annTxt0, annWho = AN.on && AN.text ? "Администрация" : annWho0;
   const stat = (v, l, c) => `<div class="ovi-s ${c || ""}"><b>${v}</b><span>${l}</span></div>`;
   const tips = [];
   if(late) tips.push(`Просрочено заданий: ${late}. Начните с самого старого.`);
@@ -12516,6 +12535,52 @@ document.addEventListener("click", e => {
   if(g("[data-act-csv]")){ const q = v => '"' + String(v).replace(/"/g, '""') + '"', rows = [["Время", "Тип", "Действие", "Кто"].map(q).join(";"), ...actFiltered().map(a => [new Date(a.t).toLocaleString("ru-RU"), (Object.fromEntries(ACT_TYPES)[a.k] || a.k), a.x, a.w].map(q).join(";"))]; const bl = new Blob(["﻿" + rows.join("\n")], { type: "text/csv;charset=utf-8" }), l = document.createElement("a"); l.href = URL.createObjectURL(bl); l.download = "journal-actions.csv"; document.body.appendChild(l); l.click(); l.remove(); return; }
   if(g("[data-act-clr]")){ admConfirm("Очистить журнал действий?", "Все записи журнала на этом устройстве будут удалены без возможности вернуть.", "Очистить", () => { ACT.list.length = 0; try { localStorage.setItem(ACT_KEY, "[]"); } catch(_) {} renderAdmActLog(document.getElementById("admin")); tgToast("Журнал действий очищен"); }); return; }
 });
+
+/* ================= Панель администратора ================= */
+const ANN_KEY = "bai-announce";
+function annGet(){ try { return JSON.parse(localStorage.getItem("bai-announce") || "null") || { on: false, text: "" }; } catch(e) { return { on: false, text: "" }; } }
+function admBackup(){
+  const o = {}; try { for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(/^bai-/.test(k)) o[k] = localStorage.getItem(k); } } catch(e) {}
+  const bl = new Blob([JSON.stringify({ at: new Date().toISOString(), build: BUILD, data: o }, null, 1)], { type: "application/json" }), l = document.createElement("a");
+  l.href = URL.createObjectURL(bl); l.download = "yadro-backup-" + isoDate(new Date()) + ".json"; document.body.appendChild(l); l.click(); l.remove();
+  actLog("adm", "Скачана копия данных платформы");
+}
+function renderAdmPanel(el){
+  const U = ADM.users, cnt = r => U.filter(x => x.role === r).length, stud = rosterStud().length, ann = annGet();
+  const par = U.filter(x => x.role === "parent"), parNo = par.filter(x => x.v && x.v.reg === "no").length;
+  const today0 = new Date().setHours(0, 0, 0, 0), actToday = ACT.list.filter(a => a.t >= today0).length, errs = ACT.list.filter(a => a.t >= today0 && a.k === "err").length + JS_ERRS.length;
+  const rep = typeof modOpenN === "function" ? modOpenN() : 0, issues = (typeof platformIssues === "function" ? platformIssues() : []).length;
+  const tile = (v, l, go, c) => `<button type="button" class="ap-t ${c || ""}" ${go ? `data-ap-go="${go}"` : ""}><b>${v}</b><span>${l}</span></button>`;
+  const act = (t, d, a, ic) => `<button type="button" class="ap-a" data-ap-do="${a}"><span class="ap-ai">${ic}</span><span><b>${t}</b><small>${d}</small></span></button>`;
+  const IC = { v: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>', d: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>', c: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>', r: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4h-4"/></svg>' };
+  el.innerHTML = admHead("Панель администратора", "") + `<div class="adm-body ap">
+    <section class="panel ap-st"><div class="ap-sh"><h2>Состояние сайта</h2><span class="ap-ok ${issues || errs ? "warn" : ""}">${issues || errs ? "Есть замечания" : "Всё в порядке"}</span></div>
+      <p class="muted">Версия ${esc(PLATFORM.v)} · сборка ${esc(BUILD)} · вход ${LOCK_INFO()} · данные на этом устройстве</p>
+      <div class="ap-tiles">${tile(U.length, "аккаунтов", "users")}${tile(stud, "учеников в списках", "users")}${tile(cnt("teacher") + STAFF.length, "педагогов", "users")}${tile(par.length ? (par.length - parNo) + "/" + par.length : "0", "родителей зарегистрировано", "users", parNo ? "warn" : "")}${tile(actToday, "действий сегодня", "actlog")}${tile(errs, "ошибок сегодня", "actlog", errs ? "bad" : "")}${tile(rep, "открытых рапортов", "reports", rep ? "warn" : "")}${tile(issues, "проблем с данными", "agents", issues ? "bad" : "")}</div></section>
+    <section class="panel ap-ann"><div class="ap-sh"><h2>Объявление на главной</h2><button type="button" class="tgsw sm ${ann.on ? "on" : ""}" data-ap-annsw role="switch" aria-checked="${ann.on}" aria-label="Показывать объявление"></button></div>
+      <p class="muted">Текст покажется в плашке «Объявление» на главной у учеников и родителей. Сейчас хранится на этом устройстве, общим станет вместе с сервером.</p>
+      <textarea class="tgm-in ap-ta" id="ap-ann" maxlength="300" rows="3" placeholder="Например: в понедельник классный час в 8:30, кабинет 214">${esc(ann.text)}</textarea>
+      <div class="ap-row"><span class="muted" id="ap-cnt">${ann.text.length}/300</span><button type="button" class="btn" data-ap-annsave>Сохранить объявление</button></div></section>
+    <section class="panel"><div class="ap-sh"><h2>Быстрые действия</h2></div><div class="ap-acts">
+      ${act("Посмотреть как ученик", "Любой ученик из списков", "va-student", IC.v)}${act("Посмотреть как родитель", "Ребёнок и его оценки", "va-parent", IC.v)}${act("Посмотреть как учитель", "Журнал по предметам", "va-teacher", IC.v)}
+      ${act("Проверить платформу", "Автопроверка данных и вёрстки", "check", IC.c)}${act("Скачать копию данных", "Все данные сайта одним файлом", "backup", IC.d)}${act("Обновить интерфейс", "Перерисовать все разделы", "refresh", IC.r)}</div></section>
+    <section class="panel"><div class="ap-sh"><h2>Разделы управления</h2></div><div class="ap-links">${[["users", "Пользователи", "аккаунты, коды приглашений"], ["roles", "Роли и права", "кто что видит и может"], ["security", "Безопасность", "входы, защита, бот"], ["conn", "Коннекторы", "Telegram, почта, ИИ"], ["agents", "Агенты", "система и автоматизация"], ["actlog", "Журнал действий", "что и кто делал"], ["reports", "Рапорты", "жалобы и обращения"], ["docs", "Правила", "документы лицея"]].map(([k, t, d]) => `<button type="button" class="ap-l" data-ap-go="${k}"><b>${t}</b><small>${d}</small></button>`).join("")}</div></section>
+    <section class="panel"><div class="ap-sh"><h2>Последние действия</h2><button type="button" class="link" data-ap-go="actlog">Весь журнал</button></div>${ACT.list.length ? `<ul class="ap-ev">${ACT.list.slice(-6).reverse().map(a => `<li><time>${new Date(a.t).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</time><span>${esc(a.x)}</span><em>${esc(a.w)}</em></li>`).join("")}</ul>` : `<p class="muted">Пока пусто: действия появятся по мере работы с сайтом.</p>`}</section></div>`;
+}
+const LOCK_INFO = () => { try { return CN.isAdmin ? "закрыт для всех, кроме владельца" : "по приглашению"; } catch(e) { return "—"; } };
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-ap-go]"))){ const nt = x.dataset.apGo; ADM.tab = nt; ADM.anim = "r"; admRerender(); if(nt === "agents" && !SYS.at) sysRun(); return; }
+  if(g("[data-ap-annsw]")){ const a = annGet(); a.on = !a.on; try { localStorage.setItem(ANN_KEY, JSON.stringify(a)); } catch(_) {} actLog("adm", a.on ? "Объявление на главной включено" : "Объявление на главной выключено"); renderAdmPanel(document.getElementById("admin")); return; }
+  if(g("[data-ap-annsave]")){ const t = (document.getElementById("ap-ann") || {}).value || "", a = { on: !!t.trim(), text: t.trim() }; try { localStorage.setItem(ANN_KEY, JSON.stringify(a)); } catch(_) {} actLog("adm", "Объявление на главной обновлено"); try { renderOverview(); } catch(_) {} renderAdmPanel(document.getElementById("admin")); tgToast("Объявление сохранено"); return; }
+  if((x = g("[data-ap-do]"))){ const a = x.dataset.apDo;
+    if(a === "backup") admBackup();
+    else if(a === "check"){ try { regRun(false); } catch(_) {} tgToast("Проверка запущена"); }
+    else if(a === "refresh"){ try { renderAll(); } catch(_) {} tgToast("Интерфейс обновлён"); }
+    else if(a.startsWith("va-")){ const r = a.slice(3), L = vaRoleUsers(r), u = r === "student" ? L.find(z => z.v.cls === "8 «А»" && z.id !== "u1") || L[0] : L[0]; vaStart(r, u ? u.id : null); showTab("overview", true); }
+    return; }
+});
+document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c = document.getElementById("ap-cnt"); if(c) c.textContent = e.target.value.length + "/300"; } });
 </script>
 
 
