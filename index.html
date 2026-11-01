@@ -7601,6 +7601,17 @@ function agStatPanel(a){
 document.addEventListener("click", e => { const x = e.target.closest("[data-agf]"); if(x){ AGF.f = x.dataset.agf; renderAgents(); } });
 document.addEventListener("click", e => { const f = e.target.closest("[data-agfl]"); if(f){ AGV.flt = f.dataset.agfl; AGV.anim = true; renderAgents(); return; } const fp = e.target.closest("[data-ag-flow],[data-ag-log]"); if(fp){ const isF = fp.hasAttribute("data-ag-flow"), sec = fp.closest(".agx"), cl = isF ? "o-flow" : "o-log", on = !sec.classList.contains(cl); sec.classList.toggle(cl, on); fp.setAttribute("aria-expanded", String(on)); if(isF){ AGV.flow = on; setTimeout(() => { try { drawFlow(); } catch(_) {} }, 340); } else AGV.log = on; } });
 
+const UPD = { at: 0, remote: "", new: false, err: "" };
+async function updCheck(){
+  try {
+    const r = await fetch(location.pathname + "?v=" + Date.now(), { cache: "no-store" }); if(!r.ok) throw new Error("HTTP " + r.status);
+    const m = /const BUILD = "(\d+)"/.exec(await r.text()); if(!m) throw new Error("номер сборки не найден");
+    UPD.remote = m[1]; UPD.new = +m[1] > +BUILD; UPD.err = ""; UPD.at = Date.now();
+  } catch(e) { UPD.err = "нет связи с сайтом"; }
+  if(typeof renderAgents === "function" && document.getElementById("adm-ag")) try { renderAgents(); } catch(e) {}
+}
+setTimeout(updCheck, 3000); setInterval(updCheck, 3600000);
+const newsFresh = () => !!NEWS.upd && Date.now() - NEWS.upd < 172800000;
 const AGENTS = () => [
   /* ---- сбор данных ---- */
   { id: "schedule", cat: "Сбор данных", name: "Агент расписания", st: "ok", stText: "Работает", run: "open",
@@ -7610,13 +7621,13 @@ const AGENTS = () => [
     tech: ["разбор файла → структура недели", "сверка с текущим расписанием", "запись в хранилище платформы"],
     last: () => SCHED_META && SCHED_META.at ? `Последний импорт: ${SCHED_META.source}, ${fmtWhen(SCHED_META.at)}` : "Импортов ещё не было, стоит расписание из примера",
     action: { label: "Открыть импорт", attr: "data-agent-open=\"schedule\"" } },
-  { id: "news", cat: "Сбор данных", name: "Агент новостей", st: NEWS_URL ? "ok" : "wait", stText: NEWS_URL ? "Работает" : "Нужен сервер", run: "none",
+  { id: "news", cat: "Сбор данных", name: "Агент новостей", st: newsFresh() ? "ok" : "wait", stText: newsFresh() ? "Работает" : "Нужен сервер", run: "none",
     role: "Каждое утро собирает 5 интересных новостей про технологии, науку, изобретения и школу и показывает их на главном экране.",
     from: ["Хабр", "N + 1", "Naked Science", "Индикатор", "Мел", "ПостНаука"], to: ["Главное"],
     who: "Сервер платформы, раз в день",
     tech: ["чтение RSS-лент источников", "отбор новостей, понятных школьнику", "короткий пересказ в 1–2 предложения"],
     needs: ["Сервер для чтения RSS (браузер не пускает к чужим лентам)"],
-    last: () => "Пока показываются только источники" },
+    last: () => newsFresh() ? `Свежие новости от ${newsAgo(new Date(NEWS.upd).toISOString())}` : `Показан снимок от ${new Date(NEWS.upd || Date.parse(NEWS_SNAP.at)).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}: сервер новости в базу не кладёт` },
   { id: "epos", cat: "Сбор данных", name: "Коннектор ЭПОС", st: "wait", stText: "Ждёт доступа", run: "none",
     role: "Будет сам забирать из ЭПОС расписание, оценки и домашние задания и обновлять платформу.",
     from: ["ЭПОС (API)"], to: ["Расписание", "Оценки", "Домашка"],
@@ -7682,14 +7693,12 @@ const AGENTS = () => [
     tech: ["роли: владелец · редактор · читатель", "журнал входов и изменений", "данные несовершеннолетних — только по согласию"],
     needs: ["Сервер платформы", "Вход через Госуслуги или школьную учётную запись"],
     last: () => "Пока доступ определяется ссылкой на артефакт" },
-  { id: "updater", cat: "Система", name: "Агент обновлений", st: "wait", stText: "Нужен сервер", run: "none",
-    role: "Будет проверять выход новой версии платформы, ставить её и откатывать назад, если что-то сломалось.",
-    from: ["Сборка платформы"], to: ["Платформа", "Журнал"],
-    who: "Сервер платформы",
-    tech: ["проверка версии раз в сутки", "установка без потери данных", "откат на прошлую сборку"],
-    needs: ["Сервер платформы", "Место для хранения прошлых сборок"],
-    last: () => `Текущая сборка ${PLATFORM.v} от ${PLATFORM.build}, обновляется вручную` },
-  /* ---- связь ---- */
+  { id: "updater", cat: "Система", name: "Агент обновлений", st: UPD.err || !UPD.at ? "wait" : "ok", stText: UPD.err || !UPD.at ? "Не проверено" : UPD.new ? "Есть новая версия" : "Работает", run: "none",
+    role: "Раз в час сверяет сборку на экране с опубликованной на сайте и сообщает, что вышла новая версия.",
+    from: ["Опубликованный сайт"], to: ["Платформа", "Журнал"],
+    who: "Встроен в платформу, проверяет при открытии и раз в час",
+    tech: ["чтение номера сборки с сайта без кэша", "сравнение с открытой сборкой", "откат делает владелец через историю GitHub"],
+    last: () => UPD.err ? "Не удалось проверить: " + UPD.err : !UPD.at ? "Проверка ещё не выполнялась" : UPD.new ? `Открыта сборка ${BUILD}, на сайте ${UPD.remote}: обновите страницу` : `Сборка ${BUILD} актуальна · проверено ${fmtWhen(UPD.at)}` },
   { id: "bot", cat: "Связь", name: "Чат-бот помощник", st: "ok", stText: "Работает", run: "ai", tpl: "chatbot",
     role: "Отвечает на вопросы по данным ученика: что задано, какая оценка нужна, когда контрольная.",
     from: ["Все разделы"], to: ["Чаты"],
@@ -8886,7 +8895,7 @@ function renderAgents(){
           ${a.builtin
             ? (a.id === "mod" ? modActs() : a.id === "qa" ? qaActs() : mode === "local" ? `<button class="btn primary" data-ag-local="${a.id}">${a.id === "backup" ? "Собрать копию" : "Проверить"}</button>`
               : mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}`
-              : mode === "open" ? `<button class="btn primary" ${a.action.attr}>${esc(a.action.label)}</button>` : `<span class="imp-status">Запуск появится, когда будет сервер.</span>`)
+              : mode === "open" ? `<button class="btn primary" ${a.action.attr}>${esc(a.action.label)}</button>` : `<span class="imp-status">${a.id === "updater" ? "Проверка идёт автоматически." : "Запуск появится, когда будет сервер."}</span>`)
             : `${mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}` : ""}
                <button class="btn" data-ag-edit="${a.id}">Настроить</button>
                <button class="btn" data-ag-toggle="${a.id}">${a.enabled === false ? "Включить" : "Выключить"}</button>
@@ -12415,7 +12424,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "509";
+const BUILD = "510";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
