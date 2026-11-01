@@ -1361,6 +1361,17 @@ code{font-family:var(--f-mono);font-size:.92em;background:var(--pick);padding:1p
 @media (max-width:900px){
   :root[data-theme="dark"] .bnav{--gl-bg:rgba(44,43,40,.6);--gl-edge:rgba(255,255,255,.08);--gl-rim:rgba(255,255,255,.06);--gl-shadow:0 10px 36px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px var(--gl-rim),inset 0 1px 0 rgba(255,255,255,.09),var(--gl-shadow)}
   :root[data-theme="dark"] .bsheet-in{background:rgba(44,43,40,.78);border-color:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 16px 48px rgba(0,0,0,.5)}}
+/* Нижнее меню: «Ещё» — отдельная круглая плашка справа */
+@media (max-width:900px){
+  #bnav{grid-template-columns:repeat(4,minmax(0,1fr));right:calc(max(12px,env(safe-area-inset-right,0px)) + var(--bn-h,64px) + 8px)}
+  .bnav.bnav-more{display:block;left:auto;right:max(12px,env(safe-area-inset-right,0px));width:var(--bn-h,64px);height:var(--bn-h,64px);padding:0;border-radius:50%}
+  .bnav-more .bnb{width:100%;height:100%;padding:0;border-radius:50%;align-content:center;transition:color .3s ease,background-color .3s ease,transform .2s ease}
+  .bnav-more .bnb:active{transform:scale(.94)}
+  .bnav-more .bnb.is-on,.bnav-more .bnb.is-open{background:var(--pen-soft);color:var(--pen)}
+  .bsheet-in{transform-origin:calc(100% - 32px) 100%}
+}
+@media (max-width:900px) and (hover:hover){.bnav-more .bnb:hover{background:var(--pen-soft)}}
+@media (max-width:340px){#bnav{padding-left:4px;padding-right:4px}#bnav .bnb{font-size:9px}#bnav .bnb span{letter-spacing:-.035em}}
 /* Итог — строго по центру высоты строки предмета (--rh задаёт скрипт, высота самой строки без раскрытой части) */
 .gt-line .off-cell,.gt-line:last-child .off-cell{align-items:flex-start;padding-top:3px;padding-bottom:0}
 .off-cell .g-final,.off-cell .g-none{height:var(--rh,34px);min-height:34px}
@@ -5780,7 +5791,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   <span class="tab-pill" id="tab-pill-g" aria-hidden="true"></span>
 </nav>
 <div class="bsheet" id="bsheet" aria-hidden="true"><div class="bsheet-bg" data-bs-close></div><div class="bsheet-in" role="dialog" aria-label="Все разделы"><div class="bsheet-list" id="bsheet-list"></div></div></div>
-<div class="bnav" id="bnav" aria-label="Разделы"></div>
+<div class="bnav" id="bnav" aria-label="Разделы"></div><div class="bnav bnav-more" id="bnav-more"></div>
 </div>
 
 <script>
@@ -12271,16 +12282,18 @@ const bnIcon = t => { const sv = t && t.querySelector(".ti-a"); return sv ? sv.o
 function buildBnav(){
   const el = document.getElementById("bnav"); if(!el) return;
   el.innerHTML = `<span class="bnav-pill" aria-hidden="true"></span>` +
-    BN_MAIN.filter(id => vaOk(id)).map(id => `<button class="bnb ${CLOSED[id] ? "is-closed" : ""}" data-bn="${id}" aria-label="${BN_SHORT[id]}${CLOSED[id] ? ", скоро" : ""}">${bnIcon(document.getElementById("tab-" + id))}<span>${BN_SHORT[id]}</span></button>`).join("") +
-    `<button class="bnb" data-bn="more" aria-haspopup="dialog" aria-expanded="false" aria-label="Ещё разделы"><svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg><span>Ещё</span></button>`;
+    BN_MAIN.filter(id => vaOk(id)).map(id => `<button class="bnb ${CLOSED[id] ? "is-closed" : ""}" data-bn="${id}" aria-label="${BN_SHORT[id]}${CLOSED[id] ? ", скоро" : ""}">${bnIcon(document.getElementById("tab-" + id))}<span>${BN_SHORT[id]}</span></button>`).join("");
+  const mo = document.getElementById("bnav-more"); if(mo) mo.innerHTML = `<button class="bnb" data-bn="more" aria-haspopup="dialog" aria-expanded="false" aria-label="Ещё разделы"><svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg><span>Ещё</span></button>`;
   syncBnav(true);
 }
 function syncBnav(instant){
   const el = document.getElementById("bnav"); if(!el || !el.offsetWidth) return;
   const cur = BN_MAIN.includes(state.tab) ? state.tab : "more";
   el.querySelectorAll(".bnb").forEach(b => { const on = b.dataset.bn === cur; b.classList.toggle("is-on", on); if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-  const more = el.querySelector('[data-bn="more"]'); if(more){ more.classList.toggle("is-open", SHEET_OPEN); more.setAttribute("aria-expanded", String(SHEET_OPEN)); }
-  const b = el.querySelector(`[data-bn="${cur}"]`), pill = el.querySelector(".bnav-pill"); if(!b || !pill) return;
+  const more = document.querySelector('#bnav-more [data-bn="more"]'); if(more){ more.classList.toggle("is-open", SHEET_OPEN); more.classList.toggle("is-on", cur === "more"); more.setAttribute("aria-expanded", String(SHEET_OPEN)); }
+  { const h = el.getBoundingClientRect().height; if(h) document.documentElement.style.setProperty("--bn-h", h + "px"); }
+  const b = el.querySelector(`[data-bn="${cur}"]`), pill = el.querySelector(".bnav-pill"); if(!pill) return;
+  if(!b){ pill.style.opacity = "0"; return; } pill.style.opacity = "";
   if(instant) pill.style.transition = "none";
   const ex = 0, pad = b.offsetTop, pw = b.offsetWidth + 2 * ex;
   const left = Math.max(pad, Math.min(b.offsetLeft - ex, el.clientWidth - pad - pw));
@@ -12424,7 +12437,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "510";
+const BUILD = "511";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
