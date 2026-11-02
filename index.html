@@ -6240,7 +6240,7 @@ let doneMap = {};
 try { doneMap = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { doneMap = {}; }
 const isDone = h => (h.id in doneMap) ? !!doneMap[h.id] : !!h.done;
 const isLate = h => !isDone(h) && diff(h.dueD) < 0;
-function setDone(id, v){ doneMap[id] = v; try { localStorage.setItem(LS, JSON.stringify(doneMap)); } catch(e) {} }
+function setDone(id, v){ doneMap[id] = v; try { localStorage.setItem(LS, JSON.stringify(doneMap)); } catch(e) {} try { clearTimeout(setDone.t); setDone.t = setTimeout(() => remindPush(), 3000); } catch(e) {} }
 function hwRank(a, b){
   const la = isLate(a), lb = isLate(b);
   if(la !== lb) return la ? -1 : 1;
@@ -7638,13 +7638,13 @@ const AGENTS = () => [
     tech: ["разбор файла → структура недели", "сверка с текущим расписанием", "запись в хранилище платформы"],
     last: () => SCHED_META && SCHED_META.at ? `Последний импорт: ${SCHED_META.source}, ${fmtWhen(SCHED_META.at)}` : "Импортов ещё не было, стоит расписание из примера",
     action: { label: "Открыть импорт", attr: "data-agent-open=\"schedule\"" } },
-  { id: "news", cat: "Сбор данных", name: "Агент новостей", st: newsFresh() ? "ok" : "wait", stText: newsFresh() ? "Работает" : "Нужен сервер", run: "none",
-    role: "Каждое утро собирает 5 интересных новостей про технологии, науку, изобретения и школу и показывает их на главном экране.",
-    from: ["Хабр", "N + 1", "Naked Science", "Индикатор", "Мел", "ПостНаука"], to: ["Главное"],
-    who: "Сервер платформы, раз в день",
-    tech: ["чтение RSS-лент источников", "отбор новостей, понятных школьнику", "короткий пересказ в 1–2 предложения"],
-    needs: ["Сервер для чтения RSS (браузер не пускает к чужим лентам)"],
-    last: () => newsFresh() ? `Свежие новости от ${newsAgo(new Date(NEWS.upd).toISOString())}` : `Показан снимок от ${new Date(NEWS.upd || Date.parse(NEWS_SNAP.at)).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}: сервер новости в базу не кладёт` },
+  { id: "news", cat: "Сбор данных", name: "Агент новостей", st: newsFresh() ? "ok" : "wait", stText: newsFresh() ? "Работает" : "Ждёт сбора", run: "none",
+    role: "Каждое утро собирает свежие новости: сначала ВШЭ и пермский кампус, потом наука, изобретения, технологии и школа.",
+    from: ["ВШЭ – Пермь", "НИУ ВШЭ", "N + 1", "Naked Science", "Индикатор", "Хабр", "Мел", "ПостНаука"], to: ["Главное"],
+    who: "Сервер платформы, утренний таймер; вручную — /news в боте",
+    tech: ["чтение RSS-лент источников", "свежие за 2 недели, ВШЭ первыми", "короткий текст и картинка из ленты", "если ленты не ответили — остаются прежние"],
+    needs: newsFresh() ? undefined : ["Новая версия функции yadro-api", "Утренний таймер или /news в боте"],
+    last: () => newsFresh() ? `Свежие новости от ${newsAgo(new Date(NEWS.upd).toISOString())}` : `Показан снимок от ${new Date(NEWS.upd || Date.parse(NEWS_SNAP.at)).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}: сервер ещё не собрал новости (утренний таймер или /news в боте)` },
   { id: "epos", cat: "Сбор данных", name: "Коннектор ЭПОС", st: "wait", stText: "Ждёт доступа", run: "none",
     role: "Будет сам забирать из ЭПОС расписание, оценки и домашние задания и обновлять платформу.",
     from: ["ЭПОС (API)"], to: ["Расписание", "Оценки", "Домашка"],
@@ -7739,13 +7739,13 @@ const AGENTS = () => [
     who: "Работает на странице, в момент набора и отправки",
     tech: ["быстрая проверка во время набора: подсказка и отказ в отправке", "углублённая проверка после отправки: ловит маскировку, удаляет сообщение", "первое нарушение — предупреждение, повторное — рапорт администрации"],
     last: () => `Проверено ${MOD.checked}, не отправлено ${MOD.blocked}, удалено ${MOD.removed}` },
-  { id: "notify", cat: "Связь", name: "Напоминалка", st: "wait", stText: "Нужен сервер", run: "none",
-    role: "Утром пришлёт план дня, накануне напомнит о сроках домашки и контрольных.",
-    from: ["Домашка", "Контрольные"], to: ["Telegram", "Почта"],
-    who: "Сервер платформы, по расписанию",
-    tech: ["отправка в 7:30 и за день до срока", "канал: Telegram-бот или почта", "токен хранится только на сервере"],
-    needs: ["Сервер, работающий постоянно", "Telegram-бот или почтовый отправитель", "Согласие родителей на рассылку"],
-    last: () => "Страница сама отправлять уведомления не может" }
+  { id: "notify", cat: "Связь", name: "Напоминалка", st: tgLinked() ? "ok" : "wait", stText: tgLinked() ? "Работает" : "Нужен бот", run: "none",
+    role: "Утром присылает в Telegram план дня, вечером — что сдать и какие работы завтра.",
+    from: ["Расписание", "Домашка", "Контрольные"], to: ["Telegram"],
+    who: "Сервер платформы, по таймерам 7:00 и 19:00 по Перми; команды /plan и /zavtra в боте",
+    tech: ["сайт владельца раз в полчаса передаёт план на 10 дней", "утром: уроки, работы и сдачи дня", "вечером: несданное и работы на завтра", "токен бота только на сервере"],
+    needs: tgLinked() ? undefined : ["Привязать Telegram-бот на вкладке «Безопасность»"],
+    last: () => rmdLast() }
 ];
 /* Каталог шаблонов: что агент делает, что нужно для подключения и где что сделать */
 const TEMPLATES = [
@@ -8912,7 +8912,7 @@ function renderAgents(){
           ${a.builtin
             ? (a.id === "mod" ? modActs() : a.id === "qa" ? qaActs() : mode === "local" ? `<button class="btn primary" data-ag-local="${a.id}">${a.id === "backup" ? "Собрать копию" : "Проверить"}</button>`
               : mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}`
-              : mode === "open" ? `<button class="btn primary" ${a.action.attr}>${esc(a.action.label)}</button>` : `<span class="imp-status">${a.id === "updater" ? "Проверка идёт автоматически." : "Запуск появится, когда будет сервер."}</span>`)
+              : mode === "open" ? `<button class="btn primary" ${a.action.attr}>${esc(a.action.label)}</button>` : `<span class="imp-status">${a.id === "updater" ? "Проверка идёт автоматически." : a.id === "notify" ? "Сам по таймерам; в боте /plan и /zavtra." : a.id === "news" ? "Сам каждое утро; в боте /news." : "Запуск появится, когда будет сервер."}</span>`)
             : `${mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}` : ""}
                <button class="btn" data-ag-edit="${a.id}">Настроить</button>
                <button class="btn" data-ag-toggle="${a.id}">${a.enabled === false ? "Включить" : "Выключить"}</button>
@@ -9046,6 +9046,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
   if(CN.isAdmin && typeof rsBuild === "function") rsBuild();
+  if(CN.isAdmin && user && typeof window.yadroTg === "function") remindStart(user);
   try { vaApply(); const h0 = (location.hash || "").slice(1); if(h0 && h0 !== state.tab) showTab(h0, false); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
   /* после обновления страницы остаёмся в выбранном режиме просмотра («от лица…») и на той же вкладке */
   if(CN.isAdmin){ try { const sv = JSON.parse(localStorage.getItem("bai-va") || "null"); if(sv && sv.role && ADM.perm[sv.role]){ vaStart(sv.role, sv.uid); const h = (location.hash || "").slice(1); if(h) showTab(h, false); } } catch(e) {} }
@@ -12087,6 +12088,35 @@ const SEC_C = [   // id, название, состояние (true / false / "p
 const TGS = { d: null, err: "", busy: false, at: 0, link: "", msg: "", ask: false, poll: 0 };
 const tgErr = e => { const m = String(e && e.message || e || ""); return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m.length > 180 ? m.slice(0, 180) + "…" : m || "Сервер не ответил"; };
 function tgRedraw(){ const e = document.getElementById("sec-tg"); if(e) e.innerHTML = tgHtml(); }
+/* ---- Напоминалка: план на 10 дней уходит на сервер (data/users/<id>/remind), бот присылает его утром и вечером ---- */
+const RMD = { uid: "", at: 0, err: "" };
+function tgLinked(){ try { return !!(TGS.d && TGS.d.linked); } catch(e) { return false; } }
+function rmdLast(){ try { return RMD.err ? "План не передан: " + RMD.err : RMD.at ? "План передан на сервер " + fmtWhen(RMD.at) : "План ещё не передавался"; } catch(e) { return "План ещё не передавался"; } }
+function remindData(){
+  const days = {};
+  for(let i = 0; i < 10; i++){ const d = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + i), L = holidayOf(d) ? [] : lessonsFor(d).filter(x => x.sub && x.sid);
+    if(L.length) days[isoDate(d)] = { l: L.map(x => [x.num, x.sub.name, x.time[0] || "", x.room || ""]) }; }
+  const lim = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + 10);
+  return { days,
+    hw: HW.filter(h => h.dueD >= TODAY && h.dueD < lim).map(h => ({ s: subjName(h.s), t: String(h.text || "").slice(0, 200), due: isoDate(h.dueD), done: isDone(h) })),
+    tests: TESTS.filter(t => t.d >= TODAY && t.d < lim).map(t => ({ s: subjName(t.s), type: t.type || "", topic: t.topic || "", d: isoDate(t.d) })) };
+}
+async function remindPush(force){
+  try {
+    if(!RMD.uid || !DB) return; const body = remindData(), h = JSON.stringify(body);
+    let last = null; try { last = JSON.parse(localStorage.getItem("bai-remind") || "null"); } catch(e) {}
+    if(!force && last && last.h === h && Date.now() - last.t < 6 * 36e5) return;
+    await DB.doc("data/users/" + RMD.uid + "/remind").set({ ...body, at: Date.now() });
+    RMD.at = Date.now(); RMD.err = ""; try { localStorage.setItem("bai-remind", JSON.stringify({ h, t: RMD.at })); } catch(e) {}
+  } catch(e) { RMD.err = String(e && e.message || e); }
+}
+async function remindStart(user){
+  try { RMD.uid = await user.id(); } catch(e) { return; }
+  try { const l = JSON.parse(localStorage.getItem("bai-remind") || "null"); if(l) RMD.at = l.t; } catch(e) {}
+  setTimeout(remindPush, 4000); setInterval(remindPush, 30 * 60e3);
+  tgCall("tg_status").then(j => { if(!TGS.d) TGS.d = j; try { if(document.getElementById("adm-ag")) renderAgents(); } catch(e) {} }).catch(() => {});
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") remindPush(); });
+}
 function tgCall(a, b){ return typeof window.yadroTg === "function" ? window.yadroTg(a, b) : Promise.reject(new Error("Работает на сайте Ядра, не внутри Claude")); }
 function tgFetch(force){
   if(TGS.busy || (!force && TGS.at && Date.now() - TGS.at < 60000)) return;
@@ -12107,11 +12137,11 @@ function tgHtml(){
     <div class="sec-tgb"><button type="button" class="btn" data-tg="retry">Проверить</button></div>`;
   if(!d.linked) return head + `<p class="sec-demo">${d.pull ? (d.seen ? "Воркер Cloudflare на связи." : "Воркер Cloudflare ещё не выходил на связь: он заходит раз в минуту.") : "Токен на сервере есть."} Осталось привязать ваш Telegram: бот будет писать только вам.</p>
     <div class="sec-tgb">${TGS.link ? `<a class="btn" href="${esc(TGS.link)}" target="_blank" rel="noopener">Открыть бота в Telegram</a><span class="sec-demo">Нажмите там Start. Ссылка действует 10 минут.</span>` : `<button type="button" class="btn ${TGS.busy ? "busy" : ""}" data-tg="link" ${TGS.busy ? "disabled" : ""}>Привязать Telegram</button>`}</div>${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}${TGS.msg && /посредник/.test(TGS.msg) ? tgRelay() : ""}`;
-  return head + `<p class="sec-demo">Привязан${d.name ? ": " + esc(d.name) : ""}. Команды в боте: /status — сводка, /help.</p>
-    <div class="sec-fs">${tog("alert", "Тревоги", "Подбор кода, сканеры, лимиты")}${tog("login", "Входы", "Сообщение при каждом входе на сайт")}${tog("daily", "Сводка", "Утренняя сводка за вчера")}</div>
+  return head + `<p class="sec-demo">Привязан${d.name ? ": " + esc(d.name) : ""}. Команды в боте: /status — сводка, /plan — план на сегодня, /zavtra — что на завтра, /news — обновить новости.</p>
+    <div class="sec-fs">${tog("alert", "Тревоги", "Подбор кода, сканеры, лимиты")}${tog("login", "Входы", "Сообщение при каждом входе на сайт")}${tog("daily", "Сводка", "Утренняя сводка за вчера")}${tog("remind", "Напоминания", "Утром план дня, вечером сроки на завтра")}</div>
     <div class="sec-tgb"><button type="button" class="btn" data-tg="test">Отправить тест</button><button type="button" class="sec-fb ${TGS.ask ? "ask sec-clr" : ""}" data-tg="unlink">${TGS.ask ? "Точно отвязать?" : "Отвязать"}</button></div>
     ${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}
-    <details class="sec-tgd"><summary>Чтобы сводка приходила сама каждое утро</summary><p>В Яндекс Облаке: Cloud Functions → Триггеры → Создать → Таймер. Cron-выражение <b>0 4 * * ? *</b> (это 9:00 по Перми), функция <b>yadro-api</b>, последняя версия. Больше ничего не нужно.</p></details>`;
+    <details class="sec-tgd"><summary>Чтобы сводка и напоминания приходили сами</summary><p>В Яндекс Облаке: Cloud Functions → Триггеры → Создать → Таймер, функция <b>yadro-api</b>. Утро (сводка, план дня, новости): <b>0 2 * * ? *</b> — это 7:00 по Перми. Вечер (сроки на завтра): второй таймер <b>0 14 * * ? *</b> — 19:00 по Перми.</p></details>`;
 }
 const SEC_PR = { crit: ["Критично", "bad"], imp: ["Важно", "warn"], nice: ["Желательно", "off"] };
 const secState = c => c === "lock" ? (SECSTAT.data && SECSTAT.data.lock ? "ok" : "off") : c === "live" ? (SECSTAT.data ? "ok" : "off") : c === "part" ? "part" : c ? "ok" : "off";
@@ -12443,7 +12473,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "512";
+const BUILD = "513";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
