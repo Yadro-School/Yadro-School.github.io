@@ -9495,7 +9495,7 @@ async function schSave(){
   catch(e) { SCH.msg = "Не сохранилось: " + e.message; }
   SCH.busy = false; renderAdmRefresh();
 }
-async /* оценки ученика из журнала: сервер кладёт копию в grades/<его id> (сопоставление по полному ФИО) */
+/* оценки ученика из журнала: сервер кладёт копию в grades/<его id> (сопоставление по полному ФИО) */
 async function gradesForMe(uid){
   if(!DB || !uid) return;
   try {
@@ -13275,7 +13275,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "523";
+const BUILD = "524";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
