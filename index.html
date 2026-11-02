@@ -1372,6 +1372,89 @@ code{font-family:var(--f-mono);font-size:.92em;background:var(--pick);padding:1p
 }
 @media (max-width:900px) and (hover:hover){.bnav-more .bnb:hover{background:var(--pen-soft)}}
 @media (max-width:340px){#bnav{padding-left:4px;padding-right:4px}#bnav .bnb{font-size:9px}#bnav .bnb span{letter-spacing:-.035em}}
+/* ===== Журнал директора и завуча (обзор классов) ===== */
+.jro{max-width:760px;display:grid;gap:10px}
+.jro-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.jro-sub{font-size:13px;color:var(--muted)}
+.jro-hb{display:flex;gap:6px;flex-wrap:wrap}
+.jro-h1{display:flex;align-items:center;gap:8px}
+.jro-back{appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:.8em;line-height:1;padding:2px 8px 4px;border-radius:10px;cursor:pointer}
+.jro-back:hover{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}
+.jro-chs{display:flex;gap:6px;flex-wrap:wrap}
+.jro-ch{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:500 13px var(--f-body);padding:6px 13px;border-radius:999px;cursor:pointer}
+.jro-ch:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
+.jro-ch.on{background:var(--pen-soft);border-color:transparent;color:var(--pen)}
+.jro-lab{margin:6px 2px 0;font-size:12px;color:var(--muted)}
+.jro-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (min-width:700px){.jro-tiles{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.jro-tile{position:relative;appearance:none;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 12px;cursor:pointer;display:grid;gap:2px;color:var(--ink);font:inherit}
+.jro-tile b{font:500 16px var(--f-body)}.jro-tile span{font-size:12px;color:var(--muted)}
+.jro-tile:hover{border-color:color-mix(in srgb,var(--pen) 35%,var(--line));background:color-mix(in srgb,var(--pen) 5%,var(--surface))}
+.jro-tile em{position:absolute;top:8px;right:9px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:color-mix(in srgb,var(--margin) 22%,transparent);color:var(--ink);font:500 11px/18px var(--f-body);font-style:normal;text-align:center}
+.jro-note,.jro-mut{margin:0;font-size:12px;color:var(--muted)}
+.jro-kps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.jro-kps.sm{grid-template-columns:repeat(3,minmax(0,1fr))}
+.jro-kp{appearance:none;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:8px 10px;cursor:pointer;display:grid;gap:1px;color:var(--ink);font:inherit;min-width:0}
+.jro-kp.jro-st{cursor:default}
+.jro-kp b{font:500 18px var(--f-body);display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}.jro-kp b i{font-style:normal;font-size:11px}
+.jro-kp span{font-size:11px;line-height:1.25;color:var(--muted);overflow-wrap:anywhere}
+.jro{animation:popIn .22s cubic-bezier(.2,.8,.3,1)}
+.jro-more{appearance:none;border:0;background:none;font:500 12px var(--f-body);color:var(--ink);opacity:.75;padding:6px 4px;text-align:left;cursor:pointer;border-radius:8px}.jro-more:hover{opacity:1;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.jro-tile:active,.jro-kp:not(.jro-st):active,.jro-b:active,.jro-rh:active{scale:.97}
+.jro-kp:not(.jro-st):hover{border-color:color-mix(in srgb,var(--pen) 35%,var(--line))}
+.jro-up{color:var(--good)}.jro-dn{color:var(--toxic)}
+.jro-dd{position:relative}
+.jro-ddb{appearance:none;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:10px 14px;font:14px var(--f-body);color:var(--ink);cursor:pointer}
+.jro-ddb em{font-style:normal;color:var(--muted)}.jro-dd.on .jro-ddb{border-color:color-mix(in srgb,var(--pen) 45%,var(--line))}
+.jro-dd.on .jro-ddb svg{transform:rotate(180deg)}.jro-ddb svg{transition:transform .25s}
+.jro-ddl{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);display:grid;gap:1px;padding:5px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(20,12,6,.16);max-height:min(60dvh,420px);overflow:auto;animation:popIn .18s cubic-bezier(.2,.8,.3,1)}
+.jro-ddl button{appearance:none;border:0;background:none;display:flex;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:10px;font:14px var(--f-body);color:var(--ink);cursor:pointer;text-align:left}
+.jro-ddl button span:last-child{color:var(--muted)}.jro-ddl button:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.jro-ddl button.on{background:var(--pen-soft);color:var(--pen)}.jro-ddl button.on span:last-child{color:var(--pen)}
+.jro-at{border-radius:14px;background:color-mix(in srgb,var(--margin) 13%,var(--surface));padding:8px 10px 6px;display:grid}
+.jro-at p{margin:0 4px 4px;font:500 12px var(--f-body);color:var(--ink)}
+.jro-kv{appearance:none;border:0;background:none;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);font:14px var(--f-body);color:var(--ink);text-align:left;cursor:pointer;border-radius:0}
+.jro-kv>span:last-child{color:var(--muted);text-align:right;display:flex;gap:8px;align-items:baseline;justify-content:flex-end}
+.jro-kv small{font-size:11px;color:var(--muted)}.jro-kv b{font-weight:500;color:var(--ink)}.jro-kv b.dn{color:var(--toxic)}
+button.jro-kv:hover,summary.jro-kv:hover{background:color-mix(in srgb,var(--ink) 5%,transparent);border-radius:9px}
+.jro-kv.jro-st{cursor:default}.jro-at .jro-kv{border-bottom:0;padding:5px 4px}.jro-at .jro-kv>span:last-child{color:var(--ink);opacity:.75;font-size:13px}
+.jro-th{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);padding:2px 6px 0}
+.jro-list{border-top:1px solid var(--line)}
+.jro-r{border-bottom:1px solid var(--line)}.jro-r.open{background:color-mix(in srgb,var(--ink) 3%,transparent);border-radius:12px}
+.jro-rh{appearance:none;border:0;background:none;width:100%;display:flex;align-items:center;gap:10px;padding:8px 6px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;border-radius:12px}
+.jro-rh:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.jro-av{width:32px;height:32px;flex:0 0 32px;border-radius:50%;background:color-mix(in srgb,var(--ink) 7%,transparent);display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.jro-n{flex:1;min-width:0;display:grid}.jro-n b{font:500 14px var(--f-body)}.jro-n small{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jro-last{display:flex;gap:4px}.jro-last i{font-style:normal;font-size:12px;color:var(--muted);min-width:14px;text-align:center}
+.jro-tr{font-size:11.5px;min-width:34px;text-align:right}
+.jro-v{font:500 15px var(--f-body);min-width:34px;text-align:right}
+.jro-ex{padding:2px 8px 10px 48px;display:grid;gap:2px;animation:popIn .2s cubic-bezier(.2,.8,.3,1)}
+.tgm .jro-ex{padding:2px 4px 8px 12px}
+.jro-mk{appearance:none;border:0;background:none;text-align:left;font:13px var(--f-body);color:var(--muted);padding:4px 6px;border-radius:8px;cursor:default}
+.jro-mk b{color:var(--ink);font-weight:500}
+.jro-sl .jro-kv{padding:6px 4px;font-size:13px}
+.jro-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.jro-b{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 13px var(--f-body);padding:8px 13px;border-radius:12px;cursor:pointer}
+.jro-b:hover{background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
+.jro-b.p{background:var(--pen-soft);border-color:transparent;color:var(--pen)}.jro-b.p:hover{background:color-mix(in srgb,var(--pen) 22%,var(--surface))}
+.jro-b.sm{padding:6px 11px;font-size:12px}
+.jro-over{margin-bottom:6px}
+.jro-seg{display:flex;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:12px;padding:3px;gap:2px}
+.jro-seg button{flex:1;appearance:none;border:0;background:none;font:500 13px var(--f-body);color:var(--muted);padding:7px 6px;border-radius:9px;cursor:pointer}
+.jro-seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.jro-wd{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.jro-wd div{border-radius:12px;background:color-mix(in srgb,var(--ink) 5%,transparent);padding:7px 4px;text-align:center;font-size:11px;color:var(--muted)}
+.jro-wd b{display:block;font:500 15px var(--f-body);color:var(--ink)}
+.jro-lk{appearance:none;border:0;background:none;padding:2px 6px;margin-left:-6px;border-radius:8px;font:500 13px var(--f-body);color:var(--ink);cursor:pointer}.jro-lk:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.jro-det summary{list-style:none}.jro-det summary::-webkit-details-marker{display:none}
+.jro-ed{min-height:120px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:15px/1.9 var(--f-body);color:var(--ink);background:var(--paper);outline:none}
+.jro-ed:focus{border-color:color-mix(in srgb,var(--pen) 45%,var(--line))}
+.jro-pl{display:inline-block;background:var(--pen-soft);color:var(--pen);border-radius:7px;padding:0 7px;line-height:1.6;margin:0 1px;user-select:none}
+.jro-add{display:flex;flex-wrap:wrap;gap:6px}
+.jro-add button{appearance:none;border:1px solid color-mix(in srgb,var(--pen) 35%,var(--line));background:none;color:var(--pen);font:13px var(--f-body);padding:6px 11px;border-radius:999px;cursor:pointer}
+.jro-add button:hover{background:var(--pen-soft)}
+.jro-ta{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:15px/1.5 var(--f-body);color:var(--ink);background:var(--paper);resize:vertical}
+@media (max-width:420px){.jro-kp span{font-size:10px}.jro-kp b{font-size:16px}.jro-kp{padding:7px 8px}.jro-tile{padding:9px 10px}.jro-tile b{font-size:15px}}
 /* Итог — строго по центру высоты строки предмета (--rh задаёт скрипт, высота самой строки без раскрытой части) */
 .gt-line .off-cell,.gt-line:last-child .off-cell{align-items:flex-start;padding-top:3px;padding-bottom:0}
 .off-cell .g-final,.off-cell .g-none{height:var(--rh,34px);min-height:34px}
@@ -9042,11 +9125,12 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; if(ME_ROLE && ME_ROLE !== "student") buildBnav(); } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
   if(CN.isAdmin && typeof rsBuild === "function") rsBuild();
-  if(CN.isAdmin && user && typeof window.yadroTg === "function") remindStart(user);
+  if(CN.isAdmin && user && typeof window.yadroTg === "function"){ remindStart(user); jrSyncStart(); }
   try { vaApply(); const h0 = (location.hash || "").slice(1); if(h0 && h0 !== state.tab) showTab(h0, false); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
   /* после обновления страницы остаёмся в выбранном режиме просмотра («от лица…») и на той же вкладке */
   if(CN.isAdmin){ try { const sv = JSON.parse(localStorage.getItem("bai-va") || "null"); if(sv && sv.role && ADM.perm[sv.role]){ vaStart(sv.role, sv.uid); const h = (location.hash || "").slice(1); if(h) showTab(h, false); } } catch(e) {} }
@@ -10673,7 +10757,43 @@ const jrNm3 = f => { const w = f.split(" "); return w.length < 3 ? f : w[0] + " 
 const jrNmIn = f => { const w = f.split(" "); return w.length < 2 ? f : w[0] + " " + w[1][0] + "." + (w.length > 2 ? " " + w[w.length - 1][0] + "." : ""); };
 const jrNmHtml = f => `<span class="jr-nw"><span class="nf">${esc(jrNm3(f))}</span><span class="ni">${esc(jrNmIn(f))}</span></span>`;
 const JD = (() => { try { const j = JSON.parse(localStorage.getItem("bai-journal-v3")); return j && typeof j === "object" ? j : {}; } catch(e) { return {}; } })();
-const jrSave = () => { try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); } catch(e) {} clearTimeout(jrSave._t); jrSave._t = setTimeout(() => { try { if(typeof vaData === "function") vaData(VA.uid); } catch(e) {} }, 80); };
+/* ---- синхронизация журнала через сервер: каждый ключ журнала (предмет|четверть|класс) — документ jr/<код>; при расхождении побеждает более новый ---- */
+const JDT = (() => { try { const j = JSON.parse(localStorage.getItem("bai-journal-t") || "{}"); return j && typeof j === "object" ? j : {}; } catch(e) { return {}; } })();
+const JDH = {}; Object.keys(JD).forEach(k => { try { JDH[k] = JSON.stringify(JD[k]); } catch(e) {} });
+const JRS = { on: false, dirty: new Set(), t: 0, busy: false, at: 0, err: "" };
+const jrB64 = k => btoa(unescape(encodeURIComponent(k))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+function jrTrack(){
+  const now = Date.now(); let ch = false;
+  Object.keys(JD).forEach(k => { let h = ""; try { h = JSON.stringify(JD[k]); } catch(e) {} if(JDH[k] !== h){ JDH[k] = h; JDT[k] = now; JRS.dirty.add(k); ch = true; } });
+  if(ch){ try { localStorage.setItem("bai-journal-t", JSON.stringify(JDT)); } catch(e) {} if(JRS.on){ clearTimeout(JRS.t); JRS.t = setTimeout(jrPush, 1200); } }
+}
+async function jrPush(){
+  if(!JRS.on || !DB || JRS.busy || !JRS.dirty.size) return; JRS.busy = true; const ks = [...JRS.dirty]; JRS.dirty.clear();
+  try { for(const k of ks){ if(JD[k]) await DB.doc("jr/" + jrB64(k)).set({ key: k, t: JDT[k] || Date.now(), D: JD[k] }); } JRS.at = Date.now(); JRS.err = ""; }
+  catch(e) { ks.forEach(k => JRS.dirty.add(k)); JRS.err = String(e && e.message || e); clearTimeout(JRS.t); JRS.t = setTimeout(jrPush, 30000); }
+  finally { JRS.busy = false; if(JRS.dirty.size && !JRS.err){ clearTimeout(JRS.t); JRS.t = setTimeout(jrPush, 1500); } }
+}
+async function jrPull(){
+  if(!JRS.on || !DB) return;
+  try {
+    const snap = await DB.collection("jr").get(), seen = new Set(); let ch = false;
+    snap.docs.forEach(d => { const x = d.data(); if(!x || typeof x.key !== "string" || !x.D || !Array.isArray(x.D.cols)) return; seen.add(x.key);
+      const lt = JDT[x.key] || 0, rt = +x.t || 0;
+      if(rt > lt){ JD[x.key] = x.D; JDT[x.key] = rt; try { JDH[x.key] = JSON.stringify(x.D); } catch(e) {} ch = true; }
+      else if(lt > rt) JRS.dirty.add(x.key); });
+    Object.keys(JD).forEach(k => { if(!seen.has(k) && JDT[k]) JRS.dirty.add(k); });
+    if(ch){ try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); localStorage.setItem("bai-journal-t", JSON.stringify(JDT)); } catch(e) {}
+      try { JRO.cache = {}; } catch(e) {} try { vaData(VA.uid); } catch(e) {} try { if(state.tab === "journal" && !JR.pop) renderJournal(); } catch(e) {} }
+    JRS.err = ""; if(JRS.dirty.size) jrPush();
+  } catch(e) { JRS.err = String(e && e.message || e); }
+}
+function jrSyncStart(){
+  if(JRS.on) return; let n = 0;
+  const go = () => { if(!DB){ if(++n < 40) setTimeout(go, 500); return; } JRS.on = true; jrPull(); setInterval(jrPull, 60000);
+    document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") jrPull(); }); };
+  go();
+}
+const jrSave = () => { try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); } catch(e) {} try { jrTrack(); } catch(e) {} try { JRO.cache = {}; } catch(e) {} clearTimeout(jrSave._t); jrSave._t = setTimeout(() => { try { if(typeof vaData === "function") vaData(VA.uid); } catch(e) {} }, 80); };
 const JR = { subj: null, pop: null, pi: null, att: false, bst: false, flt: null, wk: new Set() };
 const jrLate = () => (jrP().e - TODAY) / 864e5 <= 14;   // итоги «не аттестован» показываем, когда до конца четверти осталось не больше двух недель
 const jrP = () => PERIODS[Math.min(PERIODS.length - 1, JR.pi == null ? (JR.pi = CUR_I) : JR.pi)];
@@ -10712,6 +10832,7 @@ function jrData(){
       });
     });
     JD[key] = { cols, marks };
+    try { JDH[key] = JSON.stringify(JD[key]); } catch(e) {}   // сгенерированный, ещё не правленный ключ: на сервер не отправляем
   }
   return JD[key];
 }
@@ -10827,7 +10948,7 @@ function ovScan(){ document.querySelectorAll(OV_SEL).forEach(el => { if(!el._ov)
 function tabReset(t){
   try{
     if(t === "grades"){ state.gradeFin = null; state.gradeFlt = "all"; state.gradeQ = ""; state.gradePeriod = CUR.id; if(state.openSubj) state.openSubj.clear(); state.gSortOpen = false; renderGrades(); }
-    else if(t === "journal"){ JR.pi = null; JR.subj = null; JR.att = false; JR.bst = false; JR.flt = null; JR.wk.clear(); jrPopClose(); if(jrCan()) renderJournal(); }
+    else if(t === "journal"){ try { const m = document.getElementById("tgm"); if(m && m.dataset.jro) tgModalClose(true); } catch(_) {} try { Object.assign(JRO, { cls: null, par: "all", subj: "all", open: null, dd: false, edit: false, attOpen: null, per: "q", attAll: false }); } catch(_) {} JR.pi = null; JR.subj = null; JR.att = false; JR.bst = false; JR.flt = null; JR.wk.clear(); jrPopClose(); if(jrCan()) renderJournal(); }
     else if(t === "admin"){ ADM.q = ""; ADM.form = null; }
     else if(t === "monitoring"){ MONS.pk = false; MONS.sel = null; MONS.f = "all"; MONS.cur = null; }
   }catch(e){}
@@ -10883,13 +11004,217 @@ function jrFocusAbs(sid){
     requestAnimationFrame(() => pop.classList.add("on"));
   }, 380);
 }
+/* ================= Журнал для директора, завуча и методиста: обзор классов → класс → ученик ================= */
+const JRO_ROLES = ["director", "zavuch", "deputy", "methodist", "controller"];
+const JRO = { cls: null, par: "all", subj: "all", open: null, dd: false, edit: false, cache: {}, per: "q", attOpen: null };
+const jroOn = () => JRO_ROLES.includes(VA.role || ME_ROLE);
+const jroNm = f => { const w = String(f || "").split(/\s+/); return w.length < 2 ? f : w[0] + " " + w[1][0] + "."; };
+const jroIni = f => { const w = String(f || "").split(/\s+/); return ((w[0] || "")[0] || "") + ((w[1] || "")[0] || ""); };
+const jroNum = v => v == null ? "—" : da(v);
+const jroDay = d => d.getDate() + "." + String(d.getMonth() + 1).padStart(2, "0");
+const JRO_WD = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+const jroPl = (n, f) => n + " " + plural(n, f);
+/* данные журнала класса по предмету, не оставляя следов: новые ключи не сохраняются и не уходят на сервер */
+function jroPeek(cls, sid){
+  const keep = [JR.subj, JR.pi, JR.cls], st0 = JR_STUD.slice();
+  try {
+    JR.cls = cls; jrSetCls(cls); JR.subj = sid; JR.pi = CUR_I;
+    const P = jrP(), key = sid + "|" + P.id + (cls !== "8 «А»" ? "|" + cls : ""), had = Object.prototype.hasOwnProperty.call(JD, key);
+    const D = jrData(), studs = JR_STUD.slice();
+    if(!had){ delete JD[key]; delete JDH[key]; }
+    return { D, studs };
+  } finally { JR.subj = keep[0]; JR.pi = keep[1]; JR.cls = keep[2]; JR_STUD.length = 0; st0.forEach(x => JR_STUD.push(x)); }
+}
+function jroCls(cls){
+  if(JRO.cache[cls]) return JRO.cache[cls];
+  const subs = Object.entries(DATA.subjects).filter(([, x]) => x.graded !== false), cut = TODAY.getTime() - 14 * DAY;
+  const S = {}, subj = {}, wdA = [0, 0, 0, 0, 0, 0, 0], wdS = [0, 0, 0, 0, 0, 0, 0], days = []; let order = [], slots = 0, absN = 0;
+  subs.forEach(([sid, sx]) => {
+    const { D, studs } = jroPeek(cls, sid); if(!order.length) order = studs;
+    const avs = [];
+    studs.forEach(([id, nm]) => {
+      const s = S[id] || (S[id] = { id, nm, sw: 0, sv: 0, ow: 0, ov: 0, abs: [], subj: {} }), m = D.marks[id] || {};
+      let sw = 0, sv = 0; const marks = [];
+      D.cols.forEach(c => { const v = m[c.id], dt = jrDt(c), w = jrW(c.k), wd = dt.getDay();
+        slots++; wdS[wd]++; days.push([dt, v === "н" ? 1 : 0]);
+        if(v === "н"){ s.abs.push({ d: dt, sid, name: sx.name, topic: c.topic || "" }); absN++; wdA[wd]++; }
+        if(typeof v === "number"){ sw += w; sv += v * w; s.sw += w; s.sv += v * w; if(dt.getTime() < cut){ s.ow += w; s.ov += v * w; } marks.push({ v, d: dt, k: c.k, w, topic: c.topic || "" }); } });
+      marks.sort((a, b) => b.d - a.d);
+      const avg = sw ? sv / sw : null; s.subj[sid] = { avg, n: marks.length, marks, name: sx.name }; if(avg != null) avs.push(avg);
+    });
+    subj[sid] = { name: sx.name, avg: avs.length ? avs.reduce((a, b) => a + b, 0) / avs.length : null };
+  });
+  const list = order.map(([id]) => S[id]).filter(Boolean);
+  list.forEach(s => { s.avg = s.sw ? s.sv / s.sw : null; const old = s.ow ? s.ov / s.ow : null; s.tr = s.avg != null && old != null ? s.avg - old : null;
+    s.low = Object.entries(s.subj).filter(([, x]) => x.avg != null && fin(x.avg) < 5).map(([sid, x]) => ({ sid, name: x.name, avg: x.avg })).sort((a, b) => a.avg - b.avg);
+    s.abs.sort((a, b) => b.d - a.d); s.abs7 = s.abs.filter(a => TODAY - a.d <= 7 * DAY).length; });
+  const av = list.filter(s => s.avg != null), avg = av.length ? av.reduce((a, s) => a + s.avg, 0) / av.length : null;
+  const tr = av.filter(s => s.tr != null), trend = tr.length ? tr.reduce((a, s) => a + s.tr, 0) / tr.length : null;
+  const hw = jroHw(cls);
+  const att = [];
+  list.forEach(s => { if(s.low.length >= 2) att.push({ s, t: jroPl(s.low.length, ["предмет", "предмета", "предметов"]) + " ниже 5", w: 3 + s.low.length });
+    else if(s.abs7 >= 3) att.push({ s, t: jroPl(s.abs7, ["пропуск", "пропуска", "пропусков"]) + " за неделю", w: 2 + s.abs7 / 2 });
+    else if(s.tr != null && s.tr <= -0.6) att.push({ s, t: "средний упал на " + da(-s.tr), w: 1 - s.tr }); });
+  att.sort((a, b) => b.w - a.w);
+  return (JRO.cache[cls] = { cls, list, subj, avg, trend, slots, absN, att: slots ? 1 - absN / slots : 1, wdA, wdS, days, hw, low: list.filter(s => s.low.length), attn: att });
+}
+function jroHw(cls){
+  const base = cls === "8 «А»" ? (DATA.homework || []).map(h => ({ ...h, cls: [cls] })) : [];
+  return base.concat(JHW.filter(h => (h.cls || []).includes(cls))).map(h => ({ ...h, dueD: dd(h.due), givenD: dd(h.given) })).filter(h => h.dueD >= new Date(TODAY.getTime() - 7 * DAY)).sort((a, b) => a.dueD - b.dueD);
+}
+/* ---------- разметка ---------- */
+const jroCh = (on, attr, txt) => `<button type="button" class="jro-ch ${on ? "on" : ""}" ${attr}>${txt}</button>`;
+function jroHome(){
+  const pars = ["8", "9", "10", "11"], cls = JR_CLS.filter(c => JRO.par === "all" || c.split(" ")[0] === JRO.par);
+  const all = JR_CLS.map(jroCls), n = all.reduce((a, c) => a + c.list.length, 0);
+  const tile = c => { const C = jroCls(c); return `<button type="button" class="jro-tile" data-jro-cls="${esc(c)}" data-tip="${esc(c)}|Средний ${jroNum(C.avg)} · посещаемость ${Math.round(C.att * 100)}%"><b>${esc(c)}</b><span>ср. ${jroNum(C.avg)} · ${C.list.length} уч.</span>${C.attn.length ? `<em>${C.attn.length}</em>` : ""}</button>`; };
+  return `<div class="view-head"><div class="hello"><p class="eyebrow">${esc((ROLES_ALL.find(r => r.id === (VA.role || ME_ROLE)) || {}).name || "Журнал")}</p><h1 class="headline">Журнал</h1></div></div>
+  <section class="jro"><div class="jro-hd"><span class="jro-sub">${jroPl(JR_CLS.length, ["класс", "класса", "классов"])} · ${jroPl(n, ["ученик", "ученика", "учеников"])}</span></div>
+  <div class="jro-chs">${jroCh(JRO.par === "all", 'data-jro-par="all"', "Все")}${pars.map(p => jroCh(JRO.par === p, `data-jro-par="${p}"`, p + " классы")).join("")}</div>
+  ${pars.filter(p => JRO.par === "all" || JRO.par === p).map(p => { const L = cls.filter(c => c.split(" ")[0] === p); return L.length ? `<p class="jro-lab">${p} классы</p><div class="jro-tiles">${L.map(tile).join("")}</div>` : ""; }).join("")}
+  <p class="jro-note">Число в углу плитки — сколько учеников требуют внимания.</p></section>`;
+}
+function jroClass(){
+  const C = jroCls(JRO.cls), sid = JRO.subj, sub = sid !== "all" ? C.subj[sid] : null;
+  const ed = VA.role ? ["e", "f"].includes(lvOf("journal")) : !!CN.isAdmin;
+  const kp = (k, v, l, cl) => `<button type="button" class="jro-kp" data-jro-kp="${k}"><b class="${cl || ""}">${v}</b><span>${l} ›</span></button>`;
+  const tr = C.trend == null || Math.abs(C.trend) < 0.01 ? "" : `<i class="${C.trend >= 0 ? "jro-up" : "jro-dn"}">${C.trend >= 0 ? "↑" : "↓"}${da(Math.abs(C.trend))}</i>`;
+  const subs = Object.entries(C.subj).filter(([, x]) => x.avg != null);
+  const row = s => {
+    const x = sub ? s.subj[sid] : null, v = sub ? (x && x.avg) : s.avg, open = JRO.open === s.id;
+    const info = [s.abs.length ? jroPl(s.abs.length, ["пропуск", "пропуска", "пропусков"]) : "без пропусков", s.low.length ? jroPl(s.low.length, ["предмет", "предмета", "предметов"]) + " ниже 5" : ""].filter(Boolean).join(" · ");
+    const last = sub && x ? `<span class="jro-last">${x.marks.slice(0, 3).map(m => `<i>${dv(m.v)}</i>`).join("")}</span>` : s.tr != null ? (Math.abs(s.tr) < 0.01 ? `<span class="jro-tr">→</span>` : `<span class="jro-tr ${s.tr >= 0 ? "jro-up" : "jro-dn"}">${s.tr >= 0 ? "↑" : "↓"}${da(Math.abs(s.tr))}</span>`) : "";
+    const det = !open ? "" : sub
+      ? `<div class="jro-ex">${x && x.marks.length ? x.marks.map(m => `<span class="jro-mk" tabindex="0" data-tip="${esc((KIND[m.k] || KIND[""]).label)}${m.topic ? "|" + esc(m.topic) : ""}">${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))} · <b>${dv(m.v)}</b></span>`).join("") : `<span class="jro-mut">Оценок по предмету пока нет</span>`}
+        <div class="jro-acts"><button type="button" class="jro-b" data-jro-stud="${s.id}">Карточка ученика</button><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div></div>`
+      : `<div class="jro-ex"><div class="jro-sl">${Object.entries(s.subj).filter(([, y]) => y.avg != null).sort((a, b) => a[1].avg - b[1].avg).map(([k, y]) => `<button type="button" class="jro-kv" data-jro-subj-go="${k}"><span>${esc(y.name)}</span><span>${y.marks[0] ? `<small>посл. ${dv(y.marks[0].v)}</small>` : ""}<b class="${fin(y.avg) < 5 ? "jro-dn" : ""}">${jroNum(y.avg)}</b></span></button>`).join("")}</div>
+        <div class="jro-acts"><button type="button" class="jro-b" data-jro-stud="${s.id}">Карточка ученика</button><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div></div>`;
+    return `<div class="jro-r ${open ? "open" : ""}"><button type="button" class="jro-rh" data-jro-open="${s.id}" aria-expanded="${open}"><span class="jro-av">${esc(jroIni(s.nm))}</span><span class="jro-n"><b>${esc(jroNm(s.nm))}</b><small>${esc(info)}</small></span>${last}<span class="jro-v ${v != null && fin(v) < 5 ? "jro-dn" : ""}">${jroNum(v)}</span></button>${det}</div>`;
+  };
+  const ddList = JRO.dd ? `<div class="jro-ddl" role="listbox">${[["all", { name: "Все предметы", avg: C.avg }], ...subs].map(([k, x]) => `<button type="button" role="option" class="${k === sid ? "on" : ""}" data-jro-subj="${k}"><span>${esc(x.name)}</span><span>${jroNum(x.avg)}</span></button>`).join("")}</div>` : "";
+  return `<div class="view-head"><div class="hello"><p class="eyebrow">Журнал</p><h1 class="headline jro-h1"><button type="button" class="jro-back" data-jro-home aria-label="Все классы" data-tip="Все классы">‹</button>${esc(JRO.cls)}</h1></div></div>
+  <section class="jro">
+    <div class="jro-hd"><span class="jro-sub">${jroPl(C.list.length, ["ученик", "ученика", "учеников"])}</span><span class="jro-hb"><button type="button" class="jro-b sm" data-jro-tpl>Шаблоны писем</button>${ed ? `<button type="button" class="jro-b sm" data-jro-edit>Править журнал</button>` : ""}</span></div>
+    <div class="jro-kps">${kp("avg", jroNum(C.avg) + tr, "средний")}${kp("att", Math.round(C.att * 100) + "%", "посещаемость")}${kp("hw", C.hw.length, "заданий ДЗ")}${kp("low", C.low.length, "ниже 5", C.low.length ? "jro-dn" : "")}</div>
+    <div class="jro-dd ${JRO.dd ? "on" : ""}"><button type="button" class="jro-ddb" data-jro-dd aria-haspopup="listbox" aria-expanded="${JRO.dd}"><span><em>Предмет:</em> ${esc(sub ? sub.name : "Все предметы")}</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="m3 4.5 3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>${ddList}</div>
+    ${C.attn.length ? `<div class="jro-at"><p>Требуют внимания · ${C.attn.length}</p>${C.attn.slice(0, JRO.attAll ? 99 : 4).map(a => `<button type="button" class="jro-kv" data-jro-stud="${a.s.id}"><span>${esc(jroNm(a.s.nm))}</span><span>${esc(a.t)}</span></button>`).join("")}${C.attn.length > 4 ? `<button type="button" class="jro-more" data-jro-attall>${JRO.attAll ? "Свернуть" : "Показать всех · " + C.attn.length}</button>` : ""}</div>` : ""}
+    <div class="jro-th"><span>Ученик</span><span>${sub ? "Последние · средний, " + esc(sub.name.toLowerCase()) : "Динамика · средний, все предметы"}</span></div>
+    <div class="jro-list">${C.list.map(row).join("")}</div>
+    <p class="jro-note">${sub ? "Класс по предмету: " + jroNum(sub.avg) : "Класс в целом: " + jroNum(C.avg)}. Средний считается с коэффициентами работ.</p>
+  </section>`;
+}
+/* ---------- окна с подробностями ---------- */
+const jroKv = (a, b, attr) => attr ? `<button type="button" class="jro-kv" ${attr}><span>${a}</span><span>${b}</span></button>` : `<div class="jro-kv jro-st"><span>${a}</span><span>${b}</span></div>`;
+function jroSheet(k){
+  const C = jroCls(JRO.cls); let title = "", body = "";
+  if(k === "avg"){
+    title = "Средний · " + jroNum(C.avg);
+    body = `<p class="jro-mut">Изменение за две недели: ${C.trend == null ? "нет данных" : (C.trend >= 0 ? "↑" : "↓") + da(Math.abs(C.trend))}</p><div>${Object.entries(C.subj).filter(([, x]) => x.avg != null).sort((a, b) => b[1].avg - a[1].avg).map(([sid, x]) => jroKv(esc(x.name), `<b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b>`, `data-jro-subj-go="${sid}"`)).join("")}</div>`;
+  } else if(k === "att"){
+    const lim = JRO.per === "week" ? 7 : JRO.per === "month" ? 31 : 999, P0 = PERIODS[CUR_I].s, inP = d => JRO.per === "q" ? d >= P0 : TODAY - d <= lim * DAY;
+    const studs = C.list.map(s => ({ s, a: s.abs.filter(a => inP(a.d)) })).filter(x => x.a.length).sort((a, b) => b.a.length - a.a.length), tot = studs.reduce((a, x) => a + x.a.length, 0);
+    const wa = [0, 0, 0, 0, 0, 0, 0], ws = [0, 0, 0, 0, 0, 0, 0]; let pa = 0, ps = 0; C.days.forEach(([d, a]) => { if(inP(d)){ ws[d.getDay()]++; wa[d.getDay()] += a; ps++; pa += a; } });
+    title = "Посещаемость · " + Math.round(C.att * 100) + "% за четверть";
+    body = `<div class="jro-seg">${[["week", "Неделя"], ["month", "Месяц"], ["q", "Четверть"]].map(([v, l]) => `<button type="button" class="${JRO.per === v ? "on" : ""}" data-jro-per="${v}">${l}</button>`).join("")}</div>
+      <div class="jro-wd">${[1, 2, 3, 4, 5].map(d => `<div><b>${ws[d] ? Math.round((1 - wa[d] / ws[d]) * 100) + "%" : "—"}</b>${JRO_WD[d]}</div>`).join("")}</div>
+      ${jroKv("Посещаемость за период", ps ? Math.round((1 - pa / ps) * 100) + "%" : "уроков не было")}${jroKv("Пропущено уроков", tot)}${jroKv("Учеников с пропусками", studs.length)}
+      <p class="jro-lab">Кто пропускал</p>${studs.length ? studs.map(({ s, a }) => { const op = JRO.attOpen === s.id; return `${jroKv(esc(jroNm(s.nm)), jroPl(a.length, ["урок", "урока", "уроков"]) + (op ? " ⌃" : " ›"), `data-jro-att="${s.id}" aria-expanded="${op}"`)}${op ? `<div class="jro-ex">${a.map(x => `<div class="jro-kv jro-st"><span>${JRO_WD[x.d.getDay()]} ${jroDay(x.d)}</span><span>${esc(x.name)}</span></div>`).join("")}<div class="jro-acts"><button type="button" class="jro-b p" data-jro-mail="${s.id}" data-jro-mt="abs">Написать родителям</button></div></div>` : ""}`; }).join("") : `<p class="jro-mut">Пропусков за этот период нет</p>`}
+      <p class="jro-mut">Причины пропусков в журнале пока не отмечаются.</p>`;
+  } else if(k === "hw"){
+    title = "Домашка · " + jroPl(C.hw.length, ["задание", "задания", "заданий"]);
+    const by = {}; C.hw.forEach(h => { (by[h.s] = by[h.s] || []).push(h); });
+    body = Object.keys(by).length ? Object.entries(by).map(([s, L]) => `<p class="jro-lab">${esc(subjName(s))} · ${L.length}</p>${L.map(h => jroKv(esc(String(h.text || "").slice(0, 90)), "до " + jroDay(h.dueD))).join("")}`).join("") + `<p class="jro-mut">Отметки «сдано» появятся, когда ученики начнут отмечать задания у себя.</p>` : `<p class="jro-mut">За последнюю неделю заданий нет</p>`;
+  } else if(k === "low"){
+    title = "Ниже 5 · " + jroPl(C.low.length, ["ученик", "ученика", "учеников"]);
+    body = C.low.length ? C.low.map(s => `<p class="jro-lab"><button type="button" class="jro-lk" data-jro-stud="${s.id}">${esc(jroNm(s.nm))} ›</button></p>${s.low.map(x => jroKv(esc(x.name), `<b class="jro-dn">${jroNum(x.avg)}</b> · до 5: ${da(Math.max(0.01, 4.5 - x.avg))}`, `data-jro-subj-go="${x.sid}"`)).join("")}`).join("") : `<p class="jro-mut">Все ученики выше 5</p>`;
+  }
+  return { title, body };
+}
+function jroStudSheet(id){
+  const C = jroCls(JRO.cls), s = C.list.find(x => x.id === id); if(!s) return null;
+  const subs = Object.entries(s.subj).filter(([, x]) => x.avg != null).sort((a, b) => a[1].avg - b[1].avg);
+  return { title: s.nm, body: `<div class="jro-kps sm"><div class="jro-kp jro-st"><b class="${s.avg != null && fin(s.avg) < 5 ? "jro-dn" : ""}">${jroNum(s.avg)}</b><span>средний</span></div><div class="jro-kp jro-st"><b>${s.abs.length}</b><span>пропусков</span></div><div class="jro-kp jro-st"><b class="${s.low.length ? "jro-dn" : ""}">${s.low.length}</b><span>ниже 5</span></div></div>
+    <div class="jro-acts"><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div>
+    <p class="jro-lab">Предметы</p>${subs.map(([sid, x]) => `<details class="jro-det"><summary class="jro-kv"><span>${esc(x.name)}</span><span>${x.marks[0] ? `<small>посл. ${dv(x.marks[0].v)}</small>` : ""}<b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></summary><div class="jro-ex">${x.marks.map(m => `<div class="jro-kv jro-st"><span>${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))}${m.topic ? " · " + esc(m.topic) : ""}</span><b>${dv(m.v)}</b></div>`).join("")}</div></details>`).join("")}
+    ${s.abs.length ? `<p class="jro-lab">Пропуски</p>${s.abs.slice(0, 12).map(a => `<div class="jro-kv jro-st"><span>${JRO_WD[a.d.getDay()]} ${jroDay(a.d)}</span><span>${esc(a.name)}</span></div>`).join("")}` : ""}` };
+}
+/* ---------- шаблоны писем: метки показываются цветными словами, в тексте хранятся как {ключ} ---------- */
+const JRO_VARS = [["родитель", "Родитель"], ["имя", "Имя ученика"], ["класс", "Класс"], ["предмет", "Предмет"], ["средний", "Средний балл"], ["пропуски", "Пропуски"]];
+const JRO_TPL0 = [
+  { id: "perf", name: "Успеваемость", text: "Здравствуйте, {родитель}! Пишу об успеваемости: {имя}, {класс}. Средний балл по предмету «{предмет}» — {средний}. Давайте обсудим, как помочь." },
+  { id: "abs", name: "Пропуски", text: "Здравствуйте, {родитель}! Пишу о пропусках: {имя}, {класс}. Пропущено уроков: {пропуски}. Подскажите, пожалуйста, причину." },
+  { id: "meet", name: "Встреча", text: "Здравствуйте, {родитель}! Приглашаем вас на встречу по учёбе: {имя}, {класс}. Когда вам удобно?" }
+];
+const jroTpls = () => { try { const j = JSON.parse(localStorage.getItem("bai-mail-tpl") || "null"); if(Array.isArray(j) && j.length) return j; } catch(e) {} return JRO_TPL0.map(x => ({ ...x })); };
+const jroTplSave = L => { try { localStorage.setItem("bai-mail-tpl", JSON.stringify(L)); } catch(e) {} };
+const jroPill = k => `<span class="jro-pl" contenteditable="false" data-v="${esc(k)}">${esc((JRO_VARS.find(v => v[0] === k) || [k, k])[1].toLowerCase())}</span>`;
+const jroTplHtml = t => esc(t).replace(/\n/g, "<br>").replace(/\{([^{}]{1,20})\}/g, (m, k) => JRO_VARS.some(v => v[0] === k) ? jroPill(k) : m);
+const jroTplRead = el => { const walk = node => { let out = ""; node.childNodes.forEach(n => { if(n.nodeType === 3) out += n.textContent; else if(n.dataset && n.dataset.v) out += "{" + n.dataset.v + "}"; else if(n.nodeName === "BR") out += "\n"; else if(/^(DIV|P)$/.test(n.nodeName)) out += (out && !out.endsWith("\n") ? "\n" : "") + walk(n); else out += walk(n); }); return out; }; return walk(el).replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim(); };
+function jroTplOpen(id){
+  const L = jroTpls(), cur = L.find(x => x.id === id) || L[0];
+  const o = tgModal("Шаблоны писем", `<div class="jro-seg">${L.map(t => `<button type="button" class="${t.id === cur.id ? "on" : ""}" data-jro-tpl-tab="${esc(t.id)}">${esc(t.name)}</button>`).join("")}</div>
+    <p class="jro-mut">Нажмите на текст, чтобы изменить. Цветные слова заменятся данными ученика.</p>
+    <div class="jro-ed" id="jro-ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст шаблона">${jroTplHtml(cur.text)}</div>
+    <p class="jro-lab">Добавить в текст</p><div class="jro-add">${JRO_VARS.map(([k, l]) => `<button type="button" data-jro-ins="${k}">+ ${l}</button>`).join("")}</div>`,
+    `<button type="button" class="jro-b" data-jro-tpl-reset="${esc(cur.id)}">Вернуть исходный</button><button type="button" class="jro-b p" data-jro-tpl-save="${esc(cur.id)}">Сохранить</button>`);
+  if(o) o.dataset.jro = "tpl";
+}
+function jroMail(id, tid){
+  const C = jroCls(JRO.cls), s = C.list.find(x => x.id === id); if(!s) return;
+  const L = jroTpls(), t = L.find(x => x.id === (tid || "perf")) || L[0];
+  const par = (ADM.users || []).find(u => u.role === "parent" && u.v && String(u.v.kids || "").toLowerCase().startsWith(s.nm.split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
+  const sid = JRO.subj !== "all" ? JRO.subj : (s.low[0] || {}).sid || (Object.entries(s.subj).filter(([, x]) => x.avg != null).sort((a, b) => a[1].avg - b[1].avg)[0] || [])[0];
+  const x = sid ? s.subj[sid] : null;
+  const val = { "родитель": par && par.name.split(/\s+/).length >= 3 && !/\./.test(par.name) ? par.name.split(/\s+/).slice(1).join(" ") : "", "имя": s.nm.split(/\s+/).slice(0, 2).reverse().join(" "), "класс": JRO.cls, "предмет": x ? x.name : "", "средний": x && x.avg != null ? da(x.avg) : jroNum(s.avg), "пропуски": String(s.abs.length) };
+  const txt = t.text.replace(/\{([^{}]{1,20})\}/g, (m, k) => val[k] != null ? val[k] : m).replace(/\{([^{}]{0,20})\}/g, "$1").replace(/,\s*!/g, "!").replace(/«»/g, "").replace(/[ \t]{2,}/g, " ");
+  const o = tgModal("Письмо родителям", `<p class="jro-mut">${esc(s.nm)} · ${esc(JRO.cls)}${par ? " · " + esc(par.name) : ""}</p>
+    <div class="jro-seg">${L.map(y => `<button type="button" class="${y.id === t.id ? "on" : ""}" data-jro-mail-t="${esc(y.id)}">${esc(y.name)}</button>`).join("")}</div>
+    <textarea class="jro-ta" id="jro-ta" rows="6" aria-label="Текст письма">${esc(txt)}</textarea>
+    <p class="jro-mut">Отправка родителям прямо в Ядре появится, когда родители зарегистрируются. Пока текст можно скопировать.</p>`,
+    `<button type="button" class="jro-b" data-jro-tpl>Шаблоны</button><button type="button" class="jro-b p" data-jro-copy>Скопировать</button>`);
+  if(o){ o.dataset.jro = "mail"; o.dataset.sid = id; }
+}
+function jroDdFit(){ const l = document.querySelector(".jro-ddl"); if(!l) return; const b = document.getElementById("bnav"), lim = (b && b.offsetWidth ? b.getBoundingClientRect().top : innerHeight) - 12, r = l.getBoundingClientRect();
+  if(r.top + 220 > lim) window.scrollBy({ top: r.top - Math.max(90, lim - Math.min(l.scrollHeight, 420)) }); const r2 = l.getBoundingClientRect(); l.style.maxHeight = Math.max(180, lim - r2.top) + "px"; }
+document.addEventListener("keydown", e => { if(e.key === "Escape" && JRO.dd){ JRO.dd = false; jroRender(); } });
+function jroRender(){ const el = document.getElementById("journal"); if(el) el.innerHTML = JRO.cls ? jroClass() : jroHome(); }
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s);
+  let x;
+  if((x = g("[data-jro-par]"))){ JRO.par = x.dataset.jroPar; jroRender(); return; }
+  if((x = g("[data-jro-cls]"))){ JRO.cls = x.dataset.jroCls; JRO.subj = "all"; JRO.open = null; JRO.dd = false; jroRender(); window.scrollTo({ top: 0 }); return; }
+  if(g("[data-jro-home]")){ JRO.cls = null; JRO.open = null; JRO.dd = false; jroRender(); return; }
+  if(g("[data-jro-attall]")){ JRO.attAll = !JRO.attAll; jroRender(); return; }
+  if(g("[data-jro-dd]")){ JRO.dd = !JRO.dd; jroRender(); if(JRO.dd) jroDdFit(); return; }
+  if((x = g("[data-jro-subj]"))){ JRO.subj = x.dataset.jroSubj; JRO.dd = false; jroRender(); return; }
+  if((x = g("[data-jro-subj-go]"))){ JRO.subj = x.dataset.jroSubjGo; JRO.dd = false; tgModalClose(); jroRender(); return; }
+  if((x = g("[data-jro-open]"))){ JRO.open = JRO.open === x.dataset.jroOpen ? null : x.dataset.jroOpen; jroRender(); return; }
+  if((x = g("[data-jro-kp]"))){ JRO.kp = x.dataset.jroKp; JRO.attOpen = null; const S = jroSheet(JRO.kp); const o = tgModal(S.title, S.body); if(o) o.dataset.jro = "kp"; return; }
+  if((x = g("[data-jro-per]"))){ JRO.per = x.dataset.jroPer; JRO.attOpen = null; const b = document.querySelector("#tgm .tgm-b"); if(b) b.innerHTML = jroSheet("att").body; return; }
+  if((x = g("[data-jro-att]"))){ JRO.attOpen = JRO.attOpen === x.dataset.jroAtt ? null : x.dataset.jroAtt; const b = document.querySelector("#tgm .tgm-b"); if(b) b.innerHTML = jroSheet("att").body; return; }
+  if((x = g("[data-jro-stud]"))){ const S = jroStudSheet(x.dataset.jroStud); if(S){ const o = tgModal(S.title, S.body); if(o) o.dataset.jro = "stud"; } return; }
+  if((x = g("[data-jro-mail]"))){ jroMail(x.dataset.jroMail, x.dataset.jroMt || "perf"); return; }
+  if((x = g("[data-jro-mail-t]"))){ const o = document.getElementById("tgm"); if(o && o.dataset.sid) jroMail(o.dataset.sid, x.dataset.jroMailT); return; }
+  if(g("[data-jro-copy]")){ const ta = document.getElementById("jro-ta"), b = g("[data-jro-copy]"); if(ta){ const done = () => { b.textContent = "Скопировано"; setTimeout(() => { b.textContent = "Скопировать"; }, 1600); }; try { navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); document.execCommand("copy"); done(); }); } catch(_) { ta.select(); try { document.execCommand("copy"); } catch(__) {} done(); } } return; }
+  if((x = g("[data-jro-tpl]"))){ jroTplOpen(); return; }
+  if((x = g("[data-jro-tpl-tab]"))){ jroTplOpen(x.dataset.jroTplTab); return; }
+  if((x = g("[data-jro-ins]"))){ const ed = document.getElementById("jro-ed"); if(!ed) return; ed.focus(); const sel = window.getSelection(); if(!sel.rangeCount || !ed.contains(sel.anchorNode)){ const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); sel.removeAllRanges(); sel.addRange(r); }
+    const r = sel.getRangeAt(0); r.deleteContents(); const t = document.createElement("span"); t.innerHTML = jroPill(x.dataset.jroIns) + " "; const frag = document.createDocumentFragment(); let last = null; while(t.firstChild){ last = frag.appendChild(t.firstChild); } r.insertNode(frag); if(last){ r.setStartAfter(last); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); } return; }
+  if((x = g("[data-jro-tpl-save]"))){ const ed = document.getElementById("jro-ed"), L = jroTpls(), t = L.find(y => y.id === x.dataset.jroTplSave); if(ed && t){ const v = jroTplRead(ed); if(v){ t.text = v; jroTplSave(L); x.textContent = "Сохранено"; setTimeout(() => { if(x.isConnected) x.textContent = "Сохранить"; }, 1400); } } return; }
+  if((x = g("[data-jro-tpl-reset]"))){ const L = jroTpls(), t = L.find(y => y.id === x.dataset.jroTplReset), t0 = JRO_TPL0.find(y => y.id === x.dataset.jroTplReset); if(t && t0){ t.text = t0.text; jroTplSave(L); jroTplOpen(t.id); } return; }
+  if(g("[data-jro-edit]")){ JRO.edit = true; JR.cls = JRO.cls; jrSetCls(JRO.cls); JR.subj = JRO.subj !== "all" ? JRO.subj : null; renderJournal(); return; }
+  if(g("[data-jro-over]")){ JRO.edit = false; JRO.cls = null; JRO.cache = {}; jroRender(); return; }
+  if(JRO.dd && !g(".jro-dd")){ JRO.dd = false; jroRender(); }
+});
+
 function renderJournal(){
   const el = document.getElementById("journal"); if(!el) return;
   if(!jrCan()){ el.innerHTML = ""; return; }
+  if(jroOn() && !JRO.edit){ jroRender(); return; }
   const P = jrP(), yr = JR.pi >= PERIODS.length, future = !yr && JR.pi > CUR_I, subs = jrSubjects();
   if(!JR.subj || !DATA.subjects[JR.subj]) JR.subj = (subs[0] || [])[0];
   const dd = (key, label, val, items) => `<div class="jr-dd" data-dd="${key}"><button type="button" class="jr-ddb" data-jr-dd="${key}" aria-haspopup="listbox" aria-label="${label}: ${esc(val)}">${key === "q" ? "" : `<span>${label}</span>`}<b>${esc(val)}</b><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div class="jr-ddm gl-scroll"><ul class="glist jr-dl" role="listbox">${items}</ul><span class="gl-bar" aria-hidden="true"><i></i></span></div></div>`;
-  const top = `<div class="view-head"><div class="hello"><p class="eyebrow">${VA.role ? "Преподаватель" : "Журнал преподавателя"}</p><h1 class="headline">Журнал</h1></div></div>
+  const top = `<div class="view-head"><div class="hello">${jroOn() ? `<button type="button" class="jro-b sm jro-over" data-jro-over>‹ Все классы</button>` : ""}<p class="eyebrow">${jroOn() ? esc((ROLES_ALL.find(r => r.id === (VA.role || ME_ROLE)) || {}).name || "Журнал") : VA.role ? "Преподаватель" : "Журнал преподавателя"}</p><h1 class="headline">Журнал</h1></div></div>
     <div class="jr-tb">${dd("cls", "Класс", JR.cls || JR_CLS[0], `<li class="jr-cg">${[8, 9, 10, 11].map(g => `<div class="jr-gr"><span>${g}</span><div>${JR_CLS.filter(c => c.split(" ")[0] === String(g)).map(c => `<button type="button" role="option" class="${c === (JR.cls || JR_CLS[0]) ? "on" : ""}" ${JR_ROST[c] ? `data-jr-cls="${c}"` : "disabled title=\"Скоро\""}>${c.split(" ")[1].replace(/[«»]/g, "")}</button>`).join("")}</div></div>`).join("")}</li>`)}
       ${dd("q", "Четверть", yr ? "Год" : P.name, PERIODS.map((p, i) => `<li><button type="button" role="option" class="${p === P ? "on" : ""}" data-jrq="${i}">${esc(p.name)}${i > CUR_I ? "<em>не началась</em>" : ""}</button></li>`).join("") + `<li><button type="button" role="option" class="${yr ? "on" : ""}" data-jrq="${PERIODS.length}">Годовая оценка</button></li>`)}
       ${dd("subj", "Предмет", DATA.subjects[JR.subj] ? DATA.subjects[JR.subj].name : "", subs.map(([id, x]) => `<li><button type="button" role="option" class="${id === JR.subj ? "on" : ""}" data-jr-subj="${id}">${esc(x.name)}</button></li>`).join(""))}
@@ -12311,20 +12636,23 @@ function renderClosed(id){
 }
 
 /* ================= Нижнее меню на телефоне ================= */
-const BN_MAIN = ["overview", "schedule", "grades", "homework"];
-const BN_SHORT = { overview: "Главное", schedule: "Расписание", grades: "Оценки", homework: "Домашка" };
+/* разделы в нижнем меню зависят от роли: сотрудникам школы — журнал и чаты, ученику и родителю — оценки и домашка */
+const BN_STAFF = ["teacher", "methodist", "zavuch", "deputy", "director", "controller"];
+let ME_ROLE = "";
+const bnMain = () => BN_STAFF.includes(VA.role || ME_ROLE) ? ["overview", "journal", "schedule", "chats"] : ["overview", "schedule", "grades", "homework"];
+const BN_SHORT = { overview: "Главное", schedule: "Расписание", grades: "Оценки", homework: "Домашка", journal: "Журнал", chats: "Чаты" };
 let SHEET_OPEN = false;
 const bnIcon = t => { const sv = t && t.querySelector(".ti-a"); return sv ? sv.outerHTML.replace('class="ti ti-a"', 'class="bn-ic"') : ""; };
 function buildBnav(){
   const el = document.getElementById("bnav"); if(!el) return;
   el.innerHTML = `<span class="bnav-pill" aria-hidden="true"></span>` +
-    BN_MAIN.filter(id => vaOk(id)).map(id => `<button class="bnb ${CLOSED[id] ? "is-closed" : ""}" data-bn="${id}" aria-label="${BN_SHORT[id]}${CLOSED[id] ? ", скоро" : ""}">${bnIcon(document.getElementById("tab-" + id))}<span>${BN_SHORT[id]}</span></button>`).join("");
+    bnMain().filter(id => vaOk(id) && (id !== "journal" || jrCan())).map(id => `<button class="bnb ${CLOSED[id] ? "is-closed" : ""}" data-bn="${id}" aria-label="${BN_SHORT[id]}${CLOSED[id] ? ", скоро" : ""}">${bnIcon(document.getElementById("tab-" + id))}<span>${BN_SHORT[id]}</span></button>`).join("");
   const mo = document.getElementById("bnav-more"); if(mo) mo.innerHTML = `<button class="bnb" data-bn="more" aria-haspopup="dialog" aria-expanded="false" aria-label="Ещё разделы"><svg class="bn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg><span>Ещё</span></button>`;
   syncBnav(true);
 }
 function syncBnav(instant){
   const el = document.getElementById("bnav"); if(!el || !el.offsetWidth) return;
-  const cur = BN_MAIN.includes(state.tab) ? state.tab : "more";
+  const cur = bnMain().includes(state.tab) ? state.tab : "more";
   el.querySelectorAll(".bnb").forEach(b => { const on = b.dataset.bn === cur; b.classList.toggle("is-on", on); if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   const more = document.querySelector('#bnav-more [data-bn="more"]'); if(more){ more.classList.toggle("is-open", SHEET_OPEN); more.classList.toggle("is-on", cur === "more"); more.setAttribute("aria-expanded", String(SHEET_OPEN)); }
   { const h = el.getBoundingClientRect().height; if(h) document.documentElement.style.setProperty("--bn-h", h + "px"); }
@@ -12341,7 +12669,7 @@ function renderSheet(){
   const list = document.getElementById("bsheet-list"); if(!list) return;
   if(matchMedia("(max-width:900px)").matches){ const g = document.getElementById("gs"); if(g && list.parentElement && g.parentElement !== list.parentElement) list.parentElement.insertBefore(g, list); }
   let sep = false;
-  list.innerHTML = [...document.querySelectorAll(".tabs .tab")].filter(t => !t.hidden && t.dataset.tab && !BN_MAIN.includes(t.dataset.tab)).map(t => {
+  list.innerHTML = [...document.querySelectorAll(".tabs .tab")].filter(t => !t.hidden && t.dataset.tab && !bnMain().includes(t.dataset.tab)).map(t => {
     const id = t.dataset.tab, soon = t.classList.contains("tab-soon");
     const head = !sep && t.closest(".tabs-extra") ? (sep = true, `<div class="bs-sep"></div>`) : "";
     return head + `<button class="bs-i ${state.tab === id ? "is-on" : ""}" ${soon ? "disabled" : `data-bs="${id}"`}>${bnIcon(t)}<span>${esc(t.querySelector(".tl").textContent)}</span>${soon ? `<span class="soon">скоро</span>` : t.classList.contains("tab-beta") ? `<span class="beta">${esc((t.querySelector(".beta") || {}).textContent || "бета")}</span>` : ""}</button>`;
@@ -12390,6 +12718,8 @@ let RH_Q = 0; const qRowH = () => { cancelAnimationFrame(RH_Q); RH_Q = requestAn
   window.addEventListener("resize", qRowH); window.addEventListener("orientationchange", qRowH);
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(qRowH); }
 renderAll();
+/* оценки из журнала сразу видны в «Оценках» и после перезагрузки страницы */
+try { if(Object.keys(JD).length && !VA.role) vaData(null); } catch(e) {}
 /* порядок вкладок в меню: перетаскивание, сохраняется в браузере */
 (() => {
   const box = document.querySelector(".tabs-in"); if(!box) return;
@@ -12473,7 +12803,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "513";
+const BUILD = "514";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
