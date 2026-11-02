@@ -9480,24 +9480,24 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
 })();
 
 /* ===== Расписание класса: админ редактирует, ученик видит расписание своего класса (документ schedule/<код класса>) ===== */
-const SCH = { cls: "8 «А»", day: 1, ed: null, data: null, busy: false, msg: "", imp: false, impTxt: "" };
+const SCH = { cls: "8 «А»", day: 1, ed: null, data: null, weeks: null, busy: false, msg: "", imp: false, impTxt: "" };
 const schB64 = t => btoa(unescape(encodeURIComponent(t))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const schKey = c => "schedule/" + schB64(c);
 const SCH_DAYS = [[1, "Пн"], [2, "Вт"], [3, "Ср"], [4, "Чт"], [5, "Пт"], [6, "Сб"]];
 async function schLoad(cls){
   SCH.msg = ""; SCH.data = null; SCH.ed = null; renderAdmRefresh();
-  try { const snap = DB ? await DB.doc(schKey(cls)).get() : null; SCH.data = (snap && snap.exists && snap.data().timetable) || {}; } catch(e) { SCH.data = {}; SCH.msg = "Не удалось загрузить: " + e.message; }
+  try { const snap = DB ? await DB.doc(schKey(cls)).get() : null; const d = snap && snap.exists ? snap.data() : {}; SCH.data = d.timetable || {}; SCH.weeks = d.weeks || null; } catch(e) { SCH.data = {}; SCH.msg = "Не удалось загрузить: " + e.message; }
   SCH.loading = false; renderAdmRefresh();
 }
 async function schSave(){
   if(!DB || !SCH.data) return; SCH.busy = true; renderAdmRefresh();
-  try { await DB.doc(schKey(SCH.cls)).set({ cls: SCH.cls, timetable: SCH.data, at: new Date().toISOString() }); SCH.msg = "Сохранено. Ученики класса видят расписание"; actLog("adm", "Расписание " + SCH.cls + " сохранено"); }
+  try { await DB.doc(schKey(SCH.cls)).set({ cls: SCH.cls, timetable: SCH.data, weeks: SCH.weeks || null, at: new Date().toISOString() }); SCH.msg = "Сохранено. Ученики класса видят расписание"; actLog("adm", "Расписание " + SCH.cls + " сохранено"); }
   catch(e) { SCH.msg = "Не сохранилось: " + e.message; }
   SCH.busy = false; renderAdmRefresh();
 }
 async function schForStudent(cls){
   if(!DB) return;
-  try { const snap = await DB.doc(schKey(cls)).get(); DATA.timetable = (snap.exists && snap.data().timetable) || {}; }
+  try { const snap = await DB.doc(schKey(cls)).get(), d = snap.exists ? snap.data() : {}; DATA.timetable = d.timetable || {}; DATA.weeks = Object.assign({}, d.weeks || {}); if(d.subjects) Object.assign(DATA.subjects, d.subjects); }
   catch(e) { DATA.timetable = {}; }
   try { renderAll(); } catch(e) {}
 }
@@ -9524,13 +9524,27 @@ function renderAdmSched(el){
     <section class="panel sch-p"><div class="sch-top"><div class="sch-cls">${clsChips}</div><div class="sch-days">${dayChips}</div></div>
       <div class="sch-list">${body}${newForm}</div>
       <div class="sch-bar"><button type="button" class="sch-add" data-sch-new ${SCH.data === null ? "disabled" : ""}>+ Добавить урок</button><button type="button" class="sch-up" data-sch-imp>Загрузить</button><span class="sch-sp"></span><button type="button" class="sch-save" data-sch-save ${SCH.busy || SCH.data === null ? "disabled" : ""}>${SCH.busy ? "Сохраняем…" : "Сохранить расписание " + esc(cls)}</button></div>
-      ${SCH.imp ? `<div class="sch-imp"><p class="muted">Вставьте расписание, которое прислали в чате (JSON: по дням 1–6, в каждом списке уроки с полями n, t, s, teacher, room). Проверю и покажу таблицу, потом сохраните.</p><textarea id="sch-json" rows="6">${esc(SCH.impTxt)}</textarea><div class="sch-fb"><button type="button" data-sch-check>Проверить</button><button type="button" data-sch-imp>Отмена</button></div></div>` : ""}
+      ${SCH.imp ? `<div class="sch-imp"><p class="muted">Вставьте расписание, которое прислали в чате (JSON: по дням 1–6, в каждом списке уроки с полями n, t, s, teacher, room). Проверю и покажу таблицу, потом сохраните.</p><textarea id="sch-json" rows="6">${esc(SCH.impTxt)}</textarea><div class="sch-fb"><button type="button" data-sch-check>Проверить</button><button type="button" data-sch-file>Выбрать файл</button><input type="file" id="sch-file" accept=".json,application/json" hidden><button type="button" data-sch-imp>Отмена</button></div></div>` : ""}
       ${SCH.msg ? `<p class="sch-msg">${esc(SCH.msg)}</p>` : ""}
     </section></div>`;
+}
+async function schImportAll(j){
+  const weeks = j.weeks || {}, subs = j.subjects || {}, classes = Object.keys(weeks);
+  if(!DB){ SCH.msg = "База недоступна, сохранить нельзя"; return renderAdmRefresh(); }
+  SCH.busy = true; let done = 0; renderAdmRefresh();
+  Object.assign(DATA.subjects, subs);
+  for(const cls of classes){
+    const wk = weeks[cls], keys = Object.keys(wk).sort(), last = wk[keys[keys.length - 1]] || {};
+    try { await DB.doc(schKey(cls)).set({ cls, weeks: wk, timetable: last, subjects: subs, at: new Date().toISOString() }); done++; }
+    catch(e) { SCH.msg = "Остановились на " + cls + ": " + e.message; break; }
+  }
+  if(done === classes.length) SCH.msg = "Загружено расписание для " + done + " классов, по неделям: " + Object.keys(weeks[classes[0]] || {}).join(", ");
+  SCH.busy = false; SCH.imp = false; actLog("adm", "Расписание всей школы загружено: " + done + " кл."); renderAdmRefresh();
 }
 function schCheck(){
   const txt = (document.getElementById("sch-json") || {}).value || ""; SCH.impTxt = txt;
   let j; try { j = JSON.parse(txt); } catch(e) { SCH.msg = "Не читается JSON: проверьте скобки и кавычки"; return renderAdmRefresh(); }
+  if(j && j.weeks){ return schImportAll(j); }
   const out = {}; const subs = Object.keys(DATA.subjects);
   for(const d of [1, 2, 3, 4, 5, 6]){ const L = j[d] || j[String(d)] || []; if(!Array.isArray(L)) { SCH.msg = "День " + d + ": ждали список уроков"; return renderAdmRefresh(); }
     out[d] = L.map((x, i) => ({ n: +x.n || i + 1, t: String(x.t || ""), s: subs.includes(x.s) ? x.s : String(x.s || ""), teacher: String(x.teacher || ""), room: String(x.room || "") })); }
@@ -9538,6 +9552,11 @@ function schCheck(){
   SCH.data = out; SCH.imp = false; SCH.msg = bad.length ? "Проверьте предметы, не найдены: " + bad.join(", ") + ". Остальное сохранится, после исправления сохраните ещё раз" : "Расписание проверено. Нажмите «Сохранить»";
   renderAdmRefresh();
 }
+document.addEventListener("change", e => {
+  if(e.target && e.target.id === "sch-file" && e.target.files && e.target.files[0]){
+    const r = new FileReader(); r.onload = () => { SCH.impTxt = String(r.result || ""); const ta = document.getElementById("sch-json"); if(ta) ta.value = SCH.impTxt; try { const j = JSON.parse(SCH.impTxt); if(j && j.weeks) schImportAll(j); else schCheck(); } catch(err) { SCH.msg = "Файл не читается как JSON"; renderAdmRefresh(); } }; r.readAsText(e.target.files[0]);
+  }
+});
 document.addEventListener("click", e => {
   const g = sel => e.target.closest(sel); let x;
   if((x = g("[data-sch-cls]"))){ SCH.cls = x.dataset.schCls; SCH.day = 1; SCH.imp = false; schLoad(SCH.cls); return; }
@@ -9557,6 +9576,7 @@ document.addEventListener("click", e => {
   if((x = g("[data-sch-del]"))){ const L = SCH.data[SCH.day] || []; L.splice(+x.dataset.schDel, 1); L.forEach((l, i) => l.n = i + 1); SCH.ed = null; renderAdmRefresh(); return; }
   if(g("[data-sch-imp]")){ SCH.imp = !SCH.imp; renderAdmRefresh(); return; }
   if(g("[data-sch-check]")){ schCheck(); return; }
+  if(g("[data-sch-file]")){ const f = document.getElementById("sch-file"); if(f) f.click(); return; }
   if(g("[data-sch-save]")){ schSave(); return; }
 });
 function admSave(){ try { localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-perm", JSON.stringify(ADM.perm)); } catch(e) {} }
@@ -13241,7 +13261,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "521";
+const BUILD = "522";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
