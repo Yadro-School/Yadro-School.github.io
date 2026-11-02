@@ -1490,6 +1490,16 @@ button.jro-kv:hover,summary.jro-kv:hover{background:color-mix(in srgb,var(--ink)
 .stf-day small{font-size:10.5px;color:var(--muted)}.stf-day b{font:500 15px var(--f-body)}.stf-day span{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .stf-day.td{background:var(--pen-soft);border-color:transparent;color:var(--pen)}.stf-day.td span,.stf-day.td small{color:var(--pen)}
 .stf-day em{position:absolute;top:4px;right:5px;font-style:normal;font-size:9.5px;min-width:14px;height:14px;padding:0 4px;border-radius:7px;background:color-mix(in srgb,var(--margin) 25%,transparent);color:var(--ink);line-height:14px;text-align:center}
+.inv-uh{margin:16px 0 6px;font:500 13px var(--f-body);color:var(--muted)}
+.inv-i.inv-u{display:block;padding:0}.inv-i .inv-ub{all:unset;height:auto;border:0;box-sizing:border-box;display:flex;gap:10px;align-items:center;width:100%;padding:8px 10px;cursor:pointer;border-radius:10px;transition:background .18s}
+.inv-i .inv-ub:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}.inv-i .inv-ub:active{transform:scale(.99)}.inv-i .inv-ub .inv-r{flex:1}
+.inv-ud{padding:4px 10px 10px;display:grid;gap:8px;animation:cfIn .28s cubic-bezier(.3,.9,.3,1.05)}.inv-ua{display:flex;gap:8px;flex-wrap:wrap}
+/* Настройки → Вход */
+@media(max-width:420px){#settings .set-tabs button{font-size:12px;padding:0 2px}}
+.au-lab{margin:12px 0 2px;font:500 12px var(--f-body);color:var(--muted)}
+.au-f{gap:8px}.au-in{flex:1;min-width:0;height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:14px var(--f-body)}
+.au-in:focus{outline:none;border-color:color-mix(in srgb,var(--pen) 45%,var(--line))}
+.au-msg{color:var(--ink)}.au-warn{color:var(--ink);background:color-mix(in srgb,var(--margin) 16%,transparent);padding:8px 12px;border-radius:12px}
 /* Итог — строго по центру высоты строки предмета (--rh задаёт скрипт, высота самой строки без раскрытой части) */
 .gt-line .off-cell,.gt-line:last-child .off-cell{align-items:flex-start;padding-top:3px;padding-bottom:0}
 .off-cell .g-final,.off-cell .g-none{height:var(--rh,34px);min-height:34px}
@@ -4037,7 +4047,7 @@ label input:focus,label input:focus-visible,.jq-sr input:focus,.jq-sr input:focu
 .dclr-ck{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}.dclr-ck input{accent-color:var(--pen);width:16px;height:16px}
 .tgm-btn.dclr-go{background:var(--pen);color:var(--on-pen,#fff)}.tgm-btn.dclr-go:disabled{opacity:.4;cursor:default}
 /* вкладки настроек — как переключатель в «Администраторе» */
-#settings .set-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:0!important;padding:4px;max-width:560px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}
+#settings .set-tabs{display:grid!important;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0!important;padding:4px;max-width:640px;border-radius:99px;background:var(--surface);border:1px solid var(--line)}
 #settings .set-tabs button{width:100%;justify-content:center;border:0!important;background:transparent!important;height:34px;padding:0 6px;font-size:13px;white-space:nowrap}
 #settings .set-tabs button:hover:not(:disabled){color:var(--ink)}
 #settings .set-tabs button[aria-selected="true"]{color:var(--pen)!important}
@@ -5666,11 +5676,25 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   /* ---------- вход ---------- */
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
-  window.yadroTok = function(){ return tok; };
   window.yadroSec = function(){ return call("sec_stats"); };
   window.yadroTg = function(a, b){ return /^tg_/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   window.yadroSecClear = function(what){ return call("sec_clear", { what: what }); };
   window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  /* способы входа своего аккаунта (вкладка «Настройки» → «Вход и безопасность») */
+  window.yadroAuth = {
+    methods: function(){ return call("auth_methods"); },
+    emailSend: function(e){ return call("email_bind_send", { email: e }); },
+    emailVerify: function(e, c){ return call("email_bind_verify", { email: e, code: c }); },
+    emailUnbind: function(){ return call("email_unbind"); },
+    yaBind: function(){ try { sessionStorage.setItem("yd-yb", "1"); } catch(e) {} yaStart(); },
+    yaUnbind: function(){ return call("ya_unbind"); },
+    yaOk: function(){ return location.host === "yadro-ed.ru"; },
+    pkOk: function(){ return pkOk; },
+    pkAdd: function(){ return pkRegister(); },
+    pkRemove: function(id){ return call("pk_remove", { id: id }); },
+    revokeAll: function(){ return call("sessions_revoke").then(function(j){ tok = j.token; try { localStorage.setItem(TK, tok); } catch(e) {} return j; }); },
+    logout: function(){ logout(); }
+  };
 
   function overlay(){
     var el = document.createElement("div"); el.id = "yd-login";
@@ -5685,8 +5709,6 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
       '<div class="c"><h1>Ядро</h1><p id="yd-sub">Войдите, чтобы увидеть дневник</p><div id="yd-body"></div></div>';
     document.body.appendChild(el); return el;
   }
-  /* Вход временно закрыт: пускаем только владельца (сравнение по хешу, сам адрес в коде не хранится). Чтобы открыть вход, поставьте LOCK = false. */
-  var LOCK = false, OWNER_H = "442b0fdf09593f3068f6ecba0808702e143d00b57dbf7b1434a4c509b44c9bd6";
   function sha(t){ return crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(t).trim().toLowerCase())).then(function(b){ return Array.prototype.map.call(new Uint8Array(b), function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); }); }
   function closed(){
     try { localStorage.removeItem(TK); } catch(e) {} tok = null;
@@ -5697,56 +5719,105 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   }
   var YA_ID = "38704efbddc840edaaa1cbce336da23c", YA_REDIR = "https://yadro-ed.ru/";
   function yaStart(){
-    var st = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    var rb = new Uint8Array(16); crypto.getRandomValues(rb); var st = Array.prototype.map.call(rb, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("");
     try { sessionStorage.setItem("yd-ys", st); } catch(e) {}
     location.href = "https://oauth.yandex.ru/authorize?response_type=code&client_id=" + YA_ID + "&redirect_uri=" + encodeURIComponent(YA_REDIR) + "&state=" + st;
   }
-  function loginUI(){
-    var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "", invite = "";
+  /* Вход: первый раз — только по коду доступа от администратора; потом — привязанными способами (ключ доступа, почта, Яндекс ID) */
+  function loginUI(startAt){
+    var el = overlay(), body = el.querySelector("#yd-body"), sub = el.querySelector("#yd-sub"), email = "";
     var err = function(t){ var e = body.querySelector(".e"); if(e) e.textContent = t || ""; };
-    function stepEmail(){
-      sub.textContent = "Войдите, чтобы увидеть дневник";
-      body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username webauthn" placeholder="Почта"><input id="yd-iv" maxlength="9" autocomplete="off" autocapitalize="characters" placeholder="Пригласительный код (при первом входе)"><p class="e"></p><button id="yd-go">Получить код на почту</button>' +
-        (location.host === "yadro-ed.ru" ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
-        (pkOk ? '<button class="g" id="yd-pk">Войти по ключу доступа</button>' : "") + '<p class="s">Пароли не нужны: пришлём одноразовый код</p>';
-      var em = body.querySelector("#yd-em"); em.value = email; em.focus(); var iv = body.querySelector("#yd-iv"); iv.value = invite;
-      var go = body.querySelector("#yd-go");
-      function send(){ email = em.value.trim(); invite = iv.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
-        call("code_send", { email: email, invite: invite || undefined }).then(stepCode).catch(function(e){ err(e.message); go.disabled = false; }); }
-      go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
-      var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = function(){ invite = iv.value.trim(); try { sessionStorage.setItem("yd-inv", invite); } catch(e) {} yaStart(); };
-      var pk = body.querySelector("#yd-pk"); if(pk) pk.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось войти по ключу"); }); };
-    }
+    var hasYa = location.host === "yadro-ed.ru";
     function stepCode(){
+      sub.textContent = "Введите код доступа от администратора";
+      body.innerHTML = '<input id="yd-iv" maxlength="9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" placeholder="Код, например ABCD-2345"><p class="e"></p><button id="yd-go">Войти</button>' +
+        '<p class="s" style="margin:14px 0 8px">Уже входили раньше?</p>' + (pkOk ? '<button class="g" id="yd-pk">Войти по ключу доступа</button>' : "") + '<button class="g" id="yd-em">Войти по почте</button>' + (hasYa ? '<button class="g" id="yd-ya">Войти через Яндекс ID</button>' : "") +
+        '<p class="s">Код выдаёт администратор школы. Он действует один раз.</p>';
+      var iv = body.querySelector("#yd-iv"), go = body.querySelector("#yd-go"); iv.focus();
+      iv.oninput = function(){ var v = iv.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); iv.value = v.length > 4 ? v.slice(0, 4) + "-" + v.slice(4) : v; };
+      function redeem(){ var v = iv.value.replace(/[^A-Z0-9]/gi, ""); if(v.length !== 8){ err("Код — 8 букв и цифр"); return; } go.disabled = true; err("");
+        call("inv_redeem", { invite: v }).then(function(j){ done(j, "invite"); }).catch(function(e){ err(e.message); go.disabled = false; }); }
+      go.onclick = redeem; iv.onkeydown = function(e){ if(e.key === "Enter") redeem(); };
+      var pk = body.querySelector("#yd-pk"); if(pk) pk.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось войти по ключу"); }); };
+      body.querySelector("#yd-em").onclick = stepEmail;
+      var ya = body.querySelector("#yd-ya"); if(ya) ya.onclick = function(){ yaStart(); };
+    }
+    function stepEmail(){
+      sub.textContent = "Вход по привязанной почте";
+      body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код</button><p class="s"><a id="yd-back">Назад</a></p>';
+      var em = body.querySelector("#yd-em"), go = body.querySelector("#yd-go"); em.value = email; em.focus();
+      function send(){ email = em.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
+        call("code_send", { email: email }).then(stepMail).catch(function(e){ err(e.message); go.disabled = false; }); }
+      go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
+      body.querySelector("#yd-back").onclick = stepCode;
+    }
+    function stepMail(){
       sub.textContent = "Мы отправили код на " + email;
-      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма">' + (invite ? '<input id="yd-nm" placeholder="Ваше имя" autocomplete="name">' : "") + '<p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
-      var cd = body.querySelector("#yd-cd"); cd.focus();
-      var ok = body.querySelector("#yd-ok");
+      body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма"><p class="e"></p><button id="yd-ok">Войти</button><p class="s"><a id="yd-back">Другая почта</a></p>';
+      var cd = body.querySelector("#yd-cd"), ok = body.querySelector("#yd-ok"); cd.focus();
       function verify(){ ok.disabled = true; err("");
-        call("code_verify", { email: email, code: cd.value, invite: invite || undefined, name: (body.querySelector("#yd-nm") || {}).value || "" }).then(function(j){ done(j, true); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
+        call("code_verify", { email: email, code: cd.value }).then(function(j){ done(j, "email"); }).catch(function(e){ err(e.message); ok.disabled = false; }); }
       ok.onclick = verify; cd.onkeydown = function(e){ if(e.key === "Enter") verify(); };
       body.querySelector("#yd-back").onclick = stepEmail;
     }
-    function done(j, offerPk){
+    /* после входа: второй шаг (админ) или предложение привязать способ входа (после кода доступа) */
+    function done(j, how){
       tok = j.token; try { localStorage.setItem(TK, tok); } catch(e) {}
-      if(offerPk && pkOk && !j.user.hasPasskey){
-        sub.textContent = "Вы вошли";
-        body.innerHTML = '<p>Включить быстрый вход по Face ID или отпечатку на этом устройстве?</p><p class="e"></p><button id="yd-y">Включить</button><button class="g" id="yd-n">Не сейчас</button>';
-        body.querySelector("#yd-y").onclick = function(){ pkRegister().then(function(){ location.reload(); }).catch(function(e){ err(e.message || "Не получилось включить"); }); };
-        body.querySelector("#yd-n").onclick = function(){ location.reload(); };
-      } else location.reload();
+      if(j.need2){ step2(j.need2, j.user && j.user.name); return; }
+      if(how === "invite" && j.user && !j.user.hasPasskey && !j.user.email && !j.user.ya){ stepBind(j.user); return; }
+      location.reload();
+    }
+    function stepBind(u){
+      sub.textContent = "Как входить в следующий раз?";
+      body.innerHTML = '<p>' + (u && u.name ? "Здравствуйте, " + u.name.replace(/[<>&"]/g, "") + "! " : "") + 'Код доступа одноразовый. Привяжите способ входа — тогда новый код не понадобится.</p><p class="e"></p>' +
+        (pkOk ? '<button id="yd-bpk">Ключ доступа (Face ID, отпечаток)</button>' : "") + '<button class="g" id="yd-bem">Почта</button>' + (hasYa ? '<button class="g" id="yd-bya">Яндекс ID</button>' : "") + '<button class="g" id="yd-bno">Позже</button>' +
+        '<p class="s">Без привязки в следующий раз понадобится новый код от администратора. Привязать можно и потом: Настройки → Вход.</p>';
+      var bpk = body.querySelector("#yd-bpk"); if(bpk) bpk.onclick = function(){ err(""); pkRegister().then(function(){ location.reload(); }).catch(function(e){ err(e.message || "Не получилось"); }); };
+      body.querySelector("#yd-bem").onclick = function(){ bindMail(""); };
+      var bya = body.querySelector("#yd-bya"); if(bya) bya.onclick = function(){ try { sessionStorage.setItem("yd-yb", "1"); } catch(e) {} yaStart(); };
+      body.querySelector("#yd-bno").onclick = function(){ location.reload(); };
+    }
+    function bindMail(em0){
+      sub.textContent = "Привязать почту";
+      body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="email" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код</button><p class="s"><a id="yd-back">Назад</a></p>';
+      var em = body.querySelector("#yd-em"), go = body.querySelector("#yd-go"); em.value = em0; em.focus();
+      go.onclick = function(){ var e1 = em.value.trim(); if(!e1){ err("Введите почту"); return; } go.disabled = true; err("");
+        call("email_bind_send", { email: e1 }).then(function(){
+          sub.textContent = "Код отправлен на " + e1;
+          body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из письма"><p class="e"></p><button id="yd-ok">Привязать</button>';
+          var cd = body.querySelector("#yd-cd"), ok = body.querySelector("#yd-ok"); cd.focus();
+          ok.onclick = function(){ ok.disabled = true; err(""); call("email_bind_verify", { email: e1, code: cd.value }).then(function(){ location.reload(); }).catch(function(x){ err(x.message); ok.disabled = false; }); };
+        }).catch(function(x){ err(x.message); go.disabled = false; }); };
+      body.querySelector("#yd-back").onclick = function(){ stepBind(null); };
+    }
+    /* второй шаг администратора: ключ доступа или код в Telegram */
+    function step2(via, name){
+      sub.textContent = "Подтвердите вход администратора";
+      body.innerHTML = '<p>' + (name ? name.replace(/[<>&"]/g, "") + ", для" : "Для") + ' входа администратора нужен второй шаг.</p><p class="e"></p>' +
+        (via && via.pk && pkOk ? '<button id="yd-2pk">Подтвердить ключом доступа</button>' : "") + (via && via.tg ? '<button class="' + (via.pk ? "g" : "") + '" id="yd-2tg">Прислать код в Telegram</button>' : "") +
+        '<p class="s"><a id="yd-out">Выйти</a></p>';
+      var p2 = body.querySelector("#yd-2pk"); if(p2) p2.onclick = function(){ err(""); pkLogin().catch(function(e){ err(e.message || "Не получилось"); }); };
+      var t2 = body.querySelector("#yd-2tg"); if(t2) t2.onclick = function(){ t2.disabled = true; err("");
+        call("l2_send").then(function(){
+          sub.textContent = "Код отправлен в Telegram";
+          body.innerHTML = '<input id="yd-cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Код из Telegram"><p class="e"></p><button id="yd-ok">Войти</button><p class="s">Сообщение может прийти через минуту.</p>';
+          var cd = body.querySelector("#yd-cd"), ok = body.querySelector("#yd-ok"); cd.focus();
+          function v(){ ok.disabled = true; err(""); call("l2_verify", { code: cd.value }).then(function(j){ tok = j.token; try { localStorage.setItem(TK, tok); } catch(e) {} location.reload(); }).catch(function(x){ err(x.message); ok.disabled = false; }); }
+          ok.onclick = v; cd.onkeydown = function(e){ if(e.key === "Enter") v(); };
+        }).catch(function(x){ err(x.message); t2.disabled = false; }); };
+      body.querySelector("#yd-out").onclick = logout;
     }
     window.__ydDone = done;
+    if(startAt && startAt.need2){ step2(startAt.need2, startAt.name); return; }
     var qs = new URLSearchParams(location.search), qc = qs.get("code"), qst = qs.get("state"), want = "";
     try { want = sessionStorage.getItem("yd-ys") || ""; } catch(e) {}
     if(qc || qs.get("error")){ try { history.replaceState(null, "", location.pathname); sessionStorage.removeItem("yd-ys"); } catch(e) {} }
     if(qc && qst && want && qst === want){
       sub.textContent = "Входим через Яндекс…"; body.innerHTML = '<p class="e"></p><p class="s">Секунду…</p>';
-      var yinv = ""; try { yinv = sessionStorage.getItem("yd-inv") || ""; sessionStorage.removeItem("yd-inv"); } catch(e) {}
-      call("ya_login", { code: qc, invite: yinv || undefined }).then(function(j){ done(j, true); }).catch(function(e){ stepEmail(); err(e.message || "Не получилось войти через Яндекс"); });
+      call("ya_login", { code: qc }).then(function(j){ done(j, "ya"); }).catch(function(e){ stepCode(); err(e.message || "Не получилось войти через Яндекс"); });
       return;
     }
-    stepEmail();
+    stepCode();
   }
 
   /* ---------- ключи доступа ---------- */
@@ -5777,10 +5848,19 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   window.yadroAddPasskey = function(){ return pkRegister().then(function(){ return true; }); };
 
   /* ---------- window.claude ---------- */
-  if(!tok){ document.addEventListener("DOMContentLoaded", loginUI); return; }
+  if(!tok){ document.addEventListener("DOMContentLoaded", function(){ loginUI(); }); return; }
+  /* возврат от Яндекса при привязке к уже открытой сессии */
+  (function(){ var qs = new URLSearchParams(location.search), qc = qs.get("code"), qst = qs.get("state"), want = "", yb = "";
+    try { want = sessionStorage.getItem("yd-ys") || ""; yb = sessionStorage.getItem("yd-yb") || ""; } catch(e) {}
+    if(!qc) return; try { history.replaceState(null, "", location.pathname); sessionStorage.removeItem("yd-ys"); sessionStorage.removeItem("yd-yb"); } catch(e) {}
+    if(yb && qst && qst === want) call("ya_login", { code: qc, bind: true }).then(function(){ window.__ydMsg = "Яндекс ID привязан"; }).catch(function(e){ window.__ydMsg = e.message || "Не получилось привязать Яндекс ID"; });
+  })();
 
   var meP = null;
-  function me(){ if(!meP) meP = call("me").then(function(j){ if(!j.user){ logout(); return new Promise(function(){}); } USER = j.user; window.__ydUser = USER; return USER; }); return meP; }
+  function me(){ if(!meP) meP = call("me").then(function(j){
+      if(!j.user && j.need2){ var go = function(){ loginUI({ need2: j.need2, name: j.name }); }; if(document.body) go(); else document.addEventListener("DOMContentLoaded", go); return new Promise(function(){}); }
+      if(!j.user){ logout(); return new Promise(function(){}); }
+      USER = j.user; window.__ydUser = USER; window.__ydWeak2 = !!j.weak2; return USER; }); return meP; }
 
   function mkDb(){
     function docRef(path){
@@ -9621,13 +9701,24 @@ function admRowsHtml(){
 
 /* ---------- пригласительные коды (вкладка «Пользователи») ---------- */
 const INV = { list: null, users: [], err: "", busy: false, f: { role: "student", cls: "", classes: "", child: "", name: "" }, fresh: "" };
-const INV_R = [["student", "Ученик"], ["parent", "Родитель"], ["teacher", "Учитель"], ["admin", "Админ"]];
-const INV_RN = { student: "Ученик", parent: "Родитель", teacher: "Учитель", admin: "Администратор" };
+const INV_R = [["student", "Ученик"], ["parent", "Родитель"], ["teacher", "Учитель"], ["zavuch", "Завуч"], ["deputy", "Зам. директора"], ["director", "Директор"], ["methodist", "Методист"], ["controller", "Контролёр"], ["admin", "Админ"]];
+const INV_RN = { student: "Ученик", parent: "Родитель", teacher: "Учитель", zavuch: "Завуч", deputy: "Зам. директора", director: "Директор", methodist: "Методист", controller: "Контролёр", admin: "Администратор" };
+const INV_CLR = ["teacher", "methodist", "zavuch", "deputy", "controller"];
+/* «8а», «8 А», «10та» → как в журнале: «8 «А»», «10 ТА» */
+const invKey = t => String(t).toUpperCase().replace(/Ё/g, "Е").replace(/[^0-9A-ZА-Я]/g, "");
+function invCls(t){ const k = invKey(t); return k ? (JR_CLS.find(c => invKey(c) === k) || null) : ""; }
+const INVU = { open: "", code: {}, busy: "" };
 function invLoad(force){
   if(!window.yadroApi || (INV.list && !force) || INV.busy) return; INV.busy = true;
   Promise.all([window.yadroApi("invite_list"), window.yadroApi("users_list")]).then(([a, b]) => { INV.list = a.invites || []; INV.users = b.users || []; INV.err = ""; })
     .catch(e => { INV.err = e.message || "Не удалось загрузить"; INV.list = INV.list || []; })
     .then(() => { INV.busy = false; invRefresh(); });
+}
+function invUser(u){
+  const op = INVU.open === u.id, c = INVU.code[u.id], ways = [u.hasPasskey ? "ключ" : "", u.email ? "почта" : "", u.ya ? "Яндекс" : ""].filter(Boolean).join(", ");
+  return `<li class="inv-i inv-u${op ? " on" : ""}"><button type="button" class="inv-ub" data-invu="${esc(u.id)}" aria-expanded="${op}"><b>${esc(fioShort(u.name || "Без имени"))}</b><span class="inv-r">${INV_RN[u.role] || u.role}${u.cls ? " · " + esc(u.cls) : ""}</span><span class="inv-s">${ways ? esc(ways) : "только код"}</span></button>
+    ${op ? `<div class="inv-ud">${c ? `<div class="inv-new"><span>Код для входа · 2 дня</span><b>${esc(c)}</b><button type="button" data-inv-cp="${esc(c)}">Копировать</button></div>` : ""}
+      <div class="inv-ua"><button type="button" data-invu-code="${esc(u.id)}"${INVU.busy ? " disabled" : ""}>${c ? "Новый код" : "Код для входа"}</button><button type="button" class="x" data-invu-rv="${esc(u.id)}"${INVU.busy ? " disabled" : ""}>${INVU.done === u.id ? "Сеансы закрыты" : "Выйти везде"}</button></div></div>` : ""}</li>`;
 }
 function invRefresh(){ const p = document.getElementById("inv-p"); if(p) p.outerHTML = invHtml(true); }
 function invHtml(inner){
@@ -9637,33 +9728,40 @@ function invHtml(inner){
   const left = i => { const d = Math.ceil((i.exp - Date.now()) / 864e5); return d <= 0 ? "истёк" : "ещё " + d + " дн."; };
   const row = i => {
     const who = i.used ? "использован" : i.revoked ? "отозван" : left(i), off = i.used || i.revoked || i.exp < Date.now();
-    const det = [i.cls && "класс " + i.cls, i.classes && i.classes.length && i.classes.join(", "), i.childName && "ребёнок: " + i.childName].filter(Boolean).join(" · ");
+    const det = [i.uid && "повторный вход", i.cls && "класс " + i.cls, i.classes && i.classes.length && i.classes.join(", "), i.childName && "ребёнок: " + i.childName].filter(Boolean).join(" · ");
     return `<li class="inv-i${off ? " off" : ""}"><b class="inv-c">${esc(i.c)}</b><span class="inv-r">${INV_RN[i.role] || i.role}${det ? " · " + esc(det) : ""}</span><span class="inv-s">${who}</span>${off ? "" : `<button type="button" data-inv-cp="${esc(i.c)}">Копировать</button><button type="button" data-inv-rv="${esc(i.id)}" class="x">Отозвать</button>`}</li>`;
   };
   const extra = f.role === "student" ? `<input data-inv-f="cls" placeholder="Класс, например 8А" value="${esc(f.cls)}" maxlength="10">`
-    : f.role === "teacher" ? `<input data-inv-f="classes" placeholder="Классы через запятую: 8А, 9Б" value="${esc(f.classes)}">`
+    : INV_CLR.includes(f.role) ? `<input data-inv-f="classes" placeholder="${f.role === "teacher" ? "Классы через запятую: 8А, 9Б" : "Классы (необязательно): 8А, 9Б"}" value="${esc(f.classes)}">`
     : f.role === "parent" ? `<select data-inv-f="child"><option value="">Выберите ученика…</option>${st.map(u => `<option value="${esc(u.id)}"${f.child === u.id ? " selected" : ""}>${esc(u.name)}${u.cls ? " · " + esc(u.cls) : ""}</option>`).join("")}</select>` : "";
-  const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Пригласительные коды</h3><p>Одноразовые, на одного человека, действуют 7 дней. Роль и права задаёт код.</p></div></div>
+  const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Коды доступа</h3><p>Первый вход — только по коду. Код одноразовый, на одного человека, действует 7 дней; роль и права задаёт код. После входа человек может привязать ключ доступа, почту или Яндекс ID.</p></div></div>
     <div class="inv-rs">${INV_R.map(r => `<button type="button" data-inv-role="${r[0]}" aria-pressed="${f.role === r[0]}">${r[1]}</button>`).join("")}</div>
     <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button></div>
     ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
     ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
     ${INV.fresh ? `<div class="inv-new"><span>Новый код</span><b>${esc(INV.fresh)}</b><button type="button" data-inv-cp="${esc(INV.fresh)}">Копировать</button></div>` : ""}
     ${INV.list && INV.list.length ? `<ul class="inv-l">${INV.list.map(row).join("")}</ul>` : `<p class="inv-n">${INV.list ? "Кодов пока нет" : "Загружаем…"}</p>`}
-    <p class="inv-n">Ученик видит своё, родитель — только своего ребёнка, учитель — свои классы.</p></section>`;
+    ${INV.users.length ? `<h4 class="inv-uh">Зарегистрированы · ${INV.users.length}</h4><ul class="inv-l inv-us">${INV.users.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "ru")).map(invUser).join("")}</ul>` : ""}
+    <p class="inv-n">Ученик видит своё, родитель — только своего ребёнка, учитель — свои классы, завуч и директор — всю школу.</p></section>`;
   return html;
 }
 document.addEventListener("input", e => { const x = e.target.closest && e.target.closest("[data-inv-f]"); if(x) INV.f[x.dataset.invF] = x.value; });
 document.addEventListener("change", e => { const x = e.target.closest && e.target.closest("select[data-inv-f]"); if(x) INV.f[x.dataset.invF] = x.value; });
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
+  if((x = g("[data-invu]"))){ INVU.open = INVU.open === x.dataset.invu ? "" : x.dataset.invu; INVU.done = ""; invRefresh(); return; }
+  if((x = g("[data-invu-code]"))){ const id = x.dataset.invuCode; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("invite_create", { uid: id }).then(j => { INVU.code[id] = j.invite.c; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; INV.list = null; invLoad(true); }); return; }
+  if((x = g("[data-invu-rv]"))){ const id = x.dataset.invuRv; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("user_set", { id, revoke: true }).then(() => { INVU.done = id; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; invRefresh(); }); return; }
   if((x = g("[data-inv-role]"))){ INV.f.role = x.dataset.invRole; invRefresh(); return; }
   if((x = g("[data-inv-cp]"))){ const t = x.dataset.invCp; try { navigator.clipboard.writeText(t); x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1500); } catch(err) {} return; }
   if((x = g("[data-inv-rv]"))){ window.yadroApi("invite_revoke", { id: x.dataset.invRv }).catch(err => { INV.err = err.message; }).then(() => { INV.list = null; invLoad(true); }); return; }
   if((x = g("[data-inv-new]"))){
     const f = INV.f; INV.err = ""; if(f.role === "parent" && !f.child){ INV.err = "Выберите ученика для родителя"; invRefresh(); return; }
+    const cls = f.role === "student" ? invCls(f.cls) : "", raw = INV_CLR.includes(f.role) ? f.classes.split(/[,;]+/).map(t => t.trim()).filter(Boolean) : [], classes = raw.map(invCls);
+    const bad = f.role === "student" && cls === null ? [f.cls] : raw.filter((t, i) => !classes[i]);
+    if(bad.length){ INV.err = "Нет такого класса: " + bad.join(", ") + ". Есть: " + JR_CLS.join(", "); invRefresh(); return; }
     INV.busy = true; invRefresh();
-    window.yadroApi("invite_create", { role: f.role, name: f.name.trim(), cls: f.cls.trim(), classes: f.classes.split(/[,;]+/).map(t => t.trim()).filter(Boolean), child: f.child })
+    window.yadroApi("invite_create", { role: f.role, name: f.name.trim(), cls: cls || "", classes, child: f.child })
       .then(j => { INV.fresh = j.invite.c; INV.f.name = ""; }).catch(err => { INV.err = err.message; }).then(() => { INV.busy = false; INV.list = null; invLoad(true); });
   }
 });
@@ -10617,8 +10715,8 @@ function renderSettings(listOnly){
           <div class="confirm-btns"><button class="chip chip-danger" data-set="reset" data-val="1">Да, сбросить</button><button class="chip" data-set="reset-cancel" data-val="1">Отмена</button></div></div>`
         : `<div class="set-line"><span class="muted">Оценки и данные не затрагиваются</span><button class="chip" data-set="reset-ask" data-val="1">Сбросить</button></div>`)
   ].join("");
-  const TABS = [["look", "Оформление"], ["system", "Система"], ["notify", "Уведомления"], ["data", "Данные"]];
-  const notify = ntHtml(acc, line, D), data = dataHtml(acc, line), curBody = () => SET_TAB === "system" ? system : SET_TAB === "notify" ? notify : SET_TAB === "data" ? data : look;
+  const TABS = [["look", "Оформление"], ["system", "Система"], ["notify", "Уведомления"], ["data", "Данные"], ...(window.yadroAuth ? [["auth", "Вход"]] : [])];
+  const notify = ntHtml(acc, line, D), data = dataHtml(acc, line), curBody = () => SET_TAB === "system" ? system : SET_TAB === "notify" ? notify : SET_TAB === "data" ? data : SET_TAB === "auth" && window.yadroAuth ? auHtml(acc, line) : look;
   /* смена вкладки: заголовок и «пилюля» остаются на месте, меняется только список — он въезжает с нужной стороны */
   if(listOnly){
     const l = el.querySelector(".set-list");
@@ -10637,6 +10735,55 @@ function renderSettings(listOnly){
   SET_PREV = SET_TAB;
 }
 let SET_PREV = null, SET_SW = 0;
+
+/* ===== Настройки → Вход: способы входа, второй шаг, сеансы (только на сайте Ядра) ===== */
+const AUS = { m: null, busy: false, err: "", msg: "", em: "", emStep: 0, ask: false, rm: null };
+function auLoad(){ if(!window.yadroAuth || AUS.busy) return; AUS.busy = true; window.yadroAuth.methods().then(j => { AUS.m = j; AUS.err = ""; }).catch(e => { AUS.err = e.message; }).then(() => { AUS.busy = false; auRedraw(); }); }
+function auRedraw(){ if(SET_TAB === "auth" && state.tab === "settings") renderSettings(true); }
+function auHtml(acc, line){
+  if(window.__ydMsg && !AUS.msg){ AUS.msg = window.__ydMsg; window.__ydMsg = ""; AUS.m = null; }
+  if(!AUS.m && !AUS.busy) setTimeout(auLoad, 0);
+  const m = AUS.m, A = window.yadroAuth, U = window.__ydUser || {};
+  const btn = (attr, t, cls) => `<button type="button" class="chip ${cls || ""}" ${attr}>${t}</button>`;
+  if(!m) return acc("au-m", "Способы входа", AUS.err ? "Ошибка" : "Загружаем…", `<p class="set-hint">${esc(AUS.err || "Загружаем…")}</p>`);
+  const pks = m.passkeys.map(k => `<div class="set-line"><span>${esc(k.name)}${k.at ? ` <small class="muted">с ${new Date(k.at).toLocaleDateString("ru-RU")}</small>` : ""}</span>${AUS.rm === k.id ? `<span>${btn(`data-au="pk-rm-ok" data-id="${esc(k.id)}"`, "Удалить", "chip-danger")}${btn('data-au="pk-rm-no"', "Отмена")}</span>` : btn(`data-au="pk-rm" data-id="${esc(k.id)}"`, "Удалить")}</div>`).join("");
+  const emBody = m.email
+    ? `<div class="set-line"><span>${esc(m.email)}</span>${m.ownerEmail ? `<span class="muted">почта владельца</span>` : btn('data-au="em-un"', "Отвязать")}</div>`
+    : AUS.emStep === 1 ? `<div class="set-line au-f"><input class="au-in" id="au-cd" inputmode="numeric" maxlength="6" placeholder="Код из письма на ${esc(AUS.em)}" autocomplete="one-time-code">${btn('data-au="em-ok"', "Привязать")}</div>`
+    : `<div class="set-line au-f"><input class="au-in" id="au-em" type="email" inputmode="email" placeholder="Почта" value="${esc(AUS.em)}" autocomplete="email">${btn('data-au="em-send"', "Получить код")}</div>`;
+  const n = m.passkeys.length + (m.email ? 1 : 0) + (m.ya ? 1 : 0);
+  const sum = n ? [m.passkeys.length ? plural(m.passkeys.length, ["ключ", "ключа", "ключей"]).replace(/^/, m.passkeys.length + " ") : "", m.email ? "почта" : "", m.ya ? "Яндекс ID" : ""].filter(Boolean).join(" · ") : "не привязаны";
+  return [
+    AUS.msg || AUS.err ? `<p class="set-hint au-msg">${esc(AUS.msg || AUS.err)}</p>` : "",
+    U.role === "admin" && window.__ydWeak2 ? `<p class="set-hint au-warn">Второй шаг входа администратора не настроен: добавьте ключ доступа или привяжите Telegram-бот на вкладке «Безопасность».</p>` : "",
+    acc("au-m", "Способы входа", sum,
+      `<p class="set-hint">Первый вход — по коду доступа от администратора. Потом входите привязанным способом. Если не привязать ни одного, для входа понадобится новый код.</p>
+       <p class="au-lab">Ключи доступа</p>${pks || `<p class="set-hint">Ключей нет</p>`}${A.pkOk() ? `<div class="set-line"><span class="muted">Face ID, отпечаток или PIN этого устройства</span>${btn('data-au="pk-add"', "Добавить ключ")}</div>` : ""}
+       <p class="au-lab">Почта</p>${emBody}
+       ${A.yaOk() || m.ya ? `<p class="au-lab">Яндекс ID</p><div class="set-line"><span>${m.ya ? "Привязан" : "Не привязан"}</span>${m.ya ? btn('data-au="ya-un"', "Отвязать") : btn('data-au="ya-bind"', "Привязать")}</div>` : ""}`),
+    acc("au-s", "Сеансы", "Выход на устройствах",
+      AUS.ask ? `<div class="confirm" role="alertdialog"><b>Выйти на всех устройствах?</b><p class="muted">На других телефонах и компьютерах придётся войти заново. Это устройство останется в аккаунте.</p><div class="confirm-btns">${btn('data-au="rv-ok"', "Да, выйти везде", "chip-danger")}${btn('data-au="rv-no"', "Отмена")}</div></div>`
+        : `<div class="set-line"><span class="muted">Если потеряли телефон или входили с чужого компьютера</span>${btn('data-au="rv"', "Выйти везде")}</div><div class="set-line"><span class="muted">Выйти только здесь</span>${btn('data-au="out"', "Выйти")}</div>`)
+  ].join("");
+}
+document.addEventListener("click", e => {
+  const x = e.target.closest && e.target.closest("[data-au]"); if(!x || !window.yadroAuth) return;
+  const A = window.yadroAuth, k = x.dataset.au, fin = p => { x.disabled = true; p.then(() => { AUS.m = null; }).catch(er => { AUS.err = er.message || "Не получилось"; }).then(() => { auLoad(); auRedraw(); }); };
+  AUS.err = ""; AUS.msg = "";
+  if(k === "pk-add"){ fin(A.pkAdd().then(() => { AUS.msg = "Ключ доступа добавлен"; })); return; }
+  if(k === "pk-rm"){ AUS.rm = x.dataset.id; auRedraw(); return; }
+  if(k === "pk-rm-no"){ AUS.rm = null; auRedraw(); return; }
+  if(k === "pk-rm-ok"){ AUS.rm = null; fin(A.pkRemove(x.dataset.id).then(() => { AUS.msg = "Ключ удалён"; })); return; }
+  if(k === "em-send"){ const v = (document.getElementById("au-em") || {}).value || ""; AUS.em = v.trim(); if(!AUS.em){ AUS.err = "Введите почту"; auRedraw(); return; } x.disabled = true; A.emailSend(AUS.em).then(() => { AUS.emStep = 1; }).catch(er => { AUS.err = er.message; }).then(auRedraw); return; }
+  if(k === "em-ok"){ const c = (document.getElementById("au-cd") || {}).value || ""; fin(A.emailVerify(AUS.em, c).then(() => { AUS.emStep = 0; AUS.msg = "Почта привязана"; })); return; }
+  if(k === "em-un"){ fin(A.emailUnbind().then(() => { AUS.msg = "Почта отвязана"; })); return; }
+  if(k === "ya-bind"){ A.yaBind(); return; }
+  if(k === "ya-un"){ fin(A.yaUnbind().then(() => { AUS.msg = "Яндекс ID отвязан"; })); return; }
+  if(k === "rv"){ AUS.ask = true; auRedraw(); return; }
+  if(k === "rv-no"){ AUS.ask = false; auRedraw(); return; }
+  if(k === "rv-ok"){ AUS.ask = false; fin(A.revokeAll().then(() => { AUS.msg = "Готово: на других устройствах нужно войти заново"; })); return; }
+  if(k === "out"){ A.logout(); return; }
+});
 
 /* ===== Уведомления и данные ===== */
 const NT_DEF = { ev: { grade: 1, low: 1, hw: 1, test: 1, sched: 1, chat: 1, abs: 0, mod: 1 }, ch: { app: 1, push: 0, tg: 0, mail: 0 }, quiet: 1, qf: "21:00", qt: "07:00", digest: "off", sound: "soft" };
@@ -10712,7 +10859,7 @@ function placeSetPill(animate){
 function rerenderAll(){ renderOverview(); renderGrades(); renderProfile(); renderSchedule(); renderSettings(); }
 function applySetting(key, val){
   if(key === "settab"){
-    const ORD = ["look", "system", "notify", "data"], nt = ORD.includes(val) ? val : "look"; if(nt === SET_TAB) return;
+    const ORD = ["look", "system", "notify", "data", "auth"], nt = ORD.includes(val) ? val : "look"; if(nt === SET_TAB) return;
     const dir = ORD.indexOf(nt) > ORD.indexOf(SET_TAB) ? 1 : -1; SET_TAB = nt; SET_ASK = false; SET_OPEN = null;
     const root = document.getElementById("settings"), box = root && root.querySelector(".set-tabs"), list = root && root.querySelector(".set-list");
     if(!box || !list || (document.documentElement.dataset.motion === "off")){ renderSettings(); return; }
@@ -10884,7 +11031,7 @@ function jrStat(st, D){
   const avg = sw ? sv / sw : null, ov = (D.finOv || {})[st];
   return { avg, n, auto: avg != null && n >= (DATA.minGrades || 3) ? fin(avg) : null, fin: ov != null ? ov : avg != null && n >= (DATA.minGrades || 3) ? fin(avg) : null, ov: ov != null };
 }
-const jrChip = (v, w) => v === "н" ? `<span class="jr-n" title="Не был">н</span>` : `<span class="jn ${band(v)}">${dv(v)}${w > 1 ? `<sub>${w}</sub>` : ""}</span>`;
+const jrChip = (v, w) => v === "н" ? `<span class="jr-n" title="Не был">н</span>` : !/^\d{1,2}(\.\d+)?$/.test(String(v)) ? "" : `<span class="jn ${band(v)}">${esc(String(dv(v)))}${w > 1 ? `<sub>${w}</sub>` : ""}</span>`;
 function jrAbsList(D){
   const out = [], cols = D.cols.slice().sort((a, b) => jrDt(b) - jrDt(a));
   cols.forEach(c => JR_STUD.forEach(([id, nm]) => { if((D.marks[id] || {})[c.id] === "н") out.push({ id, nm, c }); }));
@@ -10992,6 +11139,7 @@ function tabReset(t){
     if(t === "grades"){ state.gradeFin = null; state.gradeFlt = "all"; state.gradeQ = ""; state.gradePeriod = CUR.id; if(state.openSubj) state.openSubj.clear(); state.gSortOpen = false; renderGrades(); }
     else if(t === "journal"){ try { const m = document.getElementById("tgm"); if(m && m.dataset.jro) tgModalClose(true); } catch(_) {} try { Object.assign(JRO, { cls: null, par: "all", subj: "all", open: null, dd: false, edit: false, attOpen: null, per: "q", attAll: false }); } catch(_) {} JR.pi = null; JR.subj = null; JR.att = false; JR.bst = false; JR.flt = null; JR.wk.clear(); jrPopClose(); if(jrCan()) renderJournal(); }
     else if(t === "admin"){ ADM.q = ""; ADM.form = null; }
+    else if(t === "settings"){ try { Object.assign(AUS, { ask: false, rm: null, emStep: 0, err: "", msg: "" }); } catch(_) {} }
     else if(t === "monitoring"){ MONS.pk = false; MONS.sel = null; MONS.f = "all"; MONS.cur = null; }
   }catch(e){}
 }
@@ -11411,11 +11559,11 @@ function renderJournal(){
   const clsAvg = withAvg.length ? withAvg.reduce((a, [id]) => a + stats[id].avg, 0) / withAvg.length : null;
   const total = JR_STUD.reduce((a, [id]) => a + stats[id].n, 0);
   const lack = JR_STUD.filter(([id]) => stats[id].n < (DATA.minGrades || 3)).length;
-  const head = c => { const dt = jrDt(c), h = jrW(c.k) > 1; return `<th class="jr-h ${h ? "hv" : ""}"><button type="button" data-jr-col="${c.id}" title="${esc(dt.getDate() + " " + JR_MON[dt.getMonth()] + " · " + jrLbl(c) + (c.topic ? " · " + c.topic : ""))}"><b>${dt.getDate()}.${String(dt.getMonth() + 1).padStart(2, "0")}</b></button></th>`; };
+  const head = c => { const dt = jrDt(c), h = jrW(c.k) > 1; return `<th class="jr-h ${h ? "hv" : ""}"><button type="button" data-jr-col="${esc(c.id)}" title="${esc(dt.getDate() + " " + JR_MON[dt.getMonth()] + " · " + jrLbl(c) + (c.topic ? " · " + c.topic : ""))}"><b>${dt.getDate()}.${String(dt.getMonth() + 1).padStart(2, "0")}</b></button></th>`; };
   el.innerHTML = top + `
     <section class="panel jr-p jr-u"><div class="jr-l"><div class="jr-scroll" id="jr-scroll"><table class="jr-t">
       <thead><tr><th class="jr-nm">Ученик</th>${cols.map(head).join("")}<th class="jr-h jr-nwh"><button type="button" data-jr-newcol title="Новый урок: дата и тема" aria-label="Новый урок"><b class="jr-pl">+</b></button></th><th class="jr-av">Средний</th><th class="jr-fn">Итог</th></tr></thead>
-      <tbody>${JR_STUD.map(([id, nm], i) => { const st = stats[id], me = id === "u1"; const hideR = JR.flt === "att" ? st.fin == null : JR.flt === "non" ? !(st.n < (DATA.minGrades || 3)) : JR.flt === "abs" ? !Object.values(D.marks[id] || {}).includes("н") : false; return `<tr class="${st.n < (DATA.minGrades || 3) ? "jr-low" : ""} ${hideR ? "jr-hide" : ""}"><td class="jr-nm"><span class="jr-i">${i + 1}</span><button type="button" class="jr-sn" data-jr-stu="${id}" title="${esc(nm)}: профиль">${jrNmHtml(nm)}</button>${me ? ` <em title="Есть в дневнике">●</em>` : ""}</td>${cols.map(c => { const v = (D.marks[id] || {})[c.id]; return `<td class="jr-d"><button type="button" class="jr-c ${v == null ? "empty" : ""}" data-jr-cell="${id}|${c.id}" aria-label="${esc(jrShort(nm))}, ${c.d}" title="${esc(c.d + " · " + jrLbl(c) + (c.topic ? " · " + c.topic : ""))}">${v == null ? "" : jrChip(v, jrW(c.k))}</button></td>`; }).join("")}<td class="jr-d jr-nwc"><button type="button" class="jr-c jr-pl" data-jr-new="${id}" aria-label="Новая оценка: ${esc(jrShort(nm))}" title="Поставить оценку за новый урок">+</button></td><td class="jr-av">${st.avg == null ? "–" : `<b>${da(st.avg)}</b>`}</td><td class="jr-fn"><button type="button" class="jr-fb ${st.ov ? "ov" : ""}" data-jr-fin="${id}" title="${st.ov ? "Итог выставлен вручную" : "Изменить итог"}">${st.fin != null ? `<span class="g g-final off ${band(st.fin)}">${dv(st.fin)}</span>` : (jrLate() && st.n ? `<span class="jr-na" title="Нужно ещё ${(DATA.minGrades || 3) - st.n} оценки для итога">н/а</span>` : "–")}</button></td></tr>`; }).join("")}</tbody>
+      <tbody>${JR_STUD.map(([id, nm], i) => { const st = stats[id], me = id === "u1"; const hideR = JR.flt === "att" ? st.fin == null : JR.flt === "non" ? !(st.n < (DATA.minGrades || 3)) : JR.flt === "abs" ? !Object.values(D.marks[id] || {}).includes("н") : false; return `<tr class="${st.n < (DATA.minGrades || 3) ? "jr-low" : ""} ${hideR ? "jr-hide" : ""}"><td class="jr-nm"><span class="jr-i">${i + 1}</span><button type="button" class="jr-sn" data-jr-stu="${id}" title="${esc(nm)}: профиль">${jrNmHtml(nm)}</button>${me ? ` <em title="Есть в дневнике">●</em>` : ""}</td>${cols.map(c => { const v = (D.marks[id] || {})[c.id]; return `<td class="jr-d"><button type="button" class="jr-c ${v == null ? "empty" : ""}" data-jr-cell="${esc(id)}|${esc(c.id)}" aria-label="${esc(jrShort(nm))}, ${esc(c.d)}" title="${esc(c.d + " · " + jrLbl(c) + (c.topic ? " · " + c.topic : ""))}">${v == null ? "" : jrChip(v, jrW(c.k))}</button></td>`; }).join("")}<td class="jr-d jr-nwc"><button type="button" class="jr-c jr-pl" data-jr-new="${id}" aria-label="Новая оценка: ${esc(jrShort(nm))}" title="Поставить оценку за новый урок">+</button></td><td class="jr-av">${st.avg == null ? "–" : `<b>${da(st.avg)}</b>`}</td><td class="jr-fn"><button type="button" class="jr-fb ${st.ov ? "ov" : ""}" data-jr-fin="${id}" title="${st.ov ? "Итог выставлен вручную" : "Изменить итог"}">${st.fin != null ? `<span class="g g-final off ${band(st.fin)}">${dv(st.fin)}</span>` : (jrLate() && st.n ? `<span class="jr-na" title="Нужно ещё ${(DATA.minGrades || 3) - st.n} оценки для итога">н/а</span>` : "–")}</button></td></tr>`; }).join("")}</tbody>
     </table></div>${cols.length ? "" : `<p class="muted jr-e">Оценок в этой четверти пока нет. Нажмите «Добавить оценку», чтобы создать первую колонку.</p>`}${jrDist(D, cols, stats)}</div>${jrWidgets(D, stats)}</section>
     <p class="jr-note">Данные журнала пока хранятся только в этом браузере.</p>`;
   jrPill(true); requestAnimationFrame(() => requestAnimationFrame(() => jrPill(true)));
@@ -12983,7 +13131,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "516";
+const BUILD = "517";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
@@ -12997,7 +13145,8 @@ const REG_CHECKS = [
   ["Выбор вкладки: серая плашка + контур", () => !!TABS_NAMES.plateo],
   ["Оценки: статистика рядом с четвертью, виджеты под таблицей", () => typeof gStatsHtml === "function" && String(gradesSide).indexOf("Последние оценки") < 0],
   ["Оценки: 4 вида итога и режим без цвета", () => Object.keys(FIN_NAMES).length === 4 && !!GCOLOR_NAMES.off],
-  ["Контрольные: карточка с «Повторить» и счётчиком", () => String(renderTests).indexOf("tk-rep") > 0 && String(renderTests).indexOf("tk-w") > 0],
+  ["Контрольные: карточка с «Повторить» и счётчиком", () => { const t = String(renderTests) + (typeof testsInner === "function" ? String(testsInner) : ""); return t.indexOf("tk-rep") > 0 && t.indexOf("tk-w") > 0; }],
+  ["Вход: первый вход по коду, вкладка «Вход» в настройках", () => !window.yadroAuth || (typeof auHtml === "function" && INV_R.length === 9 && invCls("10та") === "10 ТА" && invCls("8а") === "8 «А»")],
   ["Нет ошибок скриптов", () => JS_ERRS.length === 0]
 ];
 function regRun(quiet){
