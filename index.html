@@ -9251,7 +9251,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
-  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
@@ -9494,6 +9494,20 @@ async function schSave(){
   try { await DB.doc(schKey(SCH.cls)).set({ cls: SCH.cls, timetable: SCH.data, weeks: SCH.weeks || null, at: new Date().toISOString() }); SCH.msg = "Сохранено. Ученики класса видят расписание"; actLog("adm", "Расписание " + SCH.cls + " сохранено"); }
   catch(e) { SCH.msg = "Не сохранилось: " + e.message; }
   SCH.busy = false; renderAdmRefresh();
+}
+async /* оценки ученика из журнала: сервер кладёт копию в grades/<его id> (сопоставление по полному ФИО) */
+async function gradesForMe(uid){
+  if(!DB || !uid) return;
+  try {
+    const snap = await DB.collection("grades/" + uid).get(); const out = {};
+    snap.docs.forEach(d => { const x = d.data(); if(!x || !x.key || !x.D) return; const subj = String(x.key).split("|")[0];
+      (out[subj] = out[subj] || []);
+      (x.D.cols || []).forEach(c => { const v = (x.D.marks || {})[c.id]; if(v == null) return; const [dd0, mm0] = String(c.d || "").split("."); const kind = KIND[c.k] || KIND[""];
+        const val = v === "н" ? null : +v; if(val === null || !(val >= 1 && val <= 10)) return;
+        out[subj].push({ date: new Date(+mm0 >= 8 ? DATA.yearStart : DATA.yearStart + 1, +mm0 - 1, +dd0), v: val, k: c.k || "", label: kind.label, w: kind.w, about: c.topic || "" }); }); });
+    Object.keys(DATA.subjects).forEach(id => { ALLG[id] = (out[id] || []).sort((a, b) => a.date - b.date); });
+    try { renderAll(); } catch(e) {}
+  } catch(e) {}
 }
 async function schForStudent(cls){
   if(!DB) return;
@@ -11067,7 +11081,7 @@ function jrTrack(){
 }
 async function jrPush(){
   if(!JRS.on || !DB || JRS.busy || !JRS.dirty.size) return; JRS.busy = true; const ks = [...JRS.dirty]; JRS.dirty.clear();
-  try { for(const k of ks){ if(JD[k]) await DB.doc("jr/" + jrB64(k)).set({ key: k, t: JDT[k] || Date.now(), D: JD[k] }); } JRS.at = Date.now(); JRS.err = ""; }
+  try { for(const k of ks){ if(JD[k]) await DB.doc("jr/" + jrB64(k)).set({ key: k, t: JDT[k] || Date.now(), D: Object.assign({}, JD[k], { names: Object.fromEntries(JR_STUD.map(([id, nm]) => [id, nm])) }) }); } JRS.at = Date.now(); JRS.err = ""; }
   catch(e) { ks.forEach(k => JRS.dirty.add(k)); JRS.err = String(e && e.message || e); clearTimeout(JRS.t); JRS.t = setTimeout(jrPush, 30000); }
   finally { JRS.busy = false; if(JRS.dirty.size && !JRS.err){ clearTimeout(JRS.t); JRS.t = setTimeout(jrPush, 1500); } }
 }
@@ -13261,7 +13275,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "522";
+const BUILD = "523";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
