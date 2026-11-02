@@ -1455,6 +1455,24 @@ button.jro-kv:hover,summary.jro-kv:hover{background:color-mix(in srgb,var(--ink)
 .jro-add button:hover{background:var(--pen-soft)}
 .jro-ta{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:15px/1.5 var(--f-body);color:var(--ink);background:var(--paper);resize:vertical}
 @media (max-width:420px){.jro-kp span{font-size:10px}.jro-kp b{font-size:16px}.jro-kp{padding:7px 8px}.jro-tile{padding:9px 10px}.jro-tile b{font-size:15px}}
+/* ===== Сотрудники школы: Главное, Профиль, Оценки, Домашка ===== */
+.stf{display:grid;gap:12px;max-width:980px;animation:popIn .22s cubic-bezier(.2,.8,.3,1)}
+.stf-lede{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.stf-acts{display:flex;gap:6px;flex-wrap:wrap}
+.stf-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+@media (max-width:760px){.stf-g{grid-template-columns:minmax(0,1fr)}}
+.stf-p{padding:14px 16px;display:grid;gap:2px}
+.stf-p .panel-head{margin-bottom:4px}
+.stf-pill{display:inline-block;min-width:16px;padding:0 5px;border-radius:8px;background:color-mix(in srgb,var(--margin) 22%,transparent);color:var(--ink);font:500 11px/16px var(--f-body);text-align:center}
+.stf-hero{display:flex;align-items:center;gap:14px;padding:16px}
+.stf-hero .prof-name{margin:0}.stf-hero .prof-sub{margin:2px 0 0}
+.stf-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stf.noanim{animation:none}
+@media (max-width:520px){.stf-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pf-top .prof-sub.par{display:block!important}
+@media (max-width:520px){.stf .jro-kps{grid-template-columns:repeat(2,minmax(0,1fr))}.stf .jro-kp span{font-size:11px}}
+.stf-hw>span:first-child{display:block}.stf-ht{color:var(--muted);font-size:13px}
+.stf-hw>span:last-child{flex:0 0 auto;align-self:flex-start}
 /* Итог — строго по центру высоты строки предмета (--rh задаёт скрипт, высота самой строки без раскрытой части) */
 .gt-line .off-cell,.gt-line:last-child .off-cell{align-items:flex-start;padding-top:3px;padding-bottom:0}
 .off-cell .g-final,.off-cell .g-none{height:var(--rh,34px);min-height:34px}
@@ -6539,6 +6557,7 @@ function testRow(t){
 /* ================= Сводка ================= */
 function renderOverview(){
   if(CLOSED.overview){ renderClosed("overview"); return; }
+  if(stfOn()){ document.getElementById("overview").innerHTML = stfHomeHtml(); return; }
   const open = HW.filter(h => !isDone(h));
   const late = open.filter(isLate);
   const must = open.filter(h => h.must);
@@ -6639,6 +6658,7 @@ function hwJump(id){
 }
 document.addEventListener("click", e => { const g = e.target.closest("[data-hwgo]"); if(g){ e.preventDefault(); e.stopPropagation(); hwJump(g.dataset.hwgo); } }, true);
 function renderHomework(partial){
+  if(stfOn()){ const he = document.getElementById("homework"); if(he) he.innerHTML = stfHomeworkHtml(); return; }
   if(CLOSED.homework){ renderClosed("homework"); return; }
   const showDone = !!state.hwDone;
   const row = (h, late) => {
@@ -6827,7 +6847,7 @@ function renderSchedule(){
     : `${mon.getDate()} ${MS[mon.getMonth()]} – ${fri.getDate()} ${MS[fri.getMonth()]}`;
   const thisMon = mondayOf(TODAY);
   const wkDiff = Math.round((mon - thisMon) / (7*DAY));
-  const sub = wkDiff === 0 ? "Текущая неделя" : wkDiff === 1 ? "Следующая неделя" : wkDiff === -1 ? "Прошлая неделя" : "";
+  const sub0 = wkDiff === 0 ? "Текущая неделя" : wkDiff === 1 ? "Следующая неделя" : wkDiff === -1 ? "Прошлая неделя" : "", sub = typeof stfOn === "function" && stfOn() ? (sub0 ? sub0 + " · 8 «А»" : "8 «А»") : sub0;
 
   const wide = false, weekView = SCHED_VIEW === "week";
   const nowT = new Date(), mins = nowT.getHours() * 60 + nowT.getMinutes();
@@ -7167,6 +7187,7 @@ function monRow(per, closed){
       </div></div></div></div>`.replace(/^/, closed ? `<div class="gt-line">` : "") + (closed ? `<div class="off-cell"></div></div>` : "");
 }
 function renderGradesRaw(){
+  if(stfOn()){ const ge = document.getElementById("grades"); if(ge) ge.innerHTML = stfGradesHtml(); return; }
   const isYear = state.gradePeriod === "year";
   const per = isYear ? YEAR : (PERIODS.find(p => p.id === state.gradePeriod) || CUR);
   const closed = isYear || per !== CUR || !!per.finals;
@@ -8219,7 +8240,7 @@ function renderChats(keepScroll, mode){
         <div class="tg-rec"><span class="rec-dot"></span><span class="rec-t" id="rec-t">0:00</span><span class="rec-w" id="rec-w"></span><button type="button" class="tg-ib bad" data-rec-x title="Отменить запись">${IC.trash}</button><button type="button" class="tg-send" data-rec-ok title="Отправить">${IC.send}</button></div>
       </form>`;
   const html = `
-    <div class="view-head"><div class="hello"><p class="eyebrow">Общение класса</p><h1 class="headline">Чаты</h1></div></div>
+    <div class="view-head"><div class="hello"><p class="eyebrow">${typeof stfOn === "function" && stfOn() ? "Общение" : "Общение класса"}</p><h1 class="headline">Чаты</h1></div></div>
     <div class="tg ${CHAT.view === "chat" ? "on-chat" : ""} ${keepScroll ? "tg-keep" : ""} ${CHAT.an ? "an-" + CHAT.an : ""}">
       <aside class="tg-side">
         <div class="tg-sh"><label class="tg-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="tg-find" type="text" inputmode="search" enterkeyhint="search" aria-label="Поиск по чатам" placeholder=" " autocomplete="off" value="${esc(CHAT.q || "")}"><span class="tg-ph" aria-hidden="true">Поиск по чатам</span><button type="button" class="tg-sx" data-tg-sx aria-label="Очистить поиск"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7m0-7l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></label><button type="button" class="tg-new" data-tg-new title="Новый чат">${IC.plus}</button></div>
@@ -9125,7 +9146,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
-  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; if(ME_ROLE && ME_ROLE !== "student") buildBnav(); } } catch(e) {}
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
@@ -10070,6 +10091,7 @@ const canPII = () => VA.role ? !!(ADM.perm[VA.role] && ADM.perm[VA.role].acts.pi
 const fmtPhone = v => { const d = String(v).replace(/\D/g, ""); const m = /^[78]?(\d{3})(\d{3})(\d{2})(\d{2})$/.exec(d); return m ? `+7 ${m[1]} ${m[2]}-${m[3]}-${m[4]}` : String(v); };
 function renderProfile(){
   const el = document.getElementById("profile"); if(!el) return;
+  if(stfOn()){ el.innerHTML = stfProfileHtml(); return; }
   const rows = STATS, graded = rows.filter(x => x.avg != null);
   const overall = graded.reduce((a,x) => a + x.avg, 0) / (graded.length || 1);
   const all = rows.flatMap(x => x.grades.map(g => ({ ...g, s: x })));
@@ -10092,7 +10114,7 @@ function renderProfile(){
   const pastTests = TESTS.filter(t => diff(t.d) < 0), nextTest = TESTS.find(t => diff(t.d) >= 0);
   /* профиль зависит от того, чьими глазами смотрим: ученик, родитель, учитель, руководство */
   const pw = (() => {
-    const u = VA.role ? (vaUser(VA.uid) || vaFindStud(VA.uid)) : null, kid = vaKid(VA.role ? VA.uid : "u1") || ADM.users.find(x => x.id === "u1"), cl = (kid && kid.v && kid.v.cls) || "8 «А»";
+    const u = VA.role ? (vaUser(VA.uid) || vaFindStud(VA.uid) || (VA.role === "parent" ? ADM.users.find(x => x.role === "parent" && x.v && /8 «А»/.test(x.v.kids || "") && /Бобриков/.test(x.v.kids || "")) || ADM.users.find(x => x.role === "parent") : null)) : null, kid = vaKid(VA.role ? VA.uid : "u1") || ADM.users.find(x => x.id === "u1"), cl = (kid && kid.v && kid.v.cls) || "8 «А»";
     const par = ADM.users.filter(x => x.role === "parent" && x.v && x.v.kids && admCls(x) === cl && kid && kid.name.startsWith(admKid(x)));
     const R = u ? u.role : "student", RN = { student: "Ученик", parent: "Родитель", teacher: "Преподаватель", methodist: "Методист", zavuch: "Завуч", deputy: "Заместитель директора", director: "Директор", controller: "Контролёр", admin: "Администратор" };
     let sub = `Ученик · ${cl}${DATA.school ? " · " + DATA.school : ""}`, eb = "Мой профиль", own = null;
@@ -10150,7 +10172,7 @@ function renderProfile(){
         <div class="prof-id">
           <p class="eyebrow">Мой профиль</p>
           <h1 class="prof-name" id="prof-name"></h1>
-          <p class="prof-sub">${esc(pw.sub)}</p>${pw.par.length && pw.R === "student" ? `<p class="prof-par"><span>Родители:</span>${pw.par.map(x => `<button type="button" class="pchip" data-par-wr="${esc(x.name)}" data-tip="Написать родителю|${esc(x.name)}">${esc(fioShort(x.name))}</button>`).join("")}</p>` : ""}
+          <p class="prof-sub ${pw.R === "parent" ? "par" : ""}">${esc(pw.sub)}</p>${pw.par.length && pw.R === "student" ? `<p class="prof-par"><span>Родители:</span>${pw.par.map(x => `<button type="button" class="pchip" data-par-wr="${esc(x.name)}" data-tip="Написать родителю|${esc(x.name)}">${esc(fioShort(x.name))}</button>`).join("")}</p>` : ""}
           <div class="prof-chips"><span class="pchip">${(() => { const lv = PERIODS.find(p => TODAY >= p.s && TODAY <= p.e); if(!lv) return esc(CUR.name) + " завершена"; const left = Math.max(0, Math.round((lv.e - TODAY) / DAY)); return esc(lv.name) + (left ? " · до конца " + left + " " + plural(left, ["день", "дня", "дней"]) : " · последний день"); })()}</span>${canPII() && PED.v.phone ? `<a class="pchip pc-c" href="tel:${esc(String(PED.v.phone).replace(/[^+\d]/g, ""))}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>${esc(fmtPhone(PED.v.phone))}</a>` : ""}${canPII() && PED.v.email ? `<a class="pchip pc-c" href="mailto:${esc(PED.v.email)}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg>${esc(PED.v.email)}</a>` : ""}</div>
         </div>
         <div class="pf-ring" title="Средний балл" ${["teacher", "methodist", "zavuch", "deputy", "director", "controller", "admin"].includes(pw.R) && VA.role ? "hidden" : ""}>
@@ -10242,6 +10264,7 @@ function monDetailHtml(g){
       ${q.sol ? `<div class="mq-sw"><button type="button" class="mq-sb" data-mq-sol aria-expanded="false"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.6.5 1 1.200 1 2.100h5c0-.9.4-1.600 1-2.100A6 6 0 0 0 12 3z"/></svg><span class="x1">Показать решение</span><span class="x2">Скрыть решение</span></button><button type="button" class="mq-sb mq-ai" data-mq-ai="${q.n}" data-tip="Подробный разбор · скоро|ИИ-помощник объяснит решение по шагам прямо здесь"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M10 3.5l1.7 4.8 4.8 1.7-4.8 1.7L10 16.5l-1.7-4.8L3.5 10l4.8-1.7z"/><path d="M18 14l.9 2.5 2.5.9-2.5.9L18 20.8l-.9-2.5-2.5-.9 2.5-.9z"/></svg>Разобрать подробно<em>скоро</em></button><div class="mq-ax"><div class="mq-ai-in"><div class="mq-ai-b"><b>Подробный разбор скоро появится</b><span>Здесь откроется пошаговое объяснение от ИИ-помощника: что дано, какую формулу применить, каждый шаг вычислений и где обычно ошибаются. Можно будет задать вопрос по заданию.</span></div></div></div><div class="mq-sx"><div class="mq-si"><p>${txt(q.sol)}</p></div></div></div>` : ""}</li>`).join("")}</ol></div>`;
 }
 function renderMonitoring(){
+  if(stfOn()){ const me = document.getElementById("monitoring"); if(me) me.innerHTML = stfMonitoringHtml(); return; }
   const el = document.getElementById("monitoring"); if(!el) return;
   const list = MON.slice().reverse(), sel = MON.find(x => x.c === MONS.sel) || list[0]; MONS.sel = sel.c;
   const avgV = MON.reduce((a, g) => a + g.v, 0) / MON.length, avgB = MON.reduce((a, g) => a + g.b, 0) / MON.length;
@@ -10801,8 +10824,10 @@ const jrEnd = P => new Date((P === CUR && TODAY > P.e ? TODAY : P.e).getTime() +
 const jrTDate = () => { const P = jrP(), e = jrEnd(P); return TODAY < P.s ? P.s : TODAY > e ? e : TODAY; };
 const JR_CLS = ["8 «А»", "8 «Б»", "8 «В»", "9 «А»", "9 «Б»", "10 ТА", "10 ТБ", "10 ЭА", "10 ЭБ", "10 ЭВ", "11 Т", "11 А", "11 Б", "11 В"];
 const JR_MON = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-const jrCan = () => VA.role ? lvOf("journal") !== "n" : !!CN.isAdmin;
-const jrEdit = () => VA.role ? ["e", "f"].includes(lvOf("journal")) : !!CN.isAdmin;
+const jrMeR = () => !VA.role && !CN.isAdmin && ["teacher", "methodist", "zavuch", "deputy", "director", "controller"].includes(typeof ME_ROLE === "string" ? ME_ROLE : "") ? ME_ROLE : null;
+const jrLv = () => { const r = jrMeR(); return r ? (((ADM.perm || {})[r] || {}).res || {}).journal || "n" : lvOf("journal"); };
+const jrCan = () => VA.role || jrMeR() ? jrLv() !== "n" : !!CN.isAdmin;
+const jrEdit = () => VA.role || jrMeR() ? ["e", "f"].includes(jrLv()) : !!CN.isAdmin;
 const jrSubjects = () => {
   const all = Object.entries(DATA.subjects).filter(([, x]) => x.graded !== false);
   const u = VA.role === "teacher" ? vaUser(VA.uid) : null, own = u && u.v && u.v.subj ? u.v.subj.split(",").map(t => t.trim().toLowerCase()) : null;
@@ -11205,6 +11230,140 @@ document.addEventListener("click", e => {
   if(g("[data-jro-edit]")){ JRO.edit = true; JR.cls = JRO.cls; jrSetCls(JRO.cls); JR.subj = JRO.subj !== "all" ? JRO.subj : null; renderJournal(); return; }
   if(g("[data-jro-over]")){ JRO.edit = false; JRO.cls = null; JRO.cache = {}; jroRender(); return; }
   if(JRO.dd && !g(".jro-dd")){ JRO.dd = false; jroRender(); }
+});
+
+/* ================= Сотрудники школы: свои Главное, Профиль, Оценки, Домашка, Мониторинг ================= */
+const STF_R = ["teacher", "methodist", "zavuch", "deputy", "director", "controller"];
+const STF_RN = { teacher: "Преподаватель", methodist: "Методист", zavuch: "Завуч", deputy: "Заместитель директора", director: "Директор", controller: "Контролёр" };
+let ME_INFO = null;
+const stfRole = () => VA.role || (CN.isAdmin ? "" : ME_ROLE);
+const stfOn = () => STF_R.includes(stfRole());
+const stfLead = () => stfRole() !== "teacher";
+/* кто смотрит: выбранный в «Смотреть как» человек, вошедший сотрудник или первый человек с этой ролью */
+function stfMe(){
+  const R = stfRole(); let u = VA.uid ? vaUser(VA.uid) : null;
+  if(!u && !VA.role && ME_INFO) u = { name: ME_INFO.name, role: R, v: { cls: (ME_INFO.classes || []).join(", ") } };
+  if(!u || u.role !== R) u = STAFF.find(x => x.role === R) || ADM.users.find(x => x.role === R) || { name: "", role: R, v: {} };
+  const v = u.v || {}, nm = String(u.name || "").trim();
+  const subjNames = String(v.subj || "").split(/[,;]+/).map(t => t.trim()).filter(Boolean);
+  const nz = t => String(t).toLowerCase().replace(/ё/g, "е").replace(/[^а-яa-z ]/g, " ").replace(/\s+/g, " ").trim(), ini = t => nz(t).split(" ").map(w => w[0]).join("");
+  const same = (n, x) => { const a = nz(n), b = nz(x); return a === b || (a.length > 4 && (b.startsWith(a) || a.startsWith(b))) || ini(n) === b.replace(/ /g, "") || (a === "математика" && /алгебр|геометр|вероятн/.test(b)); };
+  const subj = R === "teacher" ? Object.entries(DATA.subjects).filter(([, x]) => x.graded !== false && subjNames.some(n => same(n, x.name))).map(([id]) => id) : [];
+  const clsRaw = String(v.cls || "").split(/[,;]+/).map(t => t.trim()).filter(Boolean);
+  const classes = R === "teacher" ? (clsRaw.filter(c => JR_CLS.includes(c)).length ? clsRaw.filter(c => JR_CLS.includes(c)) : ["8 «А»"]) : JR_CLS.slice();
+  const w = nm.split(/\s+/), call = w.length >= 3 ? w[1] + " " + w[2] : nm;
+  return { R, RN: STF_RN[R] || "Сотрудник", name: nm || STF_RN[R] || "Сотрудник", call, v, subj, subjNames, classes, lead: R !== "teacher" };
+}
+/* статистика по своим классам: учителю — только по своим предметам */
+function stfScope(){
+  const me = stfMe(), useS = me.lead || !me.subjNames.length ? null : me.subj;
+  const cls = me.classes.map(c => {
+    const C = jroCls(c);
+    const sAvg = s => { if(!useS) return s.avg; const L = useS.map(k => s.subj[k]).filter(x => x && x.avg != null); return L.length ? L.reduce((a, x) => a + x.avg, 0) / L.length : null; };
+    const av = C.list.map(sAvg).filter(x => x != null), avg = av.length ? av.reduce((a, b) => a + b, 0) / av.length : null;
+    const attn = useS ? C.list.map(s => { const low = useS.map(k => ({ k, x: s.subj[k] })).filter(o => o.x && o.x.avg != null && fin(o.x.avg) < 5); return low.length ? { s, t: low.map(o => o.x.name + " " + da(o.x.avg)).join(", "), w: 6 - Math.min(...low.map(o => o.x.avg)), low: 1 } : s.abs7 >= 3 ? { s, t: jroPl(s.abs7, ["пропуск", "пропуска", "пропусков"]) + " за неделю", w: 1 } : null; }).filter(Boolean).sort((a, b) => b.w - a.w) : C.attn;
+    return { cls: c, C, avg, attn, n: C.list.length, low: useS ? attn.filter(a => a.low).length : C.low.length };
+  });
+  const all = cls.flatMap(x => x.attn.map(a => ({ ...a, cls: x.cls }))).sort((a, b) => b.w - a.w);
+  const n = cls.reduce((a, x) => a + x.n, 0), av = cls.filter(x => x.avg != null), avg = av.length ? av.reduce((a, x) => a + x.avg * x.n, 0) / av.reduce((a, x) => a + x.n, 0) : null;
+  const slots = cls.reduce((a, x) => a + x.C.slots, 0), absN = cls.reduce((a, x) => a + x.C.absN, 0);
+  const subs = (useS || Object.keys(DATA.subjects).filter(k => DATA.subjects[k].graded !== false)).map(k => { const L = cls.map(x => x.C.subj[k] && x.C.subj[k].avg).filter(v => v != null); return { k, name: DATA.subjects[k] ? DATA.subjects[k].name : k, avg: L.length ? L.reduce((a, b) => a + b, 0) / L.length : null }; }).filter(x => x.avg != null);
+  const hw = cls.flatMap(x => x.C.hw.map(h => ({ ...h, cl: x.cls }))).filter(h => !useS || useS.includes(h.s));
+  const seen = new Set(), hwU = hw.filter(h => { const k = h.id + "|" + h.cl; if(seen.has(k)) return false; seen.add(k); return true; });
+  return { me, cls, attn: all, n, avg, att: slots ? 1 - absN / slots : 1, subs, hw: hwU, useS };
+}
+const stfGoCls = c => { if(jroOn()){ JRO.cls = c; JRO.subj = "all"; JRO.open = null; JRO.edit = false; } else { JR.cls = c; jrSetCls(c); const me = stfMe(); if(me.subj[0]) JR.subj = me.subj[0]; } showTab("journal", true); };
+const stfHead = (eb, title, sub) => `<div class="view-head"><div class="hello"><p class="eyebrow">${esc(eb)}</p><h1 class="headline">${esc(title)}</h1>${sub ? `<p class="lede stf-lede">${sub}</p>` : ""}</div></div>`;
+const stfKp = (v, l, attr, cl) => attr ? `<button type="button" class="jro-kp" ${attr}><b class="${cl || ""}">${v}</b><span>${l} ›</span></button>` : `<div class="jro-kp jro-st"><b class="${cl || ""}">${v}</b><span>${l}</span></div>`;
+function stfGreet(){ const h = new Date().getHours(); return h < 5 ? "Доброй ночи" : h < 12 ? "Доброе утро" : h < 18 ? "Добрый день" : "Добрый вечер"; }
+/* ---------- Главное ---------- */
+function stfHomeHtml(){
+  const S = stfScope(), me = S.me, hol = holidayOf(TODAY);
+  const day = `${WDL[TODAY.getDay()]}, ${TODAY.getDate()} ${MG[TODAY.getMonth()]}`;
+  const st = hol ? `${hol.name || "Каникулы"}` : ovStatus();
+  const lessons = !me.lead && !hol && me.classes.includes("8 «А»") ? lessonsFor(TODAY).filter(l => l.sub && l.sid && (!S.useS || S.useS.includes(l.sid))) : [];
+  const tests = me.classes.includes("8 «А»") ? TESTS.filter(t => diff(t.d) >= 0 && diff(t.d) <= 14 && (!S.useS || S.useS.includes(t.s))) : [];
+  const hwNext = S.hw.filter(h => diff(h.dueD) >= 0).slice(0, 5);
+  const clsSorted = S.cls.filter(x => x.avg != null).slice().sort((a, b) => a.avg - b.avg);
+  const clsRow = x => `<button type="button" class="jro-kv" data-stf-cls="${esc(x.cls)}"><span>${esc(x.cls)}${x.attn.length ? ` <small class="stf-pill">${x.attn.length}</small>` : ""}</span><span><small>${x.n} уч.</small><b class="${x.avg != null && fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></button>`;
+  const acts = me.lead
+    ? `<button type="button" class="jro-b p" data-go="journal">Открыть журнал</button>${me.R === "controller" ? "" : `<button type="button" class="jro-b" data-jro-tpl-open>Шаблоны писем</button>`}<button type="button" class="jro-b" data-go="calendar">Календарь</button>`
+    : `<button type="button" class="jro-b p" data-stf-cls="${esc(me.classes[0])}">Поставить оценку</button><button type="button" class="jro-b" data-stf-hw>Задать ДЗ</button><button type="button" class="jro-b" data-go="chats">Чаты</button>`;
+  return `${stfHead(me.RN, `${stfGreet()}${me.call ? ", " + me.call : ""}`, `${esc(day)} · ${esc(st)}`)}
+  <div class="stf">
+    <div class="jro-kps">${me.lead
+      ? stfKp(S.cls.length, plural(S.cls.length, ["класс", "класса", "классов"]), 'data-go="journal"') + stfKp(S.n, plural(S.n, ["ученик", "ученика", "учеников"])) + stfKp(jroNum(S.avg), "средний по школе", 'data-go="grades"') + stfKp(Math.round(S.att * 100) + "%", "посещаемость", 'data-go="grades"')
+      : stfKp(S.cls.length, plural(S.cls.length, ["мой класс", "моих класса", "моих классов"]), 'data-go="journal"') + stfKp(S.n, plural(S.n, ["ученик", "ученика", "учеников"])) + stfKp(jroNum(S.avg), "средний по моим предметам", 'data-go="grades"') + stfKp(S.attn.length, "нужно внимание", 'data-go="grades"', S.attn.length ? "jro-dn" : "")}</div>
+    <div class="stf-acts">${acts}</div>
+    <div class="stf-g">
+      <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Сегодня в школе" : "Мои уроки сегодня"}</h2>${me.lead ? "" : `<button class="link" data-go="schedule">Неделя</button>`}</div>
+        ${hol ? `<p class="jro-mut">${esc(hol.name || "Каникулы")}. Уроков нет.</p>` : me.lead ? `<p class="jro-mut">Учебный день по расписанию.</p>` : lessons.length ? lessons.map(l => `<button type="button" class="jro-kv" data-go="schedule"><span><b>${l.num}.</b> ${esc(l.sub.name)} · 8 «А»</span><span>${esc(hhmm(l.time[0]))}${l.room ? " · " + esc(l.room) : ""}</span></button>`).join("") : `<p class="jro-mut">Сегодня уроков по вашим предметам нет.</p>`}
+        ${tests.length ? `<p class="jro-lab">Работы в ближайшие две недели</p>${tests.slice(0, 4).map(t => jroKv(esc(subjName(t.s)) + " · 8 «А»", esc(t.type.toLowerCase()) + ", " + rel(t.d), `data-go="calendar"`)).join("")}` : ""}</section>
+      <section class="panel stf-p"><div class="panel-head"><h2>Требуют внимания</h2>${S.attn.length ? `<span class="aside">${S.attn.length}</span>` : ""}</div>
+        ${S.attn.length ? S.attn.slice(0, 6).map(a => jroKv(esc(jroNm(a.s.nm)) + ` <small>${esc(a.cls)}</small>`, esc(a.t), `data-stf-cls="${esc(a.cls)}"`)).join("") + (S.attn.length > 6 ? `<button type="button" class="jro-more" data-go="grades">Все · ${S.attn.length}</button>` : "") : `<p class="jro-mut">Сейчас никто не отстаёт.</p>`}</section>
+      <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Классы: слабее всего" : "Мои классы"}</h2><button class="link" data-go="journal">Журнал</button></div>
+        ${(me.lead ? clsSorted.slice(0, 5) : S.cls).map(clsRow).join("") || `<p class="jro-mut">Классов нет.</p>`}</section>
+      <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Домашка в школе" : "Мои задания"}</h2><button class="link" data-go="homework">Все</button></div>
+        ${hwNext.length ? hwNext.map(h => jroKv(esc(subjName(h.s)) + ` <small>${esc(h.cl)}</small>`, esc(rel(h.dueD)), `data-stf-hwi="${esc(h.id)}|${esc(h.cl)}"`)).join("") : `<p class="jro-mut">Ближайших сроков нет.${me.lead ? "" : " Задайте домашку кнопкой выше."}</p>`}</section>
+    </div>
+    ${typeof ovNewsHtml === "function" ? ovNewsHtml() : ""}
+  </div>`;
+}
+/* ---------- Профиль ---------- */
+function stfProfileHtml(){
+  const S = stfScope(), me = S.me, v = me.v;
+  const post = v.post && v.post !== me.RN ? v.post : "", dir = String(v.dir || v.what || "").replace(/^заместитель директора;?\s*/i, "");
+  const rows = [["Должность", post], ["Направление", dir || (me.lead ? me.subjNames.join(", ") : "")], [me.lead ? "" : "Предметы", me.lead ? "" : me.subjNames.join(", ") || "не указаны"], ["Классы", me.lead ? (v.par || "вся школа") : me.classes.join(", ")], ["Кабинет", v.room || ""], ["Нагрузка", v.hours ? v.hours + " ч в неделю" : ""]].filter(r => r[0] && r[1]);
+  return `<div class="view-head"><div class="hello"><p class="eyebrow">Мой профиль</p></div></div>
+  <div class="stf">
+    <section class="panel stf-hero"><span class="prof-ava" aria-hidden="true">${esc(jroIni(me.name))}</span><div><h1 class="prof-name">${esc(me.name)}</h1><p class="prof-sub">${esc(me.RN)}${DATA.school ? " · " + esc(DATA.school) : ""}</p></div></section>
+    <div class="stf-g">
+      <section class="panel stf-p"><div class="panel-head"><h2>О себе</h2></div>${rows.map(r => `<div class="jro-kv jro-st"><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join("")}</section>
+      <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Классы школы" : "Мои классы"}</h2></div><div class="jro-tiles stf-tiles">${S.cls.map(x => `<button type="button" class="jro-tile" data-stf-cls="${esc(x.cls)}"><b>${esc(x.cls)}</b><span>ср. ${jroNum(x.avg)} · ${x.n} уч.</span>${x.attn.length ? `<em>${x.attn.length}</em>` : ""}</button>`).join("")}</div></section>
+    </div>
+    <p class="jro-note">Телефон и почту сотрудников видят только завуч, директор и администратор.</p>
+  </div>`;
+}
+/* ---------- Оценки: успеваемость своих классов ---------- */
+function stfGradesHtml(){
+  const S = stfScope(), me = S.me;
+  const rows = S.cls.slice().sort((a, b) => (a.avg ?? 99) - (b.avg ?? 99));
+  return `${stfHead(me.lead ? "Успеваемость школы" : "Успеваемость моих классов", "Оценки", me.lead ? "Средний по всем предметам с коэффициентами работ, текущая четверть." : !me.subjNames.length ? "Предметы в вашей карточке не указаны, показаны все." : S.useS && !S.useS.length ? `Оценок по предмету «${esc(me.subjNames.join(", "))}» в журнале пока нет.` : `Средний по вашим предметам: ${esc(me.subjNames.join(", "))}.`)}
+  <div class="stf">
+    <div class="jro-kps">${stfKp(jroNum(S.avg), "средний")}${stfKp(Math.round(S.att * 100) + "%", "посещаемость")}${stfKp(S.cls.reduce((a, x) => a + x.low, 0), "ниже 5", "", "jro-dn")}${stfKp(S.attn.length, "нужно внимание")}</div>
+    <section class="panel stf-p"><div class="panel-head"><h2>Классы</h2><span class="aside">от слабых к сильным</span></div>
+      <div class="jro-th"><span>Класс</span><span>Ниже 5 · внимание · средний</span></div>
+      ${rows.map(x => `<button type="button" class="jro-kv" data-stf-cls="${esc(x.cls)}"><span>${esc(x.cls)} <small>${x.n} уч.</small></span><span><small>${x.low} · ${x.attn.length}</small><b class="${x.avg != null && fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></button>`).join("")}</section>
+    <div class="stf-g">
+      <section class="panel stf-p"><div class="panel-head"><h2>Предметы</h2></div>${S.subs.slice().sort((a, b) => a.avg - b.avg).map(x => `<button type="button" class="jro-kv" data-stf-subj="${esc(x.k)}"><span>${esc(x.name)}</span><span><b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></button>`).join("") || `<p class="jro-mut">Оценок пока нет.</p>`}</section>
+      <section class="panel stf-p"><div class="panel-head"><h2>Требуют внимания</h2><span class="aside">${S.attn.length}</span></div>${S.attn.slice(0, JRO.attAll ? 999 : 10).map(a => jroKv(esc(jroNm(a.s.nm)) + ` <small>${esc(a.cls)}</small>`, esc(a.t), `data-stf-cls="${esc(a.cls)}"`)).join("") || `<p class="jro-mut">Никто не отстаёт.</p>`}${S.attn.length > 10 ? `<button type="button" class="jro-more" data-stf-attall>${JRO.attAll ? "Свернуть" : "Показать всех · " + S.attn.length}</button>` : ""}</section>
+    </div>
+  </div>`;
+}
+/* ---------- Домашка: выданные задания ---------- */
+function stfHomeworkHtml(){
+  const S = stfScope(), me = S.me, now = S.hw.filter(h => diff(h.dueD) >= 0), past = S.hw.filter(h => diff(h.dueD) < 0).reverse();
+  const row = h => `<button type="button" class="jro-kv stf-hw" data-stf-hwi="${esc(h.id)}|${esc(h.cl)}"><span><b>${esc(subjName(h.s))}</b> <small>${esc(h.cl)}</small><br><span class="stf-ht">${esc(String(h.text || ""))}</span></span><span>${esc(rel(h.dueD))}</span></button>`;
+  return `${stfHead(me.lead ? "Задания в школе" : "Мои задания", "Домашка", me.lead ? "Задания всех классов на ближайшие дни." : "Задания, которые вы выдали своим классам.")}
+  <div class="stf">
+    ${me.lead ? "" : `<div class="stf-acts"><button type="button" class="jro-b p" data-stf-hw>Задать ДЗ</button></div>`}
+    <section class="panel stf-p"><div class="panel-head"><h2>Впереди</h2><span class="aside">${now.length}</span></div>${now.map(row).join("") || `<p class="jro-mut">Сроков впереди нет.</p>`}</section>
+    ${past.length ? `<section class="panel stf-p"><div class="panel-head"><h2>Прошедшая неделя</h2><span class="aside">${past.length}</span></div>${past.map(row).join("")}</section>` : ""}
+    <p class="jro-note">Отметки «сдано» появятся, когда ученики начнут отмечать задания у себя.</p>
+  </div>`;
+}
+function stfMonitoringHtml(){
+  return `${stfHead("Тесты «Траектории»", "Мониторинг", "")}<div class="stf"><section class="panel stf-p"><p class="jro-mut">Результаты мониторинга по классам появятся, когда подключим «Траекторию» для всей школы. Сейчас в Ядре есть результаты только одного ученика, их видит он сам.</p><div class="stf-acts"><button type="button" class="jro-b" data-go="journal">Открыть журнал</button></div></section></div>`;
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-stf-cls]"))){ e.preventDefault(); stfGoCls(x.dataset.stfCls); return; }
+  if(g("[data-stf-hw]")){ const me = stfMe(); JR.cls = me.classes[0]; jrSetCls(JR.cls); if(me.subj[0]) JR.subj = me.subj[0]; try { jrHw(); } catch(_) {} return; }
+  if(g("[data-jro-tpl-open]")){ jroTplOpen(); return; }
+  if(g("[data-stf-attall]")){ JRO.attAll = !JRO.attAll; renderGrades(); const st = document.querySelector("#grades .stf"); if(st) st.classList.add("noanim"); return; }
+  if((x = g("[data-stf-hwi]"))){ const [id, cl] = x.dataset.stfHwi.split("|"); const h = stfScope().hw.find(y => String(y.id) === id && y.cl === cl); if(h) tgModal(subjName(h.s) + " · " + h.cl, `${jroKv("Задание", esc(String(h.text || "")))}${h.type ? jroKv("Вид", esc(h.type)) : ""}${jroKv("Задано", h.givenD ? WD[h.givenD.getDay()] + ", " + jroDay(h.givenD) : "—")}${jroKv("Срок", esc(rel(h.dueD)) + " · " + jroDay(h.dueD))}${h.mins ? jroKv("Время на выполнение", h.mins + " мин") : ""}<p class="jro-mut">Отметки «сдано» появятся, когда ученики начнут отмечать задания у себя.</p>`); return; }
+  if((x = g("[data-stf-subj]"))){ const S = stfScope(), k = x.dataset.stfSubj, nm = DATA.subjects[k] ? DATA.subjects[k].name : k; tgModal(nm + " по классам", S.cls.map(c => ({ c, v: c.C.subj[k] && c.C.subj[k].avg })).filter(o => o.v != null).sort((a, b) => a.v - b.v).map(o => jroKv(esc(o.c.cls), `<b class="${fin(o.v) < 5 ? "jro-dn" : ""}">${jroNum(o.v)}</b>`, `data-stf-cls-s="${esc(o.c.cls)}|${esc(k)}"`)).join("") || `<p class="jro-mut">Оценок пока нет.</p>`); return; }
+  if((x = g("[data-stf-cls-s]"))){ const [c, k] = x.dataset.stfClsS.split("|"); tgModalClose(true); stfGoCls(c); if(jroOn()){ JRO.subj = k; renderJournal(); } else { JR.subj = k; renderJournal(); } return; }
 });
 
 function renderJournal(){
@@ -12063,7 +12222,7 @@ function renderCalendar(){
   const el = document.getElementById("calendar"); if(!el) return;
   const CF = [["all", "Все"], ["k", "Контрольные"], ["h", "Домашка"], ["n", "Заметки"]];
   el.dataset.cf = CAL.f || "all";
-  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Календарь</p><h1 class="headline">Весь месяц на одном экране</h1>
+  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">${typeof stfOn === "function" && stfOn() ? "Календарь · 8 «А»" : "Календарь"}</p><h1 class="headline">Весь месяц на одном экране</h1>
     <p class="lede">Нажмите на день: покажу уроки, контрольные, сроки домашки и ваши заметки.</p></div></div>
     <div class="cal-bar"><div class="cal-fl" role="group" aria-label="Фильтр календаря">${CF.map(([k, t]) => `<button type="button" class="chip" data-calf="${k}" aria-pressed="${(CAL.f || "all") === k}">${t}</button>`).join("")}</div><button type="button" class="plus cal-add" data-cal-add><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить событие</button></div>
     <div class="cal-wrap"><section class="panel cal-main">${calGridHtml(CAL, "calendar")}</section><section class="panel cal-day" id="cal-day">${calDayHtml(CAL.sel)}</section></div>`;
@@ -12235,14 +12394,15 @@ function ovInfoHtml(){
   const msgs = (typeof chatMsgs === "function" ? chatMsgs("klass") : []) || [], an = msgs.slice().reverse().find(m => m.f === "them" && m.x), annTxt0 = an ? an.x : "Новых объявлений нет. Важное от учителей появится здесь.", annWho0 = an && an.who ? an.who : "Классный руководитель", AN = annGet(), annTxt = AN.on && AN.text ? AN.text : annTxt0, annWho = AN.on && AN.text ? "Администрация" : annWho0;
   const stat = (v, l, c) => `<div class="ovi-s ${c || ""}"><b>${v}</b><span>${l}</span></div>`;
   const tips = [];
-  if(late) tips.push(`Просрочено заданий: ${late}. Начните с самого старого.`);
-  if(nxt) tips.push(`${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. Откройте «Подготовиться» в домашке.`);
-  if(low && low.avg < 5) tips.push(`Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`);
-  if(!tips.length) tips.push("Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.");
+  const par = (VA.role || (CN.isAdmin ? "" : ME_ROLE)) === "parent";
+  if(late) tips.push(par ? `Просрочено заданий: ${late}. Можно вместе решить, с какого начать.` : `Просрочено заданий: ${late}. Начните с самого старого.`);
+  if(nxt) tips.push(par ? `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. План подготовки — в «Домашке», кнопка «Подготовиться».` : `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. Откройте «Подготовиться» в домашке.`);
+  if(low && low.avg < 5) tips.push(par ? `Слабее всего «${low.name}»: средний ${num(low.avg)}. Стоит обсудить с учителем.` : `Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`);
+  if(!tips.length) tips.push(par ? "Всё в порядке. В календаре видно, что впереди." : "Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.");
   return `<div class="ovi">
     <section class="panel ovi-p"><div class="panel-head"><h2>Объявление</h2><button class="link" data-go="chats">Чаты</button></div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>Неделя в цифрах</h2></div><div class="ovi-g">${stat(wk.length, plural(wk.length, ["оценка","оценки","оценок"]) + " за 7 дней")}${stat(avgW == null ? "–" : num(avgW), "средний за неделю", avgW != null && avgW >= 8 ? "good" : "")}${stat(weekHw.length ? doneW + "/" + weekHw.length : "–", "домашек сделано")}${stat(overall == null ? "–" : num(overall), "средний за четверть")}</div></section>
-    <section class="panel ovi-p"><div class="panel-head"><h2>Совет дня</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section></div>`;
+    <section class="panel ovi-p"><div class="panel-head"><h2>${par ? "На что обратить внимание" : "Совет дня"}</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section></div>`;
 }
 function ovNowHtml(){
   const n = new Date(), left = diff(CUR.e);
@@ -12803,7 +12963,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "514";
+const BUILD = "515";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
