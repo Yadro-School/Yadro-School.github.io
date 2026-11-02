@@ -1473,6 +1473,23 @@ button.jro-kv:hover,summary.jro-kv:hover{background:color-mix(in srgb,var(--ink)
 @media (max-width:520px){.stf .jro-kps{grid-template-columns:repeat(2,minmax(0,1fr))}.stf .jro-kp span{font-size:11px}}
 .stf-hw>span:first-child{display:block}.stf-ht{color:var(--muted);font-size:13px}
 .stf-hw>span:last-child{flex:0 0 auto;align-self:flex-start}
+/* таблица классов на главной сотрудников */
+.stf-t{width:100%;border-collapse:collapse;font-size:14px}
+.stf-t th{font:500 11px var(--f-body);color:var(--muted);text-align:left;padding:4px 6px 8px}
+.stf-t th:not(:first-child),.stf-t td:not(:first-child){text-align:right}
+.stf-t td{padding:11px 6px;border-top:1px solid var(--line);color:var(--ink)}
+.stf-t tbody tr{cursor:pointer;transition:background-color .15s}
+.stf-t tbody tr:hover td{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.stf-t tbody tr:hover td:first-child{border-radius:10px 0 0 10px}.stf-t tbody tr:hover td:last-child{border-radius:0 10px 10px 0}
+.stf-t tbody tr:active{scale:.99}
+.stf-t tbody tr:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--pen) 35%,transparent);border-radius:10px}
+.stf-t td b{font-weight:500}
+.stf-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.stf-day{position:relative;appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 2px;display:grid;justify-items:center;gap:1px;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
+.stf-day:hover{border-color:color-mix(in srgb,var(--pen) 35%,var(--line))}.stf-day:active{scale:.96}
+.stf-day small{font-size:10.5px;color:var(--muted)}.stf-day b{font:500 15px var(--f-body)}.stf-day span{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.stf-day.td{background:var(--pen-soft);border-color:transparent;color:var(--pen)}.stf-day.td span,.stf-day.td small{color:var(--pen)}
+.stf-day em{position:absolute;top:4px;right:5px;font-style:normal;font-size:9.5px;min-width:14px;height:14px;padding:0 4px;border-radius:7px;background:color-mix(in srgb,var(--margin) 25%,transparent);color:var(--ink);line-height:14px;text-align:center}
 /* Итог — строго по центру высоты строки предмета (--rh задаёт скрипт, высота самой строки без раскрытой части) */
 .gt-line .off-cell,.gt-line:last-child .off-cell{align-items:flex-start;padding-top:3px;padding-bottom:0}
 .off-cell .g-final,.off-cell .g-none{height:var(--rh,34px);min-height:34px}
@@ -11281,28 +11298,31 @@ function stfHomeHtml(){
   const S = stfScope(), me = S.me, hol = holidayOf(TODAY);
   const day = `${WDL[TODAY.getDay()]}, ${TODAY.getDate()} ${MG[TODAY.getMonth()]}`;
   const st = hol ? `${hol.name || "Каникулы"}` : ovStatus();
-  const lessons = !me.lead && !hol && me.classes.includes("8 «А»") ? lessonsFor(TODAY).filter(l => l.sub && l.sid && (!S.useS || S.useS.includes(l.sid))) : [];
+  const sur = (me.name || "").split(/\s+/)[0] || "", mine = l => !!sur && String(l.teacher || "").startsWith(sur);
+  const lessons = !me.lead && !hol ? lessonsFor(TODAY).filter(l => l.sub && l.sid && mine(l)) : [];
   const tests = me.classes.includes("8 «А»") ? TESTS.filter(t => diff(t.d) >= 0 && diff(t.d) <= 14 && (!S.useS || S.useS.includes(t.s))) : [];
   const hwNext = S.hw.filter(h => diff(h.dueD) >= 0).slice(0, 5);
   const clsSorted = S.cls.filter(x => x.avg != null).slice().sort((a, b) => a.avg - b.avg);
-  const clsRow = x => `<button type="button" class="jro-kv" data-stf-cls="${esc(x.cls)}"><span>${esc(x.cls)}${x.attn.length ? ` <small class="stf-pill">${x.attn.length}</small>` : ""}</span><span><small>${x.n} уч.</small><b class="${x.avg != null && fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></button>`;
+  const clsRow = x => `<button type="button" class="jro-kv" data-stf-cls="${esc(x.cls)}"><span>${esc(x.cls)}</span><span><small>${x.n} уч.</small><b class="${x.avg != null && fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></button>`;
   const acts = me.lead
     ? `<button type="button" class="jro-b p" data-go="journal">Открыть журнал</button>${me.R === "controller" ? "" : `<button type="button" class="jro-b" data-jro-tpl-open>Шаблоны писем</button>`}<button type="button" class="jro-b" data-go="calendar">Календарь</button>`
     : `<button type="button" class="jro-b p" data-stf-cls="${esc(me.classes[0])}">Поставить оценку</button><button type="button" class="jro-b" data-stf-hw>Задать ДЗ</button><button type="button" class="jro-b" data-go="chats">Чаты</button>`;
-  return `${stfHead(me.RN, `${stfGreet()}${me.call ? ", " + me.call : ""}`, `${esc(day)} · ${esc(st)}`)}
+  const now = new Date();
+  return `<div class="view-head"><div class="hello"><h1 class="headline">${stfGreet()}${me.call ? ", " + esc(me.call) : ""}</h1></div></div>
   <div class="stf">
+    <section class="panel ovnow"><div class="ovnow-t"><b>${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}</b><span>${WDL[TODAY.getDay()]}</span></div><div class="ovnow-d"><b>${TODAY.getDate()} ${MG[TODAY.getMonth()]} ${TODAY.getFullYear()}</b><span>${esc(st)}</span></div></section>
     <div class="jro-kps">${me.lead
       ? stfKp(S.cls.length, plural(S.cls.length, ["класс", "класса", "классов"]), 'data-go="journal"') + stfKp(S.n, plural(S.n, ["ученик", "ученика", "учеников"])) + stfKp(jroNum(S.avg), "средний по школе", 'data-go="grades"') + stfKp(Math.round(S.att * 100) + "%", "посещаемость", 'data-go="grades"')
-      : stfKp(S.cls.length, plural(S.cls.length, ["мой класс", "моих класса", "моих классов"]), 'data-go="journal"') + stfKp(S.n, plural(S.n, ["ученик", "ученика", "учеников"])) + stfKp(jroNum(S.avg), "средний по моим предметам", 'data-go="grades"') + stfKp(S.attn.length, "нужно внимание", 'data-go="grades"', S.attn.length ? "jro-dn" : "")}</div>
+      : stfKp(S.cls.length, plural(S.cls.length, ["мой класс", "моих класса", "моих классов"]), 'data-go="journal"') + stfKp(S.n, plural(S.n, ["ученик", "ученика", "учеников"])) + stfKp(jroNum(S.avg), "средний по моим предметам", 'data-go="grades"')}</div>
     <div class="stf-acts">${acts}</div>
     <div class="stf-g">
       <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Сегодня в школе" : "Мои уроки сегодня"}</h2>${me.lead ? "" : `<button class="link" data-go="schedule">Неделя</button>`}</div>
-        ${hol ? `<p class="jro-mut">${esc(hol.name || "Каникулы")}. Уроков нет.</p>` : me.lead ? `<p class="jro-mut">Учебный день по расписанию.</p>` : lessons.length ? lessons.map(l => `<button type="button" class="jro-kv" data-go="schedule"><span><b>${l.num}.</b> ${esc(l.sub.name)} · 8 «А»</span><span>${esc(hhmm(l.time[0]))}${l.room ? " · " + esc(l.room) : ""}</span></button>`).join("") : `<p class="jro-mut">Сегодня уроков по вашим предметам нет.</p>`}
+        ${me.lead ? "" : lessons.length ? lessons.map(l => `<button type="button" class="jro-kv" data-go="schedule"><span>${esc(l.sub.name)} · ${esc(l.cls || "8 «А»")}${l.room ? " · " + esc(l.room) : ""}</span><span>${esc(hhmm(l.time[0]))}</span></button>`).join("") : `<p class="jro-mut">${hol ? esc(hol.name || "Каникулы") + ". " : ""}Уроков сегодня нет</p>`}
         ${tests.length ? `<p class="jro-lab">Работы в ближайшие две недели</p>${tests.slice(0, 4).map(t => jroKv(esc(subjName(t.s)) + " · 8 «А»", esc(t.type.toLowerCase()) + ", " + rel(t.d), `data-go="calendar"`)).join("")}` : ""}</section>
-      <section class="panel stf-p"><div class="panel-head"><h2>Требуют внимания</h2>${S.attn.length ? `<span class="aside">${S.attn.length}</span>` : ""}</div>
-        ${S.attn.length ? S.attn.slice(0, 6).map(a => jroKv(esc(jroNm(a.s.nm)) + ` <small>${esc(a.cls)}</small>`, esc(a.t), `data-stf-cls="${esc(a.cls)}"`)).join("") + (S.attn.length > 6 ? `<button type="button" class="jro-more" data-go="grades">Все · ${S.attn.length}</button>` : "") : `<p class="jro-mut">Сейчас никто не отстаёт.</p>`}</section>
+      <section class="panel stf-p stf-wk"><div class="panel-head"><h2>Моя неделя</h2><button class="link" data-go="schedule">Расписание</button></div>
+        <div class="stf-days">${Array.from({length: 7}, (_, k) => { const d = addDays(mondayOf(TODAY), k), n = me.lead ? TESTS.filter(t => key(t.d) === key(d)).length : (holidayOf(d) ? 0 : lessonsFor(d).filter(l => l.sub && l.sid && mine(l)).length), t = TESTS.filter(x => key(x.d) === key(d) && (me.lead || (me.subj.length ? me.subj.includes(x.s) : true))).length; return `<button type="button" class="stf-day ${key(d) === key(TODAY) ? "td" : ""}" data-go="schedule"><small>${WD[d.getDay()]}</small><b>${d.getDate()}</b><span>${me.lead ? (t ? t + " " + plural(t, ["работа","работы","работ"]) : "—") : (n ? n + " " + plural(n, ["урок","урока","уроков"]) : "нет")}</span>${t && !me.lead ? `<em>${t}</em>` : ""}</button>`; }).join("")}</div></section>
       <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Классы: слабее всего" : "Мои классы"}</h2><button class="link" data-go="journal">Журнал</button></div>
-        ${(me.lead ? clsSorted.slice(0, 5) : S.cls).map(clsRow).join("") || `<p class="jro-mut">Классов нет.</p>`}</section>
+        ${(me.lead ? clsSorted.slice(0, 5) : S.cls).length ? `<table class="stf-t"><thead><tr><th>Класс</th><th>Учеников</th><th>Средний</th></tr></thead><tbody>${(me.lead ? clsSorted.slice(0, 5) : S.cls).map(x => `<tr data-stf-cls="${esc(x.cls)}" tabindex="0"><td><b>${esc(x.cls)}</b></td><td>${x.n}</td><td class="${x.avg != null && fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</td></tr>`).join("")}</tbody></table>` : `<p class="jro-mut">Классов нет.</p>`}</section>
       <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Домашка в школе" : "Мои задания"}</h2><button class="link" data-go="homework">Все</button></div>
         ${hwNext.length ? hwNext.map(h => jroKv(esc(subjName(h.s)) + ` <small>${esc(h.cl)}</small>`, esc(rel(h.dueD)), `data-stf-hwi="${esc(h.id)}|${esc(h.cl)}"`)).join("") : `<p class="jro-mut">Ближайших сроков нет.${me.lead ? "" : " Задайте домашку кнопкой выше."}</p>`}</section>
     </div>
@@ -12963,7 +12983,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "515";
+const BUILD = "516";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
