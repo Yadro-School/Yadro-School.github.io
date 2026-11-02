@@ -9664,8 +9664,8 @@ function admUserRow(u){
   const r = ROLE(u.role), par = u.role === "parent", tch = u.role === "teacher", stu = u.role === "student";
   const sm = tch || stu ? "" : par ? `${esc((u.v && u.v.rel) || "Родитель")} ученика: <b>${esc(admKid(u) || "не указан")}</b>` : admSummary(u);
   const ib = (attr, ic, t, cls) => `<button type="button" class="ib ${cls || ""}" ${attr} title="${t}" aria-label="${t}">${ic}</button>`;
-  const nm = `<span class="nf">${esc(u.name)}</span><span class="ns">${esc(fioShort(u.name))}</span>`;
-  const cls = stu ? (u.v && u.v.cls) || "" : par ? (admCls(u) !== "Без класса" ? admCls(u) : "") : "";
+  const nm = `<span class="nf">${esc(u.name)}</span>`;
+  const cls = par ? (admCls(u) !== "Без класса" ? admCls(u) : "") : "";   // класс ученика уже в заголовке группы
   const ph = u.v && u.v.phone;
   return `<li class="adm-u ${u.st === "off" ? "blocked" : ""} ${tch ? "is-t" : ""}">
     <span class="adm-av sm" style="background:${r.c}">${esc(initials(u.name))}</span>
@@ -9743,7 +9743,7 @@ function invHtml(inner){
     : INV_CLR.includes(f.role) ? `<input data-inv-f="classes" placeholder="${f.role === "teacher" ? "Классы через запятую: 8А, 9Б" : "Классы (необязательно): 8А, 9Б"}" value="${esc(f.classes)}">`
     : f.role === "parent" ? `<select data-inv-f="child"><option value="">Выберите ученика…</option>${st.map(u => `<option value="${esc(u.id)}"${f.child === u.id ? " selected" : ""}>${esc(u.name)}${u.cls ? " · " + esc(u.cls) : ""}</option>`).join("")}</select>` : "";
   const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Коды доступа</h3><p>Первый вход — только по коду. Код одноразовый, на одного человека, действует 7 дней; роль и права задаёт код. После входа человек может привязать ключ доступа, почту или Яндекс ID.</p></div></div>
-    <div class="inv-rs">${INV_R.map(r => `<button type="button" data-inv-role="${r[0]}" aria-pressed="${f.role === r[0]}">${r[1]}</button>`).join("")}</div>
+    <div class="inv-rd"><button type="button" class="inv-rdb" data-inv-rtog aria-expanded="${!!INV.ropen}"><span>${INV_RN[f.role] || f.role}</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></button>${INV.ropen ? `<ul class="inv-rdm" role="listbox">${INV_R.map(r => `<li><button type="button" role="option" aria-selected="${f.role === r[0]}" class="${f.role === r[0] ? "on" : ""}" data-inv-role="${r[0]}">${r[1]}</button></li>`).join("")}</ul>` : ""}</div>
     <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button></div>
     ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
     ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
@@ -9760,7 +9760,8 @@ document.addEventListener("click", e => {
   if((x = g("[data-invu]"))){ INVU.open = INVU.open === x.dataset.invu ? "" : x.dataset.invu; INVU.done = ""; invRefresh(); return; }
   if((x = g("[data-invu-code]"))){ const id = x.dataset.invuCode; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("invite_create", { uid: id }).then(j => { INVU.code[id] = j.invite.c; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; INV.list = null; invLoad(true); }); return; }
   if((x = g("[data-invu-rv]"))){ const id = x.dataset.invuRv; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("user_set", { id, revoke: true }).then(() => { INVU.done = id; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; invRefresh(); }); return; }
-  if((x = g("[data-inv-role]"))){ INV.f.role = x.dataset.invRole; invRefresh(); return; }
+  if((x = g("[data-inv-rtog]"))){ INV.ropen = !INV.ropen; invRefresh(); return; }
+  if((x = g("[data-inv-role]"))){ INV.f.role = x.dataset.invRole; INV.ropen = false; invRefresh(); return; }
   if((x = g("[data-inv-cp]"))){ const t = x.dataset.invCp; try { navigator.clipboard.writeText(t); x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1500); } catch(err) {} return; }
   if((x = g("[data-inv-rv]"))){ window.yadroApi("invite_revoke", { id: x.dataset.invRv }).catch(err => { INV.err = err.message; }).then(() => { INV.list = null; invLoad(true); }); return; }
   if((x = g("[data-inv-new]"))){
@@ -13158,7 +13159,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "519";
+const BUILD = "520";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
@@ -13301,10 +13302,10 @@ function renderAdmPanel(el){
     <section class="panel ap-st"><div class="ap-sh"><h2>Состояние сайта</h2><span class="ap-ok ${issues || errs ? "warn" : ""}">${issues || errs ? "Есть замечания" : "Всё в порядке"}</span></div>
       <p class="muted">Версия ${esc(PLATFORM.v)} · сборка ${esc(BUILD)} · вход ${LOCK_INFO()} · данные на этом устройстве</p>
       <div class="ap-tiles">${tile(U.length, "аккаунтов", "users")}${tile(stud, "учеников в списках", "users")}${tile(cnt("teacher") + STAFF.length, "педагогов", "users")}${tile(par.length ? (par.length - parNo) + "/" + par.length : "0", "родителей зарегистрировано", "users", parNo ? "warn" : "")}${tile(actToday, "действий сегодня", "actlog")}${tile(errs, "ошибок сегодня", "actlog", errs ? "bad" : "")}${tile(rep, "открытых рапортов", "reports", rep ? "warn" : "")}${tile(issues, "проблем с данными", "agents", issues ? "bad" : "")}</div></section>
-    <section class="panel ap-ann"><div class="ap-sh"><h2>Объявление на главной</h2><button type="button" class="tgsw sm ${ann.on ? "on" : ""}" data-ap-annsw role="switch" aria-checked="${ann.on}" aria-label="Показывать объявление"></button></div>
+    <section class="panel ap-ann"><button type="button" class="ap-annb" data-ap-annopen aria-expanded="${!!ADM.annOpen}"><span><b>Объявление на главной</b><small>${ann.on && ann.text ? esc(ann.text) : "не показывается"}</small></span><span class="ap-annc">${ADM.annOpen ? "Свернуть" : "Изменить"}</span></button>${ADM.annOpen ? `<div class="ap-annx"><div class="ap-sh"><span class="muted">Показывать на главной</span><button type="button" class="tgsw sm ${ann.on ? "on" : ""}" data-ap-annsw role="switch" aria-checked="${ann.on}" aria-label="Показывать объявление"></button></div>
       <p class="muted">Текст покажется в плашке «Объявление» на главной у учеников и родителей. Сейчас хранится на этом устройстве, общим станет вместе с сервером.</p>
       <textarea class="tgm-in ap-ta" id="ap-ann" maxlength="300" rows="3" placeholder="Например: в понедельник классный час в 8:30, кабинет 214">${esc(ann.text)}</textarea>
-      <div class="ap-row"><span class="muted" id="ap-cnt">${ann.text.length}/300</span><button type="button" class="btn" data-ap-annsave>Сохранить объявление</button></div></section>
+      <div class="ap-row"><span class="muted" id="ap-cnt">${ann.text.length}/300</span><button type="button" class="btn" data-ap-annsave>Сохранить объявление</button></div></div>` : ""}</section>
     <section class="panel"><div class="ap-sh"><h2>Быстрые действия</h2></div><div class="ap-acts">
       ${act("Посмотреть как ученик", "Любой ученик из списков", "va-student", IC.v)}${act("Посмотреть как родитель", "Ребёнок и его оценки", "va-parent", IC.v)}${act("Посмотреть как учитель", "Журнал по предметам", "va-teacher", IC.v)}
       ${act("Проверить платформу", "Автопроверка данных и вёрстки", "check", IC.c)}${act("Скачать копию данных", "Все данные сайта одним файлом", "backup", IC.d)}${act("Обновить интерфейс", "Перерисовать все разделы", "refresh", IC.r)}</div></section>
@@ -13315,6 +13316,7 @@ const LOCK_INFO = () => { try { return CN.isAdmin ? "закрыт для все�
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
   if((x = g("[data-ap-go]"))){ const nt = x.dataset.apGo; ADM.tab = nt; ADM.anim = "r"; admRerender(); if(nt === "agents" && !SYS.at) sysRun(); return; }
+  if(g("[data-ap-annopen]")){ ADM.annOpen = !ADM.annOpen; renderAdmPanel(document.getElementById("admin")); return; }
   if(g("[data-ap-annsw]")){ const a = annGet(); a.on = !a.on; try { localStorage.setItem(ANN_KEY, JSON.stringify(a)); } catch(_) {} actLog("adm", a.on ? "Объявление на главной включено" : "Объявление на главной выключено"); renderAdmPanel(document.getElementById("admin")); return; }
   if(g("[data-ap-annsave]")){ const t = (document.getElementById("ap-ann") || {}).value || "", a = { on: !!t.trim(), text: t.trim() }; try { localStorage.setItem(ANN_KEY, JSON.stringify(a)); } catch(_) {} actLog("adm", "Объявление на главной обновлено"); try { renderOverview(); } catch(_) {} renderAdmPanel(document.getElementById("admin")); tgToast("Объявление сохранено"); return; }
   if((x = g("[data-ap-do]"))){ const a = x.dataset.apDo;
@@ -13343,4 +13345,25 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
   upd();
 })();
 </script>
+<style>
+/* Ядро: компактные плашки администратора */
+.ug .adm-u{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;align-items:center!important;gap:4px 12px!important}
+.ug .adm-um{min-width:0}.ug .adm-um .nf{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ug .adm-u .adm-ph{justify-self:start;padding:4px 8px;white-space:nowrap}
+.ug .adm-u>.adm-av{grid-column:1;grid-row:1/3}.ug .adm-u>.adm-um{grid-column:2;grid-row:1}.ug .adm-u>.ua{grid-column:3;grid-row:1/3}.ug .adm-u>.adm-ph{grid-column:2;grid-row:2;justify-self:start;padding:0 0 0 0;color:var(--muted);font-size:12.5px}
+.ug .adm-u .adm-tt2{display:flex;flex-wrap:wrap;gap:4px}.ug .adm-u .att-r{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+
+@media(max-width:700px){.ug .adm-u{grid-template-columns:34px minmax(0,1fr) auto!important}.ug .adm-u .adm-ph{grid-column:2/-1;grid-row:2;padding:0}}
+.inv-rd{position:relative;display:inline-block;margin:0 0 12px}
+.inv-rdb{height:32px;padding:0 10px 0 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:500 13px system-ui;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:background-color .18s,border-color .18s}
+.inv-rdb:hover{border-color:var(--pen);background:var(--pen-soft)}
+.inv-rdm{position:absolute;z-index:5;top:36px;left:0;min-width:180px;margin:0;padding:4px;list-style:none;border-radius:14px;border:1px solid var(--line);background:var(--paper);box-shadow:0 8px 24px rgba(0,0,0,.12);display:grid;gap:2px;animation:cfIn .2s ease both}
+.inv-rdm button{width:100%;text-align:left;height:30px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:inherit;font:13px system-ui;cursor:pointer;transition:background-color .15s}
+.inv-rdm button:hover{background:var(--pen-soft)}.inv-rdm button.on{color:var(--pen);font-weight:500}
+.ap-annb{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;border-radius:12px;padding:2px 0;transition:opacity .15s}
+.ap-annb:active{opacity:.7}.ap-annb b{display:block;font:500 15px var(--f-display)}.ap-annb small{display:block;font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60ch}
+.ap-annc{font-size:12.5px;color:var(--pen);flex:none}.ap-annx{margin-top:12px;display:grid;gap:10px}
+.ap-acts{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))!important;gap:6px!important}
+.ap-a{padding:7px 12px!important;border-radius:99px!important;gap:8px!important}.ap-a small{display:none}.ap-a .ap-ai{width:24px;height:24px}
+</style>
 </body></html>
