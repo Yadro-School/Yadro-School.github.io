@@ -9434,7 +9434,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
-  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; realMode(m); if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; realMode(m); if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE === "parent" && m && m.child){ if(m.cls) schForStudent(m.cls); gradesForMe(m.child); } if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
@@ -9718,6 +9718,15 @@ async function gradesForMe(uid){
         const val = v === "н" ? null : +v; if(val === null || !(val >= 1 && val <= 10)) return;
         out[subj].push({ date: new Date(+mm0 >= 8 ? DATA.yearStart : DATA.yearStart + 1, +mm0 - 1, +dd0), v: val, k: c.k || "", label: kind.label, w: kind.w, about: c.topic || "" }); }); });
     Object.keys(DATA.subjects).forEach(id => { ALLG[id] = (out[id] || []).sort((a, b) => a.date - b.date); });
+    STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
+    try { Object.keys(ST).forEach(k => { delete ST[k]; }); STATS.forEach(x => { ST[x.id] = x; }); } catch(_) {}
+    /* настоящий ученик или родитель: прошедшие контрольные и проверочные берём из оценок (предстоящих на сервере пока нет) */
+    if(!CN.isAdmin && ["student", "parent"].includes(ME_ROLE)){
+      TESTS.length = 0;
+      Object.keys(ALLG).forEach(sid => (ALLG[sid] || []).forEach(g => { if((g.k === "к" || g.k === "п") && diff(g.date) < 0) TESTS.push({ s: sid, date: g.date.getDate() + "." + String(g.date.getMonth() + 1).padStart(2, "0"), d: g.date, type: g.k === "к" ? "Контрольная работа" : "Проверочная работа", w: g.w, topic: g.about || "" }); }));
+      TESTS.sort((a, b) => a.d - b.d);
+      try { TCAL.sel = null; } catch(_) {}
+    }
     try { renderAll(); } catch(e) {}
   } catch(e) {}
 }
@@ -13513,7 +13522,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "554";
+const BUILD = "555";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
