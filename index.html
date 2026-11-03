@@ -36,6 +36,14 @@
 #adm-ag .reg2 .ag-row{display:grid!important;grid-template-columns:10px minmax(0,1fr) minmax(0,auto) 16px;gap:14px;align-items:center;padding:11px 14px}
 #adm-ag .reg2 .st{text-transform:none!important;letter-spacing:0!important;font-size:12px!important;font-weight:500!important}
 #adm-ag .reg2 .ag-d{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* агенты: список на всю ширину, статус справа в строке */
+#adm-ag .reg2{display:block!important;width:100%!important;box-sizing:border-box}
+#adm-ag .reg2 .ag-list{width:100%!important;max-width:none!important;justify-self:stretch}
+#adm-ag .reg2 .ag-i{width:100%!important;display:block!important}
+#adm-ag .reg2 .ag-row{width:100%!important;box-sizing:border-box;display:grid!important;grid-template-columns:10px minmax(0,1fr) auto 16px!important;align-items:center!important}
+#adm-ag .reg2 .ag-main{min-width:0;display:grid;gap:2px}
+#adm-ag .reg2 .ag-row .st{justify-self:end;white-space:nowrap}
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -13314,7 +13322,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "532";
+const BUILD = "533";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
