@@ -9530,7 +9530,8 @@ function schForm(l, i){
 function renderAdmSched(el){
   if(SCH.data === null && !SCH.loading){ SCH.loading = true; setTimeout(() => schLoad(SCH.cls), 0); }
   const cls = SCH.cls, day = SCH.data ? (SCH.data[SCH.day] || []) : [];
-  const clsChips = JR_CLS.map(c => `<button type="button" class="sch-cl ${c === cls ? "on" : ""}" data-sch-cls="${esc(c)}">${esc(c)}</button>`).join("");
+  const clsGroups = {}; JR_CLS.forEach(c => { const m = c.match(/^(\d+)\s+(.+)$/); if(!m) return; (clsGroups[m[1]] = clsGroups[m[1]] || []).push([c, m[2].replace(/[«»]/g, "")]); });
+  const clsChips = Object.keys(clsGroups).map(g => `<div class="sch-gr"><span class="sch-gn">${g}</span>${clsGroups[g].map(([c, t]) => `<button type="button" class="sch-cl ${c === cls ? "on" : ""}" data-sch-cls="${esc(c)}" title="${esc(c)}">${esc(t)}</button>`).join("")}</div>`).join("");
   const dayChips = SCH_DAYS.map(([d, t]) => `<button type="button" class="sch-d ${d === SCH.day ? "on" : ""}" data-sch-day="${d}">${t}${SCH.data && (SCH.data[d] || []).length ? `<em>${(SCH.data[d] || []).length}</em>` : ""}</button>`).join("");
   const body = SCH.data === null ? `<p class="muted">Загружаем…</p>` : (day.length ? day.map(schLesson).join("") : (SCH.ed === "new" ? "" : `<p class="muted">На этот день уроков нет. Добавьте урок или загрузите расписание.</p>`));
   const newForm = SCH.ed === "new" ? schForm({ n: day.length + 1, t: "", s: "", teacher: "", room: "" }, "new") : "";
@@ -13485,11 +13486,11 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 <style>
 /* Расписание класса (админ) */
 .sch{display:grid;gap:12px}.sch-p{display:grid;gap:12px}
-.sch-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.sch-cls,.sch-days{display:flex;flex-wrap:wrap;gap:6px}
+.sch-top{display:grid;gap:10px}.sch-days{padding-top:10px;border-top:1px solid var(--line)}
+.sch-days{display:flex;flex-wrap:wrap;gap:6px}.sch-cls{display:grid;gap:6px}.sch-gr{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.sch-gn{width:20px;text-align:center;color:var(--muted);font:500 14px var(--f-body)}
 .sch-cl,.sch-d{height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:500 13px var(--f-body);cursor:pointer;transition:background-color .18s,border-color .18s,transform .15s}
 .sch-cl:hover,.sch-d:hover{border-color:var(--pen)}.sch-cl:active,.sch-d:active{transform:scale(.96)}
-.sch-cl.on,.sch-d.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.sch-cl.on,.sch-d.on{background:var(--pen-soft);color:var(--pen);border-color:var(--pen)}
 .sch-d em{font-style:normal;font-size:11px;margin-left:5px;opacity:.7}
 .sch-list{display:grid;gap:4px}
 .sch-r{display:grid;grid-template-columns:28px 92px minmax(0,1fr) minmax(0,1fr) 110px auto;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;background:var(--surface-2,transparent);font-size:13.5px;transition:background-color .15s}
@@ -13509,7 +13510,7 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .sch-fb{display:flex;gap:6px;justify-content:flex-end}
 .sch-fb button,.sch-add,.sch-up,.sch-save,.sch-ok{height:32px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:transparent;color:inherit;font:500 13px var(--f-body);cursor:pointer;transition:background-color .15s,transform .15s}
 .sch-fb button:active,.sch-add:active,.sch-up:active,.sch-save:active,.sch-ok:active{transform:scale(.97)}
-.sch-ok,.sch-save{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.sch-ok,.sch-save{background:var(--pen-soft);color:var(--pen);border-color:var(--pen)}.sch-ok:hover,.sch-save:hover:not(:disabled){background:color-mix(in srgb,var(--pen) 20%,transparent)}.sch-fb button:hover,.sch-add:hover,.sch-up:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .sch-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.sch-sp{flex:1}
 .sch-save:disabled,.sch-add:disabled{opacity:.5;cursor:default}
 .sch-msg{margin:0;font-size:13px;color:var(--muted)}
