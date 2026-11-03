@@ -11616,7 +11616,7 @@ function jroClass(){
     const det = !open ? "" : sub
       ? `<div class="jro-ex">${x && x.marks.length ? x.marks.map(m => `<span class="jro-mk" tabindex="0" data-tip="${esc((KIND[m.k] || KIND[""]).label)}${m.topic ? "|" + esc(m.topic) : ""}">${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))} · <b>${dv(m.v)}</b></span>`).join("") : `<span class="jro-mut">Оценок по предмету пока нет</span>`}
         <div class="jro-acts"><button type="button" class="jro-b" data-jro-stud="${s.id}">Карточка ученика</button><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div></div>`
-      : `<div class="jro-ex"><div class="jro-sl">${Object.entries(s.subj).filter(([, y]) => y.avg != null).sort((a, b) => a[1].avg - b[1].avg).map(([k, y]) => `<button type="button" class="jro-kv" data-jro-subj-go="${k}"><span>${esc(y.name)}</span><span>${y.marks[0] ? `<small>посл. ${dv(y.marks[0].v)}</small>` : ""}<b class="${fin(y.avg) < 5 ? "jro-dn" : ""}">${jroNum(y.avg)}</b></span></button>`).join("")}</div>
+      : `<div class="jro-ex"><div class="jro-sl">${Object.entries(s.subj).filter(([, y]) => y.avg != null).sort((a, b) => a[1].avg - b[1].avg).map(([k, y]) => `<button type="button" class="jro-kv" data-jro-subj-go="${k}"><span>${esc(y.name)}</span><span><b class="${fin(y.avg) < 5 ? "jro-dn" : ""}">${jroNum(y.avg)}</b></span></button>`).join("")}</div>
         <div class="jro-acts"><button type="button" class="jro-b" data-jro-stud="${s.id}">Карточка ученика</button><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div></div>`;
     return `<div class="jro-r ${open ? "open" : ""}"><button type="button" class="jro-rh" data-jro-open="${s.id}" aria-expanded="${open}"><span class="jro-av">${esc(jroIni(s.nm))}</span><span class="jro-n"><b>${esc(jroNm(s.nm))}</b><small>${esc(info)}</small></span>${last}<span class="jro-v ${v != null && fin(v) < 5 ? "jro-dn" : ""}">${jroNum(v)}</span></button>${det}</div>`;
   };
@@ -11668,7 +11668,7 @@ function jroStudSheet(id){
     <p class="jro-mut jro-pars">${pars.length ? pars.map(p => esc(((p.v && p.v.rel) || "Родитель") + " · " + p.name)).join("<br>") : "Родители пока не зарегистрированы"}</p>`;
   return { title: "Карточка ученика", body: prof + `<div class="jro-kps sm"><div class="jro-kp jro-st"><b class="${s.avg != null && fin(s.avg) < 5 ? "jro-dn" : ""}">${jroNum(s.avg)}</b><span>средний</span></div><div class="jro-kp jro-st"><b>${s.abs.length}</b><span>пропусков</span></div><div class="jro-kp jro-st"><b class="${s.low.length ? "jro-dn" : ""}">${s.low.length}</b><span>ниже 5</span></div></div>
     <div class="jro-acts"><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div>
-    <p class="jro-lab">Предметы · средний по каждому</p><div class="jro-sl">${subs.map(([sid, x]) => `<details class="jro-det"><summary class="jro-kv"><span>${esc(x.name)}</span><span>${x.marks[0] ? `<small>посл. ${dv(x.marks[0].v)}</small>` : ""}<b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></summary><div class="jro-ex">${x.marks.map(m => `<div class="jro-kv jro-st"><span>${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))}${m.topic ? " · " + esc(m.topic) : ""}</span><b>${dv(m.v)}</b></div>`).join("")}</div></details>`).join("")}</div>
+    <p class="jro-lab">Предметы · средний по каждому</p><div class="jro-sl">${subs.map(([sid, x]) => `<details class="jro-det"><summary class="jro-kv"><span>${esc(x.name)}</span><span><b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></summary><div class="jro-ex">${x.marks.map(m => `<div class="jro-kv jro-st"><span>${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))}${m.topic ? " · " + esc(m.topic) : ""}</span><b>${dv(m.v)}</b></div>`).join("")}</div></details>`).join("")}</div>
     ${s.abs.length ? `<p class="jro-lab">Пропуски</p><div class="jro-sl">${s.abs.slice(0, 12).map(a => `<div class="jro-kv jro-st"><span>${JRO_WD[a.d.getDay()]} ${jroDay(a.d)}</span><span>${esc(a.name)}</span></div>`).join("")}</div>` : ""}` };
 }
 /* ---------- шаблоны писем: метки показываются цветными словами, в тексте хранятся как {ключ} ---------- */
@@ -13505,7 +13505,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "551";
+const BUILD = "552";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13790,5 +13790,13 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .jro-prof{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .jro-pn{display:grid;gap:1px;min-width:0}.jro-pn b{font:500 16px var(--f-body);color:var(--ink)}.jro-pn small{font-size:12px;color:var(--muted)}
 .jro-pars{margin:0 0 8px;font-size:13px;line-height:1.4}
+</style>
+<style>
+/* журнал руководства: плотные колонки предметов, без лишнего пустого места */
+.jro-sl{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}
+.jro-sl>details,.jro-sl>.jro-kv{min-width:0}
+.jro-sl .jro-kv{padding:5px 2px}
+@media (max-width:700px){.jro-sl{grid-template-columns:minmax(0,1fr)}}
+.jro-at{width:min(100%,420px)}
 </style>
 </body></html>
