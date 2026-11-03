@@ -90,6 +90,11 @@
 #adm-ag .reg2 .ag-row>.st{grid-column:4!important;justify-self:end!important}
 #adm-ag .reg2 .ag-row>.chev{grid-column:5!important}
 @media(max-width:700px){#adm-ag .reg2 .ag-row>.st{grid-column:3!important}#adm-ag .reg2 .ag-row>.chev{grid-column:4!important}}
+
+.mon-emp{display:grid;justify-items:center;gap:8px;text-align:center;padding:22px 16px;border:1px dashed var(--line);border-radius:16px;margin-top:8px}
+.mon-emp-i{font-size:26px;color:var(--muted);line-height:1}
+.mon-emp b{font:500 15px var(--f-body)}
+.mon-emp span:not(.mon-emp-i){font-size:13px;color:var(--muted);max-width:340px;line-height:1.5}
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -9418,7 +9423,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
-  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; realMode(m); if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
@@ -9663,6 +9668,22 @@ async function schSave(){
   SCH.busy = false; renderAdmRefresh();
 }
 /* оценки ученика из журнала: сервер кладёт копию в grades/<его id> (сопоставление по полному ФИО) */
+
+/* пустое состояние мониторинга */
+function monEmpty(){
+  return `<div class="mon-emp"><span class="mon-emp-i" aria-hidden="true">○</span><b>Мониторингов пока нет</b><span>Здесь появятся результаты и средний балл, когда учитель загрузит тесты.</span><button type="button" class="ovnx-btn" data-go="homework">Подготовиться</button></div>`;
+}
+/* настоящий ученик или родитель (не владелец): демо-данные владельца не показываем, оценки приходят из журнала */
+function realMode(m){
+  if(!m || CN.isAdmin || !["student", "parent"].includes(m.role)) return;
+  try {
+    Object.keys(ALLG).forEach(k => { ALLG[k] = []; });
+    MON.length = 0;
+    const nm = String(m.name || "").trim().split(/\s+/); DATA.studentName = m.role === "student" ? (nm[1] || nm[0] || "Ученик") : (nm[0] || "Пользователь");
+    STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
+    renderAll();
+  } catch(e) {}
+}
 async function gradesForMe(uid){
   if(!DB || !uid) return;
   try {
@@ -10598,10 +10619,10 @@ function renderProfile(){
       </section>
     </div>
     <div class="pf-row2">
-      <section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2><span class="aside">средняя ${da(MON.reduce((a, g) => a + g.v, 0) / MON.length)}</span></div>
+      ${!MON.length ? `<section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2></div>${monEmpty()}</section>` : `      <section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2><span class="aside">средняя ${da(MON.reduce((a, g) => a + g.v, 0) / MON.length)}</span></div>
         ${(() => { const L = MON.slice().reverse(), row = g => `<tr><td>${g.date.getDate()} ${MS[g.date.getMonth()]}</td><td>${esc(g.c)}</td><td class="mon-rv"><button type="button" class="mon-rb" data-mon-res="${g.c}" data-tip="Посмотреть результат|Баллы, оценка и разбор по заданиям" aria-label="Посмотреть результат"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 12s3.500-6.500 9.500-6.500S21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>Результат</button><button type="button" class="mon-rb" data-mon-review data-tip="Разобрать с помощником · скоро|Покажет ошибки, решения и даст похожие задания" aria-label="Разобрать с помощником"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Разобрать<em>скоро</em></button></td><td>${g.b}</td><td><span class="g ${band(g.v)} sm">${dv(g.v)}</span></td></tr>`;
           return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 6).map(row).join("")}</tbody></table>${L.length > 6 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(3).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Показать все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
-      </section>
+      </section>`}
       <div class="pf-kpi pf-kpi2 pf-kpi3">${pkTiles(all, heavy, n, tens, low, cnt, common, pct)}</div>
     </div>
     <div class="pf">
@@ -10674,6 +10695,7 @@ function monDetailHtml(g){
 function renderMonitoring(){
   if(stfOn()){ const me = document.getElementById("monitoring"); if(me) me.innerHTML = stfMonitoringHtml(); return; }
   const el = document.getElementById("monitoring"); if(!el) return;
+  if(!MON.length){ el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Тесты «Траектории» · не входят в итог</p><h1 class="headline">Мониторинг</h1></div></div>${monEmpty()}`; return; }
   const list = MON.slice().reverse(), sel = MON.find(x => x.c === MONS.sel) || list[0]; MONS.sel = sel.c;
   const avgV = MON.reduce((a, g) => a + g.v, 0) / MON.length, avgB = MON.reduce((a, g) => a + g.b, 0) / MON.length;
   el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Тесты «Траектории» · не входят в итог</p><h1 class="headline">Мониторинг</h1></div></div>
@@ -13443,7 +13465,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "537";
+const BUILD = "538";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
