@@ -11821,6 +11821,13 @@ function stfHomeHtml(){
   </div>`;
 }
 /* ---------- Профиль ---------- */
+function stfSchoolHtml(){
+  const C = JR_CLS.map(c => jroCls(c)), n = C.reduce((a, x) => a + x.list.length, 0), w = C.filter(x => x.avg != null), avg = w.length ? w.reduce((a, x) => a + x.avg, 0) / w.length : null, att = C.reduce((a, x) => a + x.attn.length, 0);
+  const row = (lab, val, attr) => `<button type="button" class="jro-kv" ${attr}><span>${lab}</span><span>${val}</span></button>`;
+  return `<section class="panel stf-p"><div class="panel-head"><h2>Школа</h2></div>
+    <div class="jro-kps"><div class="jro-kp jro-st"><b>${n}</b><span>учеников</span></div><div class="jro-kp jro-st"><b>${C.length}</b><span>классов</span></div><div class="jro-kp jro-st"><b>${jroNum(avg)}</b><span>средний</span></div><div class="jro-kp jro-st"><b class="${att ? "jro-dn" : ""}">${att}</b><span>требуют внимания</span></div></div>
+    <div class="jro-sl" style="margin-top:8px">${row("Журнал школы", "открыть", 'data-go="journal"')}${row("Расписание", "открыть", 'data-go="schedule"')}${row("Ученики", "по классам", 'data-stf-go="users"')}${row("Преподаватели", "список", 'data-stf-go="users"')}${row("Родители", "привязки", 'data-stf-go="users"')}${row("Приглашения", "коды", 'data-stf-go="users"')}${row("Роли и права", "доступ", 'data-stf-go="roles"')}</div></section>`;
+}
 function stfProfileHtml(){
   const S = stfScope(), me = S.me, v = me.v;
   const post = v.post && v.post !== me.RN ? v.post : "", dir = String(v.dir || v.what || "").replace(/^заместитель директора;?\s*/i, "");
@@ -11832,6 +11839,7 @@ function stfProfileHtml(){
       <section class="panel stf-p"><div class="panel-head"><h2>О себе</h2></div>${rows.map(r => `<div class="jro-kv jro-st"><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join("")}</section>
       <section class="panel stf-p"><div class="panel-head"><h2>${me.lead ? "Классы школы" : "Мои классы"}</h2></div><div class="jro-tiles stf-tiles">${S.cls.map(x => `<button type="button" class="jro-tile" data-stf-cls="${esc(x.cls)}"><b>${esc(x.cls)}</b><span>ср. ${jroNum(x.avg)} · ${x.n} уч.</span>${x.attn.length ? `<em>${x.attn.length}</em>` : ""}</button>`).join("")}</div></section>
     </div>
+    ${me.lead ? stfSchoolHtml() : ""}
     <p class="jro-note">Телефон и почту сотрудников видят только завуч, директор и администратор.</p>
   </div>`;
 }
@@ -13505,7 +13513,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "552";
+const BUILD = "553";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13799,4 +13807,5 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 @media (max-width:700px){.jro-sl{grid-template-columns:minmax(0,1fr)}}
 .jro-at{width:min(100%,420px)}
 </style>
+<script>document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-stf-go]");if(!b)return;e.preventDefault();e.stopPropagation();ADM.tab=b.dataset.stfGo;ADM.form=null;ADM.confirmDel=null;showTab("admin",true);},true);</script>
 </body></html>
