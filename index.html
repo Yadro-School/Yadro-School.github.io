@@ -102,6 +102,16 @@
 .jr-p.jr-u .jr-aside>.jr-w{margin:0!important}
 .jr-p.jr-u .jr-aside>.jr-w,.jr-p.jr-u .jr-aside>.jr-w.jr-w-wide{grid-column:auto!important;min-width:0}
 }
+
+/* главная: плашка «Каникулы / следующий урок» справа, на всю высоту карточки, равные отступы со всех сторон */
+@media(min-width:1180px){
+.panel.ovnow{display:grid!important;grid-template-columns:repeat(4,max-content) minmax(200px,1fr);grid-auto-rows:auto;gap:14px 12px!important;align-items:stretch!important;padding:16px!important}
+.panel.ovnow>.ovnow-t{grid-column:1/3;grid-row:1;align-self:center}
+.panel.ovnow>.ovnow-d{grid-column:3/5;grid-row:1;align-self:center}
+.panel.ovnow>.ovm-w{display:contents!important}
+.panel.ovnow .ovm{grid-row:2}
+.panel.ovnow .ovnx{grid-column:5;grid-row:1/3;height:auto!important;margin:0!important;padding:16px 18px!important;box-sizing:border-box;align-content:space-between}
+}
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -13486,7 +13496,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "542";
+const BUILD = "543";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
