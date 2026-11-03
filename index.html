@@ -9678,7 +9678,7 @@ function realMode(m){
   if(!m || CN.isAdmin || !["student", "parent"].includes(m.role)) return;
   try {
     Object.keys(ALLG).forEach(k => { ALLG[k] = []; });
-    MON.length = 0;
+    MON.length = 0; HW.length = 0; TESTS.length = 0;
     const nm = String(m.name || "").trim().split(/\s+/); DATA.studentName = m.role === "student" ? (nm[1] || nm[0] || "Ученик") : (nm[0] || "Пользователь");
     STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
     renderAll();
@@ -13465,7 +13465,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "538";
+const BUILD = "539";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
