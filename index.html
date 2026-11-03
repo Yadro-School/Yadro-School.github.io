@@ -9417,6 +9417,7 @@ const CONNECTORS = () => [
 /* Сайт вне Claude: платформа не говорит, кто владелец, поэтому пока нет настоящего входа — режим владельца включается кодом (Вход → «Режим владельца»). Заменится входом по почте. */
 var OWNER_HASH = "f8309242ab64b9fff157caa4e3888b7577ccd67d7ae5f9ff4df2486e293e954d";
 function OWNER_LOCAL(){ try { return !(window.claude && window.claude.use) && localStorage.getItem("bai-owner") === OWNER_HASH; } catch(e) { return false; } }
+try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: "", confirmDel: null, checks: {}, isAdmin: false, db: null };
 (async () => {
   let user = null;
@@ -13479,7 +13480,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "540";
+const BUILD = "541";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
