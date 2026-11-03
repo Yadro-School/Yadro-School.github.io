@@ -15,6 +15,18 @@
 .jr-u .jr-l{display:block!important}
 .jr-u .jr-l .jr-scroll{height:auto!important;max-height:none!important;flex:none!important;overflow-y:visible!important}
 }
+
+/* агенты: таблица-список, статус «мягкий фон» (только вкладка «Агенты») */
+#adm-ag .ag-row{display:grid!important;grid-template-columns:10px minmax(0,1fr) auto 16px;align-items:center;gap:12px;padding:10px 12px}
+#adm-ag .ag-main{min-width:0}
+#adm-ag .ag-main b{display:block;font-weight:500;font-size:14px}
+#adm-ag .ag-d{display:block;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#adm-ag .st{font-size:12px;padding:3px 11px;border-radius:99px;border:0;white-space:nowrap}
+#adm-ag .st-ok{background:color-mix(in srgb,#16A34A 16%,transparent);color:#15803D}
+#adm-ag .st-warn{background:color-mix(in srgb,#F59E0B 22%,transparent);color:#B45309}
+#adm-ag .st-fail{background:color-mix(in srgb,#E11D48 16%,transparent);color:#BE123C}
+#adm-ag .st-wait,#adm-ag .st-idea{background:color-mix(in srgb,#6B7280 14%,transparent);color:var(--muted)}
+#adm-ag .ag-dot.ok{background:#16A34A}#adm-ag .ag-dot.warn{background:#F59E0B}#adm-ag .ag-dot.fail{background:#E11D48}
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -13293,7 +13305,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "530";
+const BUILD = "531";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
