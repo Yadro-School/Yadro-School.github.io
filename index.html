@@ -13275,7 +13275,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "525";
+const BUILD = "526";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
@@ -13518,5 +13518,16 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 <style>
 /* профиль: на компьютере видно 9 последних оценок в каждом списке, на телефоне 5 (остальные — по кнопке «Все») */
 @media(max-width:480px){.pk3 .pk-ls li:nth-child(n+6){display:none}}
+</style>
+<style>
+/* журнал: правая колонка «Класс» — плотнее, без пустых зазоров между блоками */
+.jr-aside{gap:8px}
+.jr-aside .jr-w{padding:10px 12px;gap:6px}
+.jr-aside .jr-w>header{margin:0}
+.jr-aside .jr-w.l .jr-xw{margin-top:0}
+.jr-aside .jr-top3 li{padding:4px 0}
+.jr-aside .jr-qt li{padding:4px 0}
+.jr-aside .jr-dy2{gap:8px}
+.jr-aside .jr-mt td,.jr-aside .jr-mt th{padding:4px 2px}
 </style>
 </body></html>
