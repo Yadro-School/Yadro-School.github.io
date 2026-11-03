@@ -11905,9 +11905,20 @@ function renderJournal(){
       <tbody>${JR_STUD.map(([id, nm], i) => { const st = stats[id], me = id === "u1"; const hideR = JR.flt === "att" ? st.fin == null : JR.flt === "non" ? !(st.n < (DATA.minGrades || 3)) : JR.flt === "abs" ? !Object.values(D.marks[id] || {}).includes("н") : false; return `<tr class="${st.n < (DATA.minGrades || 3) ? "jr-low" : ""} ${hideR ? "jr-hide" : ""}"><td class="jr-nm"><span class="jr-i">${i + 1}</span><button type="button" class="jr-sn" data-jr-stu="${id}" title="${esc(nm)}: профиль">${jrNmHtml(nm)}</button>${me ? ` <em title="Есть в дневнике">●</em>` : ""}</td>${cols.map(c => { const v = (D.marks[id] || {})[c.id]; return `<td class="jr-d"><button type="button" class="jr-c ${v == null ? "empty" : ""}" data-jr-cell="${esc(id)}|${esc(c.id)}" aria-label="${esc(jrShort(nm))}, ${esc(c.d)}" title="${esc(c.d + " · " + jrLbl(c) + (c.topic ? " · " + c.topic : ""))}">${v == null ? "" : jrChip(v, jrW(c.k))}</button></td>`; }).join("")}<td class="jr-d jr-nwc"><button type="button" class="jr-c jr-pl" data-jr-new="${id}" aria-label="Новая оценка: ${esc(jrShort(nm))}" title="Поставить оценку за новый урок">+</button></td><td class="jr-av">${st.avg == null ? "–" : `<b>${da(st.avg)}</b>`}</td><td class="jr-fn"><button type="button" class="jr-fb ${st.ov ? "ov" : ""}" data-jr-fin="${id}" title="${st.ov ? "Итог выставлен вручную" : "Изменить итог"}">${st.fin != null ? `<span class="g g-final off ${band(st.fin)}">${dv(st.fin)}</span>` : (jrLate() && st.n ? `<span class="jr-na" title="Нужно ещё ${(DATA.minGrades || 3) - st.n} оценки для итога">н/а</span>` : "–")}</button></td></tr>`; }).join("")}</tbody>
     </table></div>${cols.length ? "" : `<p class="muted jr-e">Оценок в этой четверти пока нет. Нажмите «Добавить оценку», чтобы создать первую колонку.</p>`}${jrDist(D, cols, stats)}</div>${jrWidgets(D, stats)}</section>
     <p class="jr-note">Данные журнала пока хранятся только в этом браузере.</p>`;
-  jrPill(true); requestAnimationFrame(() => requestAnimationFrame(() => jrPill(true)));
+  jrLayout(); requestAnimationFrame(jrLayout); setTimeout(jrLayout, 350); jrPill(true); requestAnimationFrame(() => requestAnimationFrame(() => jrPill(true)));
   jrFit(); requestAnimationFrame(() => { jrHBar(); requestAnimationFrame(jrHBar); }); setTimeout(jrHBar, 400);
 }
+/* журнал: статистика внизу убрана, «Работы четверти» — под таблицей, кнопки по ширине карточки */
+function jrLayout(){
+  const card = document.querySelector("#journal .jr-p.jr-u"); if(!card) return;
+  const l = card.querySelector(".jr-l"), aside = card.querySelector(".jr-aside");
+  const dist = l && l.querySelector(".jr-dist"); if(dist) dist.remove();
+  const works = aside && [...aside.children].find(x => x.querySelector && x.querySelector(".jr-wk"));
+  if(works && l && !l.contains(works)){ works.classList.add("jr-wk-under"); l.appendChild(works); }
+  const tb = document.querySelector("#journal .jr-tb");
+  if(tb){ if(window.innerWidth >= 1650){ const w = card.getBoundingClientRect().width; if(w > 300) tb.style.maxWidth = Math.round(w) + "px"; } else tb.style.maxWidth = ""; }
+}
+window.addEventListener("resize", () => { try { clearTimeout(jrLayout._t); jrLayout._t = setTimeout(jrLayout, 150); } catch(e) {} });
 function jrFit(){
   jrHBar();
   const t = document.querySelector("#journal .jr-t"), sc = document.getElementById("jr-scroll"); if(!t || !sc) return;
@@ -13490,7 +13501,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "545";
+const BUILD = "549";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13758,5 +13769,12 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .jr-p.jr-u .jr-aside{grid-template-columns:minmax(0,1fr)!important;gap:8px!important;align-items:start!important}
 .jr-p.jr-u .jr-aside>.jr-w,.jr-p.jr-u .jr-aside>.jr-w.jr-w-wide{grid-column:auto!important;min-width:0}
 }
+
+.jr-u .jr-l>.jr-wk-under{margin:0;padding:12px 16px;border:0;border-top:1px solid var(--line);border-radius:0 0 0 22px;background:none}
+.jr-u .jr-l>.jr-wk-under{width:0;min-width:100%;box-sizing:border-box}
+@media(max-width:1100px){.jr-u .jr-l>.jr-wk-under{border-radius:0}}
+
+.jr-p.jr-u>.jr-l{display:block!important;height:auto!important;align-self:start!important}
+.jr-p.jr-u>.jr-l>.jr-scroll{height:auto!important;max-height:none!important;min-height:0!important;flex:none!important}
 </style>
 </body></html>
