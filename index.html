@@ -6946,7 +6946,7 @@ function renderHomework(partial){
     </section>`;
   }).join("");
   const dir = state.hwDir || 0; state.hwDir = 0;
-  const hv = state.hwView === "hist" ? "hist" : state.hwView === "tests" ? "tests" : "open";
+  const hv = state.hwView === "hist" ? "hist" : "open";
   const doneList = HW.filter(isDone).sort((a, b) => (b.dueD - a.dueD) || (a.s < b.s ? -1 : 1));
   const hkeys = [...new Set(doneList.map(h => key(h.dueD)))];
   const histRow = h => `<li class="hwh">
@@ -6972,13 +6972,13 @@ function renderHomework(partial){
       <button class="chip wk-now" data-hwweek="0" ${state.hwWeek === 0 ? "hidden" : ""}>К ближайшей</button>
     </div>
     <div class="hwlist ${dir > 0 ? "sched-in wk-r" : dir < 0 ? "sched-in wk-l" : ""}">${groups || `<p class="hw-empty">${holidayOf(addDays(mon, 2)) ? noteBr(holidayOf(addDays(mon, 2)).name) : "На этой неделе ничего не задано."}</p>`}</div>`;
-  const segHtml = `<div class="hwv h3" data-v="${hv}" role="group" aria-label="Режим"><span class="hwv-pill" aria-hidden="true"></span><button type="button" data-hwview="open" aria-pressed="${hv === "open"}">К выполнению</button><button type="button" data-hwview="hist" aria-pressed="${hv === "hist"}">История<i>${doneList.length}</i></button><button type="button" data-hwview="tests" aria-pressed="${hv === "tests"}">Контрольные<i>${TESTS.filter(t => diff(t.d) >= 0).length}</i></button></div>`;
+  const segHtml = `<div class="hwv" data-v="${hv}" role="group" aria-label="Режим"><span class="hwv-pill" aria-hidden="true"></span><button type="button" data-hwview="open" aria-pressed="${hv === "open"}">К выполнению</button><button type="button" data-hwview="hist" aria-pressed="${hv === "hist"}">История<i>${doneList.length}</i></button></div>`;
   const html = `
     <div class="view-head">
-      <div class="hello"><p class="eyebrow">${hv === "hist" ? "Выполненные задания" : hv === "tests" ? "Контрольные и проверочные" : sub}</p><h1 class="headline">Домашка</h1></div>
+      <div class="hello"><p class="eyebrow">${hv === "hist" ? "Выполненные задания" : sub}</p><h1 class="headline">Домашка</h1></div>
     </div>
     ${segHtml}
-    <div class="hwbody">${hv === "hist" ? `<div class="hwhist hv-in">${histHtml}</div>` : hv === "tests" ? `<div class="hwtests hv-in">${testsInner()}</div>` : weekHtml}</div>`;
+    <div class="hwbody">${hv === "hist" ? `<div class="hwhist hv-in">${histHtml}</div>` : weekHtml}</div>`;
   const root = document.getElementById("homework"), oldList = root.querySelector(".hwlist");
   if(partial === "view" && root.querySelector(".hwbody")){
     const t = document.createElement("div"); t.innerHTML = html;
@@ -12337,7 +12337,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("keydown", e => { if(e.key === "Escape"){ jrPopClose(); document.querySelectorAll(".jr-dd.open").forEach(d => d.classList.remove("open")); } });
 function showTab(t, push){
-  if(t === "tests"){ state.hwView = "tests"; t = "homework"; try { renderHomework(); } catch(e) {} }
+  if(t === "tests"){ t = "calendar"; try { renderCalendar(); } catch(e) {} }   // контрольные убраны из «Домашки», смотрим их в календаре
   if(t === "journal" && typeof jrCan === "function" && jrCan()) renderJournal();
   if(t === "agents"){ if(CN.isAdmin){ ADM.tab = "agents"; t = "admin"; renderAdmin(); if(!SYS.at) sysRun(); } else t = "grades"; }
   const btn = document.getElementById("tab-" + t);
@@ -12797,7 +12797,7 @@ document.addEventListener("click", e => {
     wrap.querySelectorAll("[data-cal-d].on").forEach(x => x.classList.remove("on")); b.classList.add("on");
     const box = wrap.querySelector(".cal-day"); box.innerHTML = sc === "tests" ? testsDayHtml() : calDayHtml(st.sel); calFade(box); return;
   }
-  const ct = e.target.closest("[data-cal-test]"); if(ct){ TCAL.sel = ct.dataset.calTest; const d = isoD(TCAL.sel); TCAL.y = d.getFullYear(); TCAL.m = d.getMonth(); showTab("tests", true); renderTests(); return; }
+  const ct = e.target.closest("[data-cal-test]"); if(ct){ CAL.sel = ct.dataset.calTest; const d = isoD(CAL.sel); CAL.y = d.getFullYear(); CAL.m = d.getMonth(); showTab("calendar", true); renderCalendar(); return; }
   const nd = e.target.closest("[data-cnote-del]"); if(nd){ const [iso, i] = nd.dataset.cnoteDel.split("|"), it = (CNOTES[iso] || [])[+i], sid = nS(it); (CNOTES[iso] || []).splice(+i, 1); if(!(CNOTES[iso] || []).length) delete CNOTES[iso]; cnoteSave(); notesRefresh(iso, sid); return; }
   const cf = e.target.closest("[data-calf]"); if(cf){ CAL.f = cf.dataset.calf; renderCalendar(); return; }
   if(e.target.closest("[data-cal-add]")){ calAddEvent(); return; }
@@ -13522,7 +13522,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "555";
+const BUILD = "556";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
