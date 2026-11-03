@@ -11596,7 +11596,7 @@ const jroCh = (on, attr, txt) => `<button type="button" class="jro-ch ${on ? "on
 function jroHome(){
   const pars = ["8", "9", "10", "11"], cls = JR_CLS.filter(c => JRO.par === "all" || c.split(" ")[0] === JRO.par);
   const all = JR_CLS.map(jroCls), n = all.reduce((a, c) => a + c.list.length, 0);
-  const tile = c => { const C = jroCls(c); return `<button type="button" class="jro-tile" data-jro-cls="${esc(c)}" data-tip="${esc(c)}|Средний ${jroNum(C.avg)} · посещаемость ${Math.round(C.att * 100)}%"><b>${esc(c)}</b><span>ср. ${jroNum(C.avg)} · ${C.list.length} уч.</span>${C.attn.length ? `<em>${C.attn.length}</em>` : ""}</button>`; };
+  const tile = c => { const C = jroCls(c); return `<button type="button" class="jro-tile" data-jro-cls="${esc(c)}" data-tip="${esc(c)}|Средний по всем предметам ${jroNum(C.avg)} · посещаемость ${Math.round(C.att * 100)}%"><b>${esc(c)}</b><span>ср. ${jroNum(C.avg)} по всем · ${C.list.length} уч.</span>${C.attn.length ? `<em>${C.attn.length}</em>` : ""}</button>`; };
   return `<div class="view-head"><div class="hello"><p class="eyebrow">${esc((ROLES_ALL.find(r => r.id === (VA.role || ME_ROLE)) || {}).name || "Журнал")}</p><h1 class="headline">Журнал</h1></div></div>
   <section class="jro"><div class="jro-hd"><span class="jro-sub">${jroPl(JR_CLS.length, ["класс", "класса", "классов"])} · ${jroPl(n, ["ученик", "ученика", "учеников"])}</span></div>
   <div class="jro-chs">${jroCh(JRO.par === "all", 'data-jro-par="all"', "Все")}${pars.map(p => jroCh(JRO.par === p, `data-jro-par="${p}"`, p + " классы")).join("")}</div>
@@ -11624,12 +11624,12 @@ function jroClass(){
   return `<div class="view-head"><div class="hello"><p class="eyebrow">Журнал</p><h1 class="headline jro-h1"><button type="button" class="jro-back" data-jro-home aria-label="Все классы" data-tip="Все классы">‹</button>${esc(JRO.cls)}</h1></div></div>
   <section class="jro">
     <div class="jro-hd"><span class="jro-sub">${jroPl(C.list.length, ["ученик", "ученика", "учеников"])}</span><span class="jro-hb"><button type="button" class="jro-b sm" data-jro-tpl>Шаблоны писем</button>${ed ? `<button type="button" class="jro-b sm" data-jro-edit>Править журнал</button>` : ""}</span></div>
-    <div class="jro-kps">${kp("avg", jroNum(C.avg) + tr, "средний")}${kp("att", Math.round(C.att * 100) + "%", "посещаемость")}${kp("hw", C.hw.length, "заданий ДЗ")}${kp("low", C.low.length, "ниже 5", C.low.length ? "jro-dn" : "")}</div>
+    <div class="jro-kps">${kp("avg", jroNum(C.avg) + tr, sub ? "средний · " + esc(sub.name.toLowerCase()) : "средний · все предметы")}${kp("att", Math.round(C.att * 100) + "%", "посещаемость")}${kp("hw", C.hw.length, "заданий ДЗ")}${kp("low", C.low.length, "ниже 5", C.low.length ? "jro-dn" : "")}</div>
     <div class="jro-dd ${JRO.dd ? "on" : ""}"><button type="button" class="jro-ddb" data-jro-dd aria-haspopup="listbox" aria-expanded="${JRO.dd}"><span><em>Предмет:</em> ${esc(sub ? sub.name : "Все предметы")}</span><svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="m3 4.5 3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>${ddList}</div>
     ${C.attn.length ? `<div class="jro-at"><p>Требуют внимания · ${C.attn.length}</p>${C.attn.slice(0, JRO.attAll ? 99 : 4).map(a => `<button type="button" class="jro-kv" data-jro-stud="${a.s.id}"><span>${esc(jroNm(a.s.nm))}</span><span>${esc(a.t)}</span></button>`).join("")}${C.attn.length > 4 ? `<button type="button" class="jro-more" data-jro-attall>${JRO.attAll ? "Свернуть" : "Показать всех · " + C.attn.length}</button>` : ""}</div>` : ""}
     <div class="jro-th"><span>Ученик</span><span>${sub ? "Последние · средний, " + esc(sub.name.toLowerCase()) : "Динамика · средний, все предметы"}</span></div>
     <div class="jro-list">${C.list.map(row).join("")}</div>
-    <p class="jro-note">${sub ? "Класс по предмету: " + jroNum(sub.avg) : "Класс в целом: " + jroNum(C.avg)}. Средний считается с коэффициентами работ.</p>
+    <p class="jro-note">${sub ? "Класс, " + esc(sub.name.toLowerCase()) + ": " + jroNum(sub.avg) : "Класс, все предметы: " + jroNum(C.avg)}. Средний считается с коэффициентами работ.</p>
   </section>`;
 }
 /* ---------- окна с подробностями ---------- */
@@ -13501,7 +13501,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "549";
+const BUILD = "550";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
