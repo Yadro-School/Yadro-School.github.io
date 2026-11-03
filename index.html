@@ -7,6 +7,14 @@
 .jr-u .jr-aside{align-self:start!important;height:auto!important;grid-template-rows:none!important;grid-auto-rows:auto!important;align-content:start!important}
 .jr-u .jr-aside>.jr-w{align-self:start!important;height:auto!important}
 }
+
+/* журнал ПК: высота строк только по содержимому — без пустого низа */
+@media(min-width:1101px){
+.jr-p.jr-u{grid-template-rows:auto!important;height:auto!important;min-height:0!important;align-items:start!important}
+.jr-u>.jr-l,.jr-u>.jr-aside{grid-row:auto!important;height:auto!important;align-self:start!important}
+.jr-u .jr-l{display:block!important}
+.jr-u .jr-l .jr-scroll{height:auto!important;max-height:none!important;flex:none!important;overflow-y:visible!important}
+}
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -13285,7 +13293,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "528";
+const BUILD = "529";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
