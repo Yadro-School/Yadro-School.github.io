@@ -10557,7 +10557,7 @@ function pkTiles(all, heavy, n, tens, low, cnt, common, pct){
   const sn = x => { const w = String(x || "").split(/[\s-]/)[0]; return w.length > 8 ? w.slice(0, 7) + "." : w; };
   const dd = d => d.getDate() + "." + String(d.getMonth() + 1).padStart(2, "0");
   const chip = g => `<span class="g ${band(g.v)} sm ${g.w > 1 ? "heavy" : ""}"><span class="gv">${dv(g.v)}${g.w > 1 ? `<span class="k">${g.w}</span>` : ""}</span></span>`;
-  const lastOf = (arr, k = 5) => arr.slice().sort((a, b) => b.date - a.date).slice(0, k);
+  const lastOf = (arr, k = 9) => arr.slice().sort((a, b) => b.date - a.date).slice(0, k);
   const li = g => `<li data-tip="${esc(gTip(g) + "|" + g.s.name)}">${chip(g)}<span>${esc(sn(g.s.name))}</span></li>`;
   const liF = g => `<li>${chip(g)}<span>${esc(g.s.name)}</span><time>${dd(g.date)}</time></li>`;
   const more = (arr, k, title) => arr.length > 5 ? `<button type="button" class="pk-more" data-pk-open>Все · ${arr.length}<svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 4.500 6 8l3.500-3.500"/></svg></button><div class="pk-full"><div class="pk-fh"><b>${title} · ${arr.length}</b><button type="button" class="pk-fx" data-pk-close aria-label="Свернуть">✕</button></div><ul class="pk-fl">${lastOf(arr, 999).map(liF).join("")}</ul></div>` : "";
@@ -13275,7 +13275,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "524";
+const BUILD = "525";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
@@ -13514,5 +13514,9 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .sch-save:disabled,.sch-add:disabled{opacity:.5;cursor:default}
 .sch-msg{margin:0;font-size:13px;color:var(--muted)}
 @media(max-width:700px){.sch-r{grid-template-columns:24px minmax(0,1fr) auto;row-gap:2px}.sch-r .sch-tc,.sch-r .sch-rm{grid-column:2}.sch-fr{grid-template-columns:1fr}}
+</style>
+<style>
+/* профиль: на компьютере видно 9 последних оценок в каждом списке, на телефоне 5 (остальные — по кнопке «Все») */
+@media(max-width:480px){.pk3 .pk-ls li:nth-child(n+6){display:none}}
 </style>
 </body></html>
