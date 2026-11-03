@@ -5176,7 +5176,7 @@ b,strong,h1,h2,h3,h4,th{font-weight:500}
 /* ===== главное v497 ===== */
 .ovnow{flex-wrap:wrap}
 .ovm-w{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:stretch}
-.ovnx{flex:1 1 260px;min-width:0;display:grid;gap:4px;align-content:center;padding:12px 14px;border-radius:18px;background:var(--pen-soft);cursor:pointer;transition:background-color .2s,transform .15s}
+.ovnx{flex:1 1 260px;min-width:0;height:100%;box-sizing:border-box;display:grid;gap:4px;align-content:space-between;padding:16px;border-radius:18px;background:var(--pen-soft);cursor:pointer;transition:background-color .2s,transform .15s}
 .ovnx:hover{background:color-mix(in srgb,var(--pen) 16%,transparent)}.ovnx:active{transform:scale(.99)}
 .ovnx-h{font:500 15px var(--f-display);color:var(--ink);overflow-wrap:anywhere}.ovnx-s{font-size:12.5px;color:var(--muted);line-height:1.3}
 .ovnx-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -5608,7 +5608,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 
 /* ===== главная: объявление, неделя в цифрах, совет ===== */
 .ovi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px}
-.ovi-p{min-width:0;display:grid;align-content:start;gap:8px}
+.ovi-p{min-width:0;display:grid;align-content:start;gap:8px}.ovi-p.ovi-ann{cursor:pointer;transition:background-color .18s,transform .15s}.ovi-p.ovi-ann:hover{background:color-mix(in srgb,var(--pen) 8%,transparent)}.ovi-p.ovi-ann:active{transform:scale(.99)}.ovi-p.imp{background:var(--pen-soft);border-color:transparent}.ovi-tag{font:500 11px var(--f-body);padding:3px 9px;border-radius:99px;background:var(--pen);color:var(--paper);align-self:center}
 .ovi-t{margin:0;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
 .ovi-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ovi-s{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--ink) 4%,transparent)}
@@ -12713,7 +12713,7 @@ function ovInfoHtml(){
   if(low && low.avg < 5) tips.push(par ? `Слабее всего «${low.name}»: средний ${num(low.avg)}. Стоит обсудить с учителем.` : `Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`);
   if(!tips.length) tips.push(par ? "Всё в порядке. В календаре видно, что впереди." : "Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.");
   return `<div class="ovi">
-    <section class="panel ovi-p"><div class="panel-head"><h2>Объявление</h2><button class="link" data-go="chats">Чаты</button></div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
+    <section class="panel ovi-p ovi-ann${AN.on ? " imp" : ""}" data-go="chats" role="button" tabindex="0"><div class="panel-head"><h2>Объявление</h2>${AN.on ? `<span class="ovi-tag">Важно</span>` : `<button class="link" data-go="chats">Чаты</button>`}</div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>Неделя в цифрах</h2></div><div class="ovi-g">${stat(wk.length, plural(wk.length, ["оценка","оценки","оценок"]) + " за 7 дней")}${stat(avgW == null ? "–" : num(avgW), "средний за неделю", avgW != null && avgW >= 8 ? "good" : "")}${stat(weekHw.length ? doneW + "/" + weekHw.length : "–", "домашек сделано")}${stat(overall == null ? "–" : num(overall), "средний за четверть")}</div></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>${par ? "На что обратить внимание" : "Совет дня"}</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section></div>`;
 }
@@ -13276,7 +13276,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "526";
+const BUILD = "527";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
