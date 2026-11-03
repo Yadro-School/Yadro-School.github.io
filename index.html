@@ -13513,7 +13513,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "553";
+const BUILD = "554";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13808,4 +13808,8 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .jro-at{width:min(100%,420px)}
 </style>
 <script>document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-stf-go]");if(!b)return;e.preventDefault();e.stopPropagation();ADM.tab=b.dataset.stfGo;ADM.form=null;ADM.confirmDel=null;showTab("admin",true);},true);</script>
+<style>
+/* журнал руководства: список учеников класса уже, цифры ближе к именам */
+.jro-list,.jro-th{width:min(100%,460px)}
+</style>
 </body></html>
