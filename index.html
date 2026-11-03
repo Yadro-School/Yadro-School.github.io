@@ -5783,7 +5783,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
   window.yadroSec = function(){ return call("sec_stats"); };
-  window.yadroTg = function(a, b){ return /^(tg_|ag_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  window.yadroTg = function(a, b){ return /^(tg_|ag_|hw_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   /* ИИ-сервер Ядра: сессия входа уходит только на этот адрес */
   var AI_URL = "https://functions.yandexcloud.net/d4eidkim00i3vsko02mm";
   window.yadroAi = function(payload, signal){ return fetch(AI_URL, { signal: signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload || {}, { t: tok || undefined })) }); };
@@ -9669,6 +9669,18 @@ async function schSave(){
 }
 /* оценки ученика из журнала: сервер кладёт копию в grades/<его id> (сопоставление по полному ФИО) */
 
+
+/* домашка своего класса с сервера (ученик и родитель) */
+const HWF = { on: false };
+function hwFeedPull(){
+  if(typeof window.yadroTg !== "function") return;
+  window.yadroTg("hw_feed").then(j => {
+    if(!j || !Array.isArray(j.items)) return;
+    HW.length = 0; j.items.forEach(h => { try { HW.push({ ...h, files: [], dueD: dd(h.due), givenD: dd(h.given) }); } catch(_) {} });
+    try { renderAll(); } catch(_) {}
+  }).catch(() => {});
+}
+function hwFeedStart(){ if(HWF.on) return; HWF.on = true; hwFeedPull(); setInterval(hwFeedPull, 120000); document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") hwFeedPull(); }); }
 /* пустое состояние мониторинга */
 function monEmpty(){
   return `<div class="mon-emp"><span class="mon-emp-i" aria-hidden="true">○</span><b>Мониторингов пока нет</b><span>Здесь появятся результаты и средний балл, когда учитель загрузит тесты.</span><button type="button" class="ovnx-btn" data-go="homework">Подготовиться</button></div>`;
@@ -9682,6 +9694,7 @@ function realMode(m){
     const nm = String(m.name || "").trim().split(/\s+/); DATA.studentName = m.role === "student" ? (nm[1] || nm[0] || "Ученик") : (nm[0] || "Пользователь");
     STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
     renderAll();
+    hwFeedStart();
   } catch(e) {}
 }
 async function gradesForMe(uid){
@@ -12215,6 +12228,7 @@ function jrHw(){
     const d = new Date(iso + "T12:00:00"), f2 = x => String(x).padStart(2, "0"), fm = x => f2(x.getDate()) + "." + f2(x.getMonth() + 1);
     const h = { id: "jh" + Date.now().toString(36), s: st.s, given: fm(TODAY), due: fm(d), text: t, cls: st.cls.slice(), type: JHW_TYPES[st.type], mins: st.mins, files: st.files.slice(), rem: st.rem };
     JHW.push(h); try { localStorage.setItem(JHW_KEY, JSON.stringify(JHW.slice(-200))); } catch(_) {}
+    try { window.yadroTg && window.yadroTg("hw_save", { item: h }).catch(() => {}); } catch(_) {}
     if(h.cls.includes("8 «А»")) HW.push({ ...h, dueD: dd(h.due), givenD: dd(h.given) });
     tgModalClose(); try { vaData(VA.uid); } catch(_) { try { renderHomework(); } catch(__) {} }
     tgToast("Задание добавлено: " + h.cls.join(", "));
@@ -13465,7 +13479,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "539";
+const BUILD = "540";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
