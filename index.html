@@ -8202,10 +8202,27 @@ function platformContext(kind){
   parts.push("Сегодня " + fmtLong(TODAY) + ".");
   return "\n\nКОНТЕКСТ ПЛАТФОРМЫ:\n" + parts.join("\n");
 }
+
+/* запуск агента через ИИ-сервер Ядра (YandexGPT), когда ИИ внутри Claude недоступен (сайт yadro-ed.ru) */
+async function agProxy(prompt, src, signal){
+  if(src && src.images && src.images.length && !(src.text || "").trim()) { const e = new Error("Фото на сайте пока не распознаются: вставьте текст заданий или файл с текстом"); e.code = "no_images"; throw e; }
+  const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 60000);
+  if(signal) signal.addEventListener("abort", () => ac.abort(), { once: true });
+  try {
+    const r = await fetch(AI_PROXY, { signal: ac.signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: "yandex", messages: [{ role: "user", content: String(prompt).slice(0, 14000) }] }) });
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok || !j.text){ const e = new Error(j.error || "ИИ-сервер не ответил (код " + r.status + ")"); e.code = "proxy"; throw e; }
+    return { text: j.text };
+  } catch(e) {
+    if(e && e.name === "AbortError"){ const x = new Error(signal && signal.aborted ? "Остановлено" : "ИИ-сервер отвечает слишком долго"); x.code = signal && signal.aborted ? "cancelled" : "timeout"; throw x; }
+    if(e instanceof TypeError){ const x = new Error("Нет связи с ИИ-сервером"); x.code = "network"; throw x; }
+    throw e;
+  } finally { clearTimeout(tm); }
+}
 async function agRun(a){
   if(AG.busy) return;
   AG.err = ""; AG.out = "";
-  if(!SAMPLE){ AG.err = "Запуск недоступен в этом окне: откройте платформу в Claude и разрешите ей обращаться к Claude."; renderAgents(); return; }
+  if(!SAMPLE && !AI_PROXY){ AG.err = "ИИ не подключён: агент не может работать."; renderAgents(); return; }
   const t = tplOf(a);
   AG.busy = true; AG.ctl = new AbortController(); logAdd("info", a.name, "Запуск"); renderAgents();
   try {
@@ -8215,14 +8232,14 @@ async function agRun(a){
 ИНСТРУКЦИЯ: ${a.prompt || t.prompt}${platformContext(t.ctx)}${src.text ? "\n\nДАННЫЕ ПОЛЬЗОВАТЕЛЯ:\n" + src.text.slice(0, 150000) : ""}${src.images && src.images.length ? "\n\nДанные также на приложенных изображениях." : ""}`;
     const opts = { modelTier: "default", signal: AG.ctl.signal, cache: false, onText: ({ text }) => { AG.out = text; const el = document.getElementById("ag-out"); if(el) el.textContent = text; } };
     if(src.images && src.images.length) opts.images = src.images;
-    const { text } = await SAMPLE(prompt, opts);
-    AG.out = text; bumpRun(a.id); logAdd("ok", a.name, "Готово, ответ получен");
+    const { text } = SAMPLE ? await SAMPLE(prompt, opts) : await agProxy(prompt, src, AG.ctl.signal);
+    AG.out = text; bumpRun(a.id); logAdd("ok", a.name, "Готово: " + (String(text || "").replace(/[#*_`>]/g, "").replace(/\s+/g, " ").trim().slice(0, 80) || "ответ получен"));
     if(!a.builtin) agSave({ ...a, lastRunAt: new Date().toISOString() }).catch(() => {});
   } catch(e) {
     const c = e && e.code;
     AG.out = e && e.text || AG.out;
-    logAdd(c === "cancelled" ? "info" : "fail", a.name, c === "cancelled" ? "Остановлено пользователем" : "Ошибка запуска" + (c ? ": " + c : ""));
-    AG.err = c === "cancelled" ? "Остановлено." : c === "not_granted" ? "Без разрешения обращаться к Claude агент не может работать." : c === "rate_limited" ? "Слишком много запросов подряд, подождите минуту." : c === "prompt_too_large" ? "Слишком много данных. Загрузите файл поменьше." : "Не получилось выполнить. Попробуйте ещё раз.";
+    logAdd(c === "cancelled" ? "info" : "fail", a.name, c === "cancelled" ? "Остановлено пользователем" : "Ошибка запуска" + (e && e.message ? ": " + String(e.message).slice(0, 80) : c ? ": " + c : ""));
+    AG.err = c === "cancelled" ? "Остановлено." : c === "not_granted" ? "Без разрешения обращаться к Claude агент не может работать." : c === "rate_limited" ? "Слишком много запросов подряд, подождите минуту." : ["no_images", "proxy", "timeout", "network"].includes(c) ? e.message : c === "prompt_too_large" ? "Слишком много данных. Загрузите файл поменьше." : "Не получилось выполнить. Попробуйте ещё раз.";
   } finally { AG.busy = false; renderAgents(); }
 }
 function fmtWhen(iso){ if(!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); }
@@ -9262,7 +9279,7 @@ function renderAgents(){
         <span class="chev" aria-hidden="true"></span>
       </button>
       <div class="ag-det" id="agd-${a.id}"><div class="ag-det-in">
-        ${(() => { const need = a.needs || (tpl && tpl.needs); const t = need ? "Нужно: " + need.map(x => String(x).split(" ").slice(0, 4).join(" ")).join(" · ") : (lastTxt || ""); return t && a.id !== "qa" ? `<p class="ag-one">${esc(t)}</p>` : ""; })()}
+        ${(() => { const need = a.needs || (tpl && tpl.needs); const t = need && need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).length ? "Нужно: " + need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).map(x => String(x).split(" ").slice(0, 4).join(" ")).join(" · ") : (lastTxt || ""); return t && a.id !== "qa" ? `<p class="ag-one">${esc(t)}</p>` : ""; })()}
         <div class="ag-acts">
           ${a.builtin
             ? (a.id === "mod" ? modActs() : a.id === "qa" ? qaActs() : mode === "local" ? `<button class="btn primary" data-ag-local="${a.id}">${a.id === "backup" ? "Собрать копию" : "Проверить"}</button>`
@@ -13422,7 +13439,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "535";
+const BUILD = "536";
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
   ["Имя сокращается как «Фамилия И.»", () => fioShort("Базанова Ольга Вячеславовна") === "Базанова О." && fioShort("Бобриков Александр") === "Бобриков А."],
