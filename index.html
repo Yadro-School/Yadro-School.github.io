@@ -11662,10 +11662,14 @@ function jroSheet(k){
 function jroStudSheet(id){
   const C = jroCls(JRO.cls), s = C.list.find(x => x.id === id); if(!s) return null;
   const subs = Object.entries(s.subj).filter(([, x]) => x.avg != null).sort((a, b) => a[1].avg - b[1].avg);
-  return { title: s.nm, body: `<div class="jro-kps sm"><div class="jro-kp jro-st"><b class="${s.avg != null && fin(s.avg) < 5 ? "jro-dn" : ""}">${jroNum(s.avg)}</b><span>средний</span></div><div class="jro-kp jro-st"><b>${s.abs.length}</b><span>пропусков</span></div><div class="jro-kp jro-st"><b class="${s.low.length ? "jro-dn" : ""}">${s.low.length}</b><span>ниже 5</span></div></div>
+  const first = s.nm.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
+  const pars = (ADM.users || []).filter(u => u.role === "parent" && String((u.v || {}).kids || "").toLowerCase().includes(first));
+  const prof = `<div class="jro-prof"><span class="jro-av">${esc(jroIni(s.nm))}</span><span class="jro-pn"><b>${esc(jroNm(s.nm))}</b><small>${esc(JRO.cls)}</small></span></div>
+    <p class="jro-mut jro-pars">${pars.length ? pars.map(p => esc(((p.v && p.v.rel) || "Родитель") + " · " + p.name)).join("<br>") : "Родители пока не зарегистрированы"}</p>`;
+  return { title: "Карточка ученика", body: prof + `<div class="jro-kps sm"><div class="jro-kp jro-st"><b class="${s.avg != null && fin(s.avg) < 5 ? "jro-dn" : ""}">${jroNum(s.avg)}</b><span>средний</span></div><div class="jro-kp jro-st"><b>${s.abs.length}</b><span>пропусков</span></div><div class="jro-kp jro-st"><b class="${s.low.length ? "jro-dn" : ""}">${s.low.length}</b><span>ниже 5</span></div></div>
     <div class="jro-acts"><button type="button" class="jro-b p" data-jro-mail="${s.id}">Написать родителям</button></div>
-    <p class="jro-lab">Предметы</p>${subs.map(([sid, x]) => `<details class="jro-det"><summary class="jro-kv"><span>${esc(x.name)}</span><span>${x.marks[0] ? `<small>посл. ${dv(x.marks[0].v)}</small>` : ""}<b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></summary><div class="jro-ex">${x.marks.map(m => `<div class="jro-kv jro-st"><span>${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))}${m.topic ? " · " + esc(m.topic) : ""}</span><b>${dv(m.v)}</b></div>`).join("")}</div></details>`).join("")}
-    ${s.abs.length ? `<p class="jro-lab">Пропуски</p>${s.abs.slice(0, 12).map(a => `<div class="jro-kv jro-st"><span>${JRO_WD[a.d.getDay()]} ${jroDay(a.d)}</span><span>${esc(a.name)}</span></div>`).join("")}` : ""}` };
+    <p class="jro-lab">Предметы · средний по каждому</p><div class="jro-sl">${subs.map(([sid, x]) => `<details class="jro-det"><summary class="jro-kv"><span>${esc(x.name)}</span><span>${x.marks[0] ? `<small>посл. ${dv(x.marks[0].v)}</small>` : ""}<b class="${fin(x.avg) < 5 ? "jro-dn" : ""}">${jroNum(x.avg)}</b></span></summary><div class="jro-ex">${x.marks.map(m => `<div class="jro-kv jro-st"><span>${jroDay(m.d)} · ${esc(jrLbl({ k: m.k }))}${m.topic ? " · " + esc(m.topic) : ""}</span><b>${dv(m.v)}</b></div>`).join("")}</div></details>`).join("")}</div>
+    ${s.abs.length ? `<p class="jro-lab">Пропуски</p><div class="jro-sl">${s.abs.slice(0, 12).map(a => `<div class="jro-kv jro-st"><span>${JRO_WD[a.d.getDay()]} ${jroDay(a.d)}</span><span>${esc(a.name)}</span></div>`).join("")}</div>` : ""}` };
 }
 /* ---------- шаблоны писем: метки показываются цветными словами, в тексте хранятся как {ключ} ---------- */
 const JRO_VARS = [["родитель", "Родитель"], ["имя", "Имя ученика"], ["класс", "Класс"], ["предмет", "Предмет"], ["средний", "Средний балл"], ["пропуски", "Пропуски"]];
@@ -13501,7 +13505,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "550";
+const BUILD = "551";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13776,5 +13780,15 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 
 .jr-p.jr-u>.jr-l{display:block!important;height:auto!important;align-self:start!important}
 .jr-p.jr-u>.jr-l>.jr-scroll{height:auto!important;max-height:none!important;min-height:0!important;flex:none!important}
+</style>
+<style>
+/* журнал руководства: компактный список предметов и выбор предмета, профиль в карточке ученика */
+.jro-dd{width:min(100%,360px)}
+.jro-sl{width:min(100%,400px)}
+.jro-sl .jro-kv{padding:6px 2px;gap:10px}
+.jro-sl .jro-kv>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jro-prof{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.jro-pn{display:grid;gap:1px;min-width:0}.jro-pn b{font:500 16px var(--f-body);color:var(--ink)}.jro-pn small{font-size:12px;color:var(--muted)}
+.jro-pars{margin:0 0 8px;font-size:13px;line-height:1.4}
 </style>
 </body></html>
