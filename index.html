@@ -9720,13 +9720,6 @@ async function gradesForMe(uid){
     Object.keys(DATA.subjects).forEach(id => { ALLG[id] = (out[id] || []).sort((a, b) => a.date - b.date); });
     STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
     try { Object.keys(ST).forEach(k => { delete ST[k]; }); STATS.forEach(x => { ST[x.id] = x; }); } catch(_) {}
-    /* настоящий ученик или родитель: прошедшие контрольные и проверочные берём из оценок (предстоящих на сервере пока нет) */
-    if(!CN.isAdmin && ["student", "parent"].includes(ME_ROLE)){
-      TESTS.length = 0;
-      Object.keys(ALLG).forEach(sid => (ALLG[sid] || []).forEach(g => { if((g.k === "к" || g.k === "п") && diff(g.date) < 0) TESTS.push({ s: sid, date: g.date.getDate() + "." + String(g.date.getMonth() + 1).padStart(2, "0"), d: g.date, type: g.k === "к" ? "Контрольная работа" : "Проверочная работа", w: g.w, topic: g.about || "" }); }));
-      TESTS.sort((a, b) => a.d - b.d);
-      try { TCAL.sel = null; } catch(_) {}
-    }
     try { renderAll(); } catch(e) {}
   } catch(e) {}
 }
@@ -13522,7 +13515,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "556";
+const BUILD = "557";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
