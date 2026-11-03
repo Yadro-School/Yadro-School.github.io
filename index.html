@@ -96,12 +96,6 @@
 .mon-emp b{font:500 15px var(--f-body)}
 .mon-emp span:not(.mon-emp-i){font-size:13px;color:var(--muted);max-width:340px;line-height:1.5}
 
-/* журнал на широком экране: виджеты справа в две колонки, чтобы не было пустоты под таблицей */
-@media(min-width:1650px){
-.jr-p.jr-u .jr-aside{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;align-items:start!important}
-.jr-p.jr-u .jr-aside>.jr-w{margin:0!important}
-.jr-p.jr-u .jr-aside>.jr-w,.jr-p.jr-u .jr-aside>.jr-w.jr-w-wide{grid-column:auto!important;min-width:0}
-}
 
 /* главная: плашка «Каникулы / следующий урок» справа, на всю высоту карточки, равные отступы со всех сторон */
 @media(min-width:1180px){
@@ -13496,7 +13490,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "543";
+const BUILD = "545";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13757,5 +13751,12 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 .jr-t tbody .jr-c{height:26px;border-radius:7px}
 .jr-t tbody td{padding-top:0;padding-bottom:0}
 .jr-t tbody .jr-nm{padding-top:0!important;padding-bottom:0!important;line-height:1.2}
+
+/* журнал на широком экране: одна узкая колонка виджетов справа (440 px), таблица не растягивается */
+@media(min-width:1650px){
+.jr-p.jr-u{grid-template-columns:minmax(0,max-content) 440px!important;justify-content:start!important;width:fit-content!important;max-width:100%!important}
+.jr-p.jr-u .jr-aside{grid-template-columns:minmax(0,1fr)!important;gap:8px!important;align-items:start!important}
+.jr-p.jr-u .jr-aside>.jr-w,.jr-p.jr-u .jr-aside>.jr-w.jr-w-wide{grid-column:auto!important;min-width:0}
+}
 </style>
 </body></html>
