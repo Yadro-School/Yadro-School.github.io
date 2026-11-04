@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "565";
+const BUILD = "566";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13906,5 +13906,12 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* коннекторы: название выделено */
 #admin .cn-card .reg-main>b{font-size:15px!important;font-weight:600!important;letter-spacing:-.01em;color:var(--ink)}
 #admin .cn-card .reg-desc{font-size:13px}
+</style>
+<style id="journal-grades">
+/* журнал: оценки тоньше, но цвет и цифра полностью видны */
+.jr-t .jr-c .g,.jr-t .jr-c .g .gv,.jr-t .jr-c .g *{font-variation-settings:"wght" 300!important;opacity:1!important;color:var(--gc)!important}
+.jr-t .jr-c .g.sm{font-size:17px!important}
+/* коэффициент (×2 у контрольной) — заметный бейдж, а не бледный индекс */
+.jr-t .jr-c .g .k,.g .k,.pf-mon .mon-t .g .k{display:inline-grid!important;place-items:center;min-width:12px;height:12px;padding:0 3px;margin-left:2px;border-radius:6px;font-size:9px!important;font-variation-settings:"wght" 700!important;color:var(--gc)!important;background:color-mix(in srgb,var(--gc) 16%,transparent);opacity:1!important;vertical-align:top;bottom:auto!important;position:relative;top:-2px}
 </style>
 </body></html>
