@@ -109,7 +109,7 @@
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@400;500;600;700&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@100..900&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: школьная тетрадь — шапка «в клетку» с красными полями, вкладки-закладки, сводка сверху, детали ниже */
 :root{
@@ -13515,7 +13515,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "557";
+const BUILD = "558";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13813,5 +13813,12 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 <style>
 /* журнал руководства: список учеников класса уже, цифры ближе к именам */
 .jro-list,.jro-th{width:min(100%,460px)}
+</style>
+<style>
+/* шрифт Inter везде, тонкое единое начертание (переменная ось wght) */
+:root,:root[data-font],:root[data-font="apple"],:root[data-font="claude"],:root[data-font="classic"]{--f-display:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--f-body:var(--f-display);--f-grade:var(--f-display);--f-subj:var(--f-display);--f-mono:var(--f-display)}
+*,*::before,*::after{font-variation-settings:"wght" 340;font-variant-numeric:tabular-nums}
+h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
+.headline,.brand-name,.prof-name{letter-spacing:-.02em}
 </style>
 </body></html>
