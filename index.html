@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "572";
+const BUILD = "573";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13949,5 +13949,10 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .pf-mon .mon-t td.mon-rv{padding-top:0!important;padding-bottom:0!important}
 .pf-mon .mon-xb{height:22px!important;font-size:11px!important;margin-top:2px!important}
 .pf-mon .mon-t .g{height:18px!important;min-width:22px!important;font-size:12px!important}
+</style>
+<style id="coef-v4">
+/* коэффициент — снова внизу справа оценки, как было */
+.jn,.jr-c .jn,.g{position:relative}
+.jn sub,.jr-c sub,.g sub,.g .k,.pf-mon sub{position:absolute!important;left:100%!important;top:auto!important;bottom:-2px!important;margin:0 0 0 1px!important;vertical-align:baseline!important;line-height:1!important}
 </style>
 </body></html>
