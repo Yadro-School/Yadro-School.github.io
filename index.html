@@ -5799,7 +5799,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   var AI_URL = "https://functions.yandexcloud.net/d4eidkim00i3vsko02mm";
   window.yadroAi = function(payload, signal){ return fetch(AI_URL, { signal: signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload || {}, { t: tok || undefined })) }); };
   window.yadroSecClear = function(what){ return call("sec_clear", { what: what }); };
-  window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$|reg_link_make$|reg_list$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$|reg_link_make$|reg_list$|reg_avatar$|reg_decide$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   /* способы входа своего аккаунта (вкладка «Настройки» → «Вход и безопасность») */
   window.yadroAuth = {
     methods: function(){ return call("auth_methods"); },
@@ -10053,6 +10053,34 @@ const invKey = t => String(t).toUpperCase().replace(/Ё/g, "Е").replace(/[^0-9A
 function invCls(t){ const k = invKey(t); return k ? (JR_CLS.find(c => invKey(c) === k) || null) : ""; }
 const INVU = { open: "", code: {}, busy: "" };
 const REGL = { link: "", svg: "" };
+/* заявки на регистрацию: список, фото по запросу, принять / отклонить */
+const REGA = { list: null, photo: {}, busy: "", err: "" };
+function regaLoad(force){
+  if(!window.yadroApi || (REGA.list && !force) || REGA.busy) return; REGA.busy = "l";
+  window.yadroApi("reg_list").then(j => { REGA.list = j.apps || []; REGA.err = ""; })
+    .catch(e => { REGA.err = e.message || "Не удалось загрузить заявки"; REGA.list = REGA.list || []; })
+    .then(() => { REGA.busy = ""; invRefresh(); });
+}
+function regaHtml(){
+  const pend = (REGA.list || []).filter(a => a.status === "pending");
+  const row = a => {
+    const ph = REGA.photo[a.id];
+    return `<li class="inv-i rega-i"><div class="rega-top">${ph ? `<img class="rega-ava" alt="" src="${ph}">` : `<button type="button" class="rega-ph" data-rega-ph="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Фото</button>`}<div><b>${esc(a.name)}</b><span class="inv-r">${INV_RN[a.role] || a.role}${a.cls ? " · " + esc(a.cls) : ""}</span><span class="inv-s">${esc(a.phone)} · ${esc(a.email)}</span></div></div>
+      <div class="rega-act"><button type="button" data-rega-ok="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Принять</button><button type="button" class="x" data-rega-no="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Отклонить</button></div></li>`;
+  };
+  if(REGA.list === null) return `<div class="rega-p"><h4 class="inv-uh">Заявки на регистрацию</h4><p class="inv-n">Загружаем…</p></div>`;
+  return `<div class="rega-p"><h4 class="inv-uh">Заявки на регистрацию · ${pend.length}</h4>${REGA.err ? `<p class="inv-e">${esc(REGA.err)}</p>` : ""}${pend.length ? `<ul class="inv-l">${pend.map(row).join("")}</ul>` : `<p class="inv-n">Новых заявок нет</p>`}</div>`;
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-rega-ph]"))){ const id = x.dataset.regaPh; REGA.busy = "p"; REGA.err = ""; invRefresh();
+    window.yadroApi("reg_avatar", { id }).then(j => { REGA.photo[id] = j.avatar; }).catch(err => { REGA.err = err.message; }).then(() => { REGA.busy = ""; invRefresh(); }); return; }
+  if((x = g("[data-rega-ok]")) || (x = g("[data-rega-no]"))){
+    const ok = !!g("[data-rega-ok]"), id = x.dataset.regaOk || x.dataset.regaNo; REGA.busy = "d"; REGA.err = ""; invRefresh();
+    window.yadroApi("reg_decide", { id, decision: ok ? "approve" : "reject" })
+      .catch(err => { REGA.err = err.message; })
+      .then(() => { REGA.busy = ""; REGA.list = null; regaLoad(true); INV.list = null; invLoad(true); }); return; }
+});
 /* QR для ссылки регистрации: библиотека грузится один раз с cdnjs */
 function regQr(text){
   return new Promise(res => { if(window.qrcode) return res(window.qrcode); const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; sc.onload = () => res(window.qrcode); sc.onerror = () => res(null); document.head.appendChild(sc); })
@@ -10074,6 +10102,7 @@ function invRefresh(){ const p = document.getElementById("inv-p"); if(p) p.outer
 function invHtml(inner){
   if(!window.yadroApi) return "";
   if(INV.list === null) setTimeout(invLoad, 0);
+  if(REGA.list === null) setTimeout(regaLoad, 0);
   const f = INV.f, st = INV.users.filter(u => u.role === "student");
   const left = i => { const d = Math.ceil((i.exp - Date.now()) / 864e5); return d <= 0 ? "истёк" : "ещё " + d + " дн."; };
   const row = i => {
@@ -10089,6 +10118,7 @@ function invHtml(inner){
     <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button><button type="button" class="inv-go" data-reg-new${INV.busy ? " disabled" : ""}>Ссылка для регистрации</button></div>
     ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
     ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
+    ${regaHtml()}
     ${REGL.link ? `<div class="inv-new reg-link"><span>Ссылка для регистрации · 24 часа</span><b>${esc(REGL.link)}</b><button type="button" data-inv-cp="${esc(REGL.link)}">Копировать</button><div class="reg-qr" style="background:#fff;padding:10px;border-radius:14px;width:max-content;margin-top:10px">${REGL.svg}</div></div>` : ""}
     ${INV.fresh ? `<div class="inv-new"><span>Новый код</span><b>${esc(INV.fresh)}</b><button type="button" data-inv-cp="${esc(INV.fresh)}">Копировать</button></div>` : ""}
     ${INV.list && INV.list.length ? `<ul class="inv-l">${INV.list.map(row).join("")}</ul>` : `<p class="inv-n">${INV.list ? "Кодов пока нет" : "Загружаем…"}</p>`}
@@ -13556,7 +13586,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "592";
+const BUILD = "593";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14133,4 +14163,5 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
     .catch(function(e){ sub.textContent = "Ссылка не работает"; body.innerHTML = '<p class="e">' + String(e.message || "") + '</p><p>Попросите у администратора новую ссылку.</p>'; });
 })();
 </script>
+<style id="rega-css">.rega-p{margin:14px 0 6px}.rega-i{flex-direction:column;align-items:stretch;gap:10px}.rega-top{display:flex;gap:12px;align-items:center}.rega-ava{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none}.rega-ph{align-self:flex-start;border:0;border-radius:12px;padding:8px 12px;background:#f1ede4;cursor:pointer;font:inherit;font-size:13.5px}.rega-act{display:flex;gap:8px}.rega-act button{border:0;border-radius:12px;padding:8px 14px;background:#1C8A5A;color:#fff;cursor:pointer;font:inherit;font-size:13.5px;transition:transform .15s,filter .2s}.rega-act button.x{background:#f1ede4;color:#1f1d1a}.rega-act button:hover:not(:disabled){filter:brightness(.95)}.rega-act button:active:not(:disabled){transform:scale(.97)}.rega-act button:disabled,.rega-ph:disabled{opacity:.55;cursor:default}</style>
 </body></html>
