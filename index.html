@@ -10629,8 +10629,8 @@ function renderProfile(){
         <div class="prof-id">
           <p class="eyebrow">Мой профиль</p>
           <h1 class="prof-name" id="prof-name"></h1>
-          <p class="prof-sub ${pw.R === "parent" ? "par" : ""}">${esc(pw.sub)}</p>${pw.par.length && pw.R === "student" ? `<p class="prof-par"><span>Родители:</span>${pw.par.map(x => `<button type="button" class="pchip" data-par-wr="${esc(x.name)}" data-tip="Написать родителю|${esc(x.name)}">${esc(fioShort(x.name))}</button>`).join("")}</p>` : ""}
-          <div class="prof-chips"><span class="pchip">${(() => { const lv = PERIODS.find(p => TODAY >= p.s && TODAY <= p.e); if(!lv) return esc(CUR.name) + " завершена"; const left = Math.max(0, Math.round((lv.e - TODAY) / DAY)); return esc(lv.name) + (left ? " · до конца " + left + " " + plural(left, ["день", "дня", "дней"]) : " · последний день"); })()}</span>${canPII() && PED.v.phone ? `<a class="pchip pc-c" href="tel:${esc(String(PED.v.phone).replace(/[^+\d]/g, ""))}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>${esc(fmtPhone(PED.v.phone))}</a>` : ""}${canPII() && PED.v.email ? `<a class="pchip pc-c" href="mailto:${esc(PED.v.email)}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg>${esc(PED.v.email)}</a>` : ""}</div>
+          <p class="prof-sub ${pw.R === "parent" ? "par" : ""}">${esc(pw.sub)}</p>
+          <div class="prof-chips">${canPII() && PED.v.phone ? `<a class="pchip pc-c" href="tel:${esc(String(PED.v.phone).replace(/[^+\d]/g, ""))}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>${esc(fmtPhone(PED.v.phone))}</a>` : ""}${canPII() && PED.v.email ? `<a class="pchip pc-c" href="mailto:${esc(PED.v.email)}"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v12H3zM3 7l9 7 9-7"/></svg>${esc(PED.v.email)}</a>` : ""}</div>
         </div>
         <div class="pf-ring" title="Средний балл" ${["teacher", "methodist", "zavuch", "deputy", "director", "controller", "admin"].includes(pw.R) && VA.role ? "hidden" : ""}>
           <svg viewBox="0 0 80 80" width="92" height="92" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pick)" stroke-width="7"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pen)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg>
@@ -10649,7 +10649,7 @@ function renderProfile(){
     <div class="pf-row2">
       ${!MON.length ? `<section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2></div>${monEmpty()}</section>` : `      <section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2><span class="aside">средняя ${da(MON.reduce((a, g) => a + g.v, 0) / MON.length)}</span></div>
         ${(() => { const L = MON.slice().reverse(), row = g => `<tr><td>${g.date.getDate()} ${MS[g.date.getMonth()]}</td><td>${esc(g.c)}</td><td class="mon-rv"><button type="button" class="mon-rb" data-mon-res="${g.c}" data-tip="Посмотреть результат|Баллы, оценка и разбор по заданиям" aria-label="Посмотреть результат"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 12s3.500-6.500 9.500-6.500S21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>Результат</button><button type="button" class="mon-rb" data-mon-review data-tip="Разобрать с помощником · скоро|Покажет ошибки, решения и даст похожие задания" aria-label="Разобрать с помощником"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Разобрать<em>скоро</em></button></td><td>${g.b}</td><td><span class="g ${band(g.v)} sm">${dv(g.v)}</span></td></tr>`;
-          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 6).map(row).join("")}</tbody></table>${L.length > 6 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(3).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Показать все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
+          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 5).map(row).join("")}</tbody></table>${L.length > 5 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(5).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
       </section>`}
       <div class="pf-kpi pf-kpi2 pf-kpi3">${pkTiles(all, heavy, n, tens, low, cnt, common, pct)}</div>
     </div>
@@ -10775,7 +10775,7 @@ function pkTiles(all, heavy, n, tens, low, cnt, common, pct){
   const sn = x => { const w = String(x || "").split(/[\s-]/)[0]; return w.length > 8 ? w.slice(0, 7) + "." : w; };
   const dd = d => d.getDate() + "." + String(d.getMonth() + 1).padStart(2, "0");
   const chip = g => `<span class="g ${band(g.v)} sm ${g.w > 1 ? "heavy" : ""}"><span class="gv">${dv(g.v)}${g.w > 1 ? `<span class="k">${g.w}</span>` : ""}</span></span>`;
-  const lastOf = (arr, k = 9) => arr.slice().sort((a, b) => b.date - a.date).slice(0, k);
+  const lastOf = (arr, k = 5) => arr.slice().sort((a, b) => b.date - a.date).slice(0, k);
   const li = g => `<li data-tip="${esc(gTip(g) + "|" + g.s.name)}">${chip(g)}<span>${esc(sn(g.s.name))}</span></li>`;
   const liF = g => `<li>${chip(g)}<span>${esc(g.s.name)}</span><time>${dd(g.date)}</time></li>`;
   const more = (arr, k, title) => arr.length > 5 ? `<button type="button" class="pk-more" data-pk-open>Все · ${arr.length}<svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 4.500 6 8l3.500-3.500"/></svg></button><div class="pk-full"><div class="pk-fh"><b>${title} · ${arr.length}</b><button type="button" class="pk-fx" data-pk-close aria-label="Свернуть">✕</button></div><ul class="pk-fl">${lastOf(arr, 999).map(liF).join("")}</ul></div>` : "";
@@ -13001,6 +13001,16 @@ const JS_ERRS = [];
 window.addEventListener("error", e => { if(!e.target || e.target === window) JS_ERRS.push({ at: new Date(), msg: String(e.message || "ошибка") }); });
 window.addEventListener("unhandledrejection", e => { JS_ERRS.push({ at: new Date(), msg: String(e.reason && e.reason.message || e.reason || "ошибка") }); });
 try { const j = JSON.parse(localStorage.getItem("bai-sec-scan") || "null"); if(j && Array.isArray(j.res)){ SEC.res = j.res; SEC.at = new Date(j.at); SEC.auto = !!j.auto; } } catch(e) {}
+const CF = { on: null, at: 0 };   // Cloudflare: определяем по заголовку cf-ray у своего же сайта
+async function cfCheck(){
+  try { const r = await fetch(location.origin + location.pathname + "?cfcheck=" + Date.now(), { method: "HEAD", cache: "no-store" });
+    CF.on = !!(r.headers.get("cf-ray") || /cloudflare/i.test(r.headers.get("server") || "")); }
+  catch(e) { CF.on = null; }
+  const was = CF.at; CF.at = Date.now();
+  if(typeof secQuiet === "function") try { secQuiet(); } catch(e) {}
+  try { if(SEC.el && SEC.el.isConnected && ADM.tab === "security") renderAdmSec(SEC.el); } catch(e) {}
+}
+cfCheck(); setInterval(cfCheck, 10 * 60 * 1000);
 const SEC_STEPS = [
   ["https", "Защищённое соединение", () => location.protocol === "https:" ? ["ok", "HTTPS включён"] : ["warn", "Страница открыта не по HTTPS", "Открывайте сайт только по адресу https://"]],
   ["data", "Целостность данных", () => { const i = platformIssues(); return i.length ? ["fail", `Найдено проблем: ${i.length} — ${i[0]}`, "Откройте Агенты → Система → Проверить и исправьте данные"] : ["ok", "Оценки, расписание и домашка в порядке"]; }],
@@ -13009,7 +13019,7 @@ const SEC_STEPS = [
   ["store", "Хранилище", () => { try { localStorage.setItem("bai-sec-t", "1"); localStorage.removeItem("bai-sec-t"); return ["ok", "Данные сохраняются"]; } catch(e) { return ["warn", "Браузер не даёт сохранять данные", "Разрешите сохранение данных для сайта"]; } }],
   ["backup", "Резервная копия", () => { const r = SYS.runs && SYS.runs.backup; const d = r && r.at ? Math.floor((Date.now() - new Date(r.at)) / 864e5) : null; return d == null ? ["warn", "Копий ещё не было", "Агенты → Система → «Копия данных»"] : d > 7 ? ["warn", `Последняя копия ${d} дн. назад`, "Сделайте свежую копию данных"] : ["ok", "Копия свежая"]; }],
   ["speed", "Скорость сайта", () => { const ms = SYS.boot || Math.round(performance.now()); return ms > 2500 ? ["warn", `Загрузка ${ms} мс`, "Проверьте интернет или размер данных"] : ["ok", `Загрузка ${ms} мс`]; }],
-  ["ddos", "Защита от DDoS", () => ["warn", "Не подключена", "Подключите Cloudflare перед сайтом — бесплатный тариф подходит"]],
+  ["ddos", "Защита от DDoS", () => CF.on === true ? ["ok", "Cloudflare перед сайтом — защита включена"] : CF.on === false ? ["warn", "Не подключена", "Подключите Cloudflare перед сайтом — бесплатный тариф подходит"] : ["warn", "Проверяем подключение…", "Обновится через несколько секунд"]],
   ["limit", "Лимит запросов", () => ["ok", "30 в минуту и 200 в час для помощника"]],
   ["2fa", "Вход админов по коду", () => ["warn", "Выключен", "Включите второй шаг входа для администраторов"]]
 ];
@@ -13524,7 +13534,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "561";
+const BUILD = "562";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13862,5 +13872,15 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 @media (max-width:700px){.jr-tb .jr-add:not(.jr-addhw){margin-left:0}.jr-find{flex:1 1 150px}.jr-find input{width:100%}}
 .g,.g *,.jr-c,.jr-c *,.chips>*,.chips .gv{font-variation-settings:"wght" 120}
 .g-final,.g-final *,.avg-num,.gt-fin .g-final{font-variation-settings:"wght" 340}
+</style>
+<style id="pf-clean">
+.pf-hero .eyebrow,.pf-hero .pf-ring{display:none!important}
+.pf-hero .prof-chips:empty{display:none}
+.pf-mon .mon-t td,.pf-mon .mon-t td *{color:var(--ink)}
+.pf-mon .mon-t td:first-child,.pf-mon .mon-t td:nth-child(2){color:var(--muted)}
+.pf-mon .mon-t td:nth-child(4){font-variation-settings:"wght" 380;font-size:12px}
+.pf-mon .mon-t,.pf-mon .mon-t td{font-size:11.5px}
+.pf-mon .mon-t td{padding-top:4px;padding-bottom:4px}
+.pf-mon .mon-t .g{min-width:20px;height:18px;font-size:11px;font-variation-settings:"wght" 160}
 </style>
 </body></html>
