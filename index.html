@@ -5867,7 +5867,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
       body.innerHTML = '<input id="yd-em" type="email" inputmode="email" autocomplete="username" placeholder="Почта"><p class="e"></p><button id="yd-go">Получить код</button><p class="s"><a id="yd-back">Назад</a></p>';
       var em = body.querySelector("#yd-em"), go = body.querySelector("#yd-go"); em.value = email; em.focus();
       function send(){ email = em.value.trim(); if(!email){ err("Введите почту"); return; } go.disabled = true; err("");
-        call("code_send", { email: email }).then(stepMail).catch(function(e){ err(e.message); go.disabled = false; }); }
+        call("code_send", { email: email }).then(stepMail).catch(function(e){ var m = String(e && e.message || ""); err(/лимит|много|подожд|минут|попыт/i.test(m) ? m : "Если почта привязана к аккаунту, код придёт на неё. Попробуйте ещё раз позже."); go.disabled = false; }); }
       go.onclick = send; em.onkeydown = function(e){ if(e.key === "Enter") send(); };
       body.querySelector("#yd-back").onclick = stepCode;
     }
@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "587";
+const BUILD = "588";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
