@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "579";
+const BUILD = "580";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13976,5 +13976,9 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .jr-t .jr-c .g{background:none!important;box-shadow:none!important;border:0!important;min-width:0!important;height:auto!important;padding:0 3px!important;border-radius:0!important;font-size:15px!important;font-weight:400!important;font-variation-settings:"wght" 400!important;color:var(--gc)!important;line-height:1.2!important}
 .jr-t .jr-c .g.sm{font-size:15px!important;height:auto!important;min-width:0!important}
 .jr-t .jr-c .g .gv{font-size:15px!important;font-weight:400!important}
+</style>
+<style id="jr-weight">
+/* журнал: оценки и средний балл — одинаковый вес 500 */
+.jr-t .jr-c .g,.jr-t .jr-c .g .gv,.jr-t .jr-c .g *,.jr-t .jr-av b{font-weight:500!important;font-variation-settings:"wght" 500!important}
 </style>
 </body></html>
