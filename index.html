@@ -6827,7 +6827,6 @@ function renderOverview(){
   const lastG = STATS.map(s => { const g = (ALLG[s.id] || []).slice().sort((a, b) => b.date - a.date)[0]; return g ? { s, g } : null; }).filter(Boolean).sort((a, b) => b.g.date - a.g.date).slice(0, 8);
   const dueTxt = d => { const n = diff(d); return n < 0 ? "просрочено" : n === 0 ? "сегодня" : n === 1 ? "завтра" : n === 2 ? "послезавтра" : `${d.getDate()} ${MS[d.getMonth()]}`; };
   document.getElementById("overview").innerHTML = `${ovAlertHtml()}${ovNowHtml()}${ovTodayHtml()}${ovInfoHtml()}
-    ${ovNewsHtml()}
     <div class="ovc">
       <section class="panel ovc-p"><div class="panel-head"><h2>Сначала сделать</h2><button class="link" data-go="homework">Все</button></div>
         ${soon.length ? `<ul class="ovl">${soon.map(h => { const n = diff(h.dueD); return `<li><button type="button" class="ovl-r ${n === 1 ? "tmr" : ""}" data-hwgo="${h.id}"><span class="ovl-s">${esc(subjName(h.s))}</span><span class="ovl-t">${esc(h.text)}</span><em class="${n < 0 ? "bad" : n <= 1 ? "hot" : ""}">${dueTxt(h.dueD)}</em></button></li>`; }).join("")}</ul>` : `<p class="empty">Всё сделано.</p>`}</section>
@@ -6835,7 +6834,8 @@ function renderOverview(){
         ${upcoming.length ? `<ul class="ovl">${upcoming.slice(0, 5).map(t => `<li><button type="button" class="ovl-r" data-cal-test="${isoDate(t.d)}"><u class="cdc k">${TEST_SHORT[t.type] || "КР"}</u><span class="ovl-s">${esc(subjName(t.s))}</span><span class="ovl-t">${esc(t.topic)}</span><em class="${diff(t.d) <= 3 ? "hot" : ""}">${t.d.getDate()} ${MS[t.d.getMonth()]}</em></button></li>`).join("")}</ul>` : `<p class="empty">Контрольных нет.</p>`}</section>
       ${CUR.finals ? `<section class="panel ovc-p ovf-p"><div class="panel-head"><h2>Итоговые оценки</h2><button class="link" data-go="grades">Все</button></div>
         ${(() => { const grp = new Map(); STATS.forEach(s => { const fv = s.official ?? (s.att ? s.final : null); const k = fv == null ? -1 : fv; if(!grp.has(k)) grp.set(k, []); grp.get(k).push(s); }); return `<ul class="ovfin">${[...grp.entries()].sort((a, b) => b[0] - a[0]).map(([k, L]) => `<li><button type="button" class="ovf-r" data-fin="${k}" aria-label="${k < 0 ? "Без итога" : "Итог " + dv(k)}: ${L.length} — открыть в оценках"><b class="g ${band(k < 0 ? 5 : k)} ${k < 0 ? "na" : ""}">${k < 0 ? "—" : dv(k)}</b><span class="ovf-t"><span class="ovf-c">${k < 0 ? "Итога пока нет" : "Итог " + dv(k)} · ${L.length} ${plural(L.length, ["предмет", "предмета", "предметов"])}</span><span class="ovf-n">${L.sort((a, b) => a.name.localeCompare(b.name, "ru")).map(x => esc(subjShort(x.name))).join(", ")}</span></span><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.500 8 6l-3.500 3.500"/></svg></button></li>`).join("")}</ul><p class="ovf-h">Нажмите на строку — откроются только эти предметы.</p>`; })()}</section>` : ""}
-    </div>`;
+    </div>
+    ${ovNewsHtml()}`;
 }
 
 /* ================= Задания ================= */
@@ -7016,7 +7016,7 @@ function testsInner(){
       const res = [TOP(), TOP()-2, TOP()-4].map(v => { const a = (st.sum + v*w) / (st.w + w); return { v, a, f: fin(a) }; });
       impact = `<div class="impact"><span class="lbl">Сейчас ${num(st.avg)} → «${st.final}». Если получить:</span>${res.map(r => `<span class="imp"><span class="g ${band(r.v)} sm">${r.v}</span><span>${num(r.a)}</span><span class="arrow">→</span><span class="g res ${band(r.f)} sm">${r.f}</span></span>`).join("")}</div>`;
     }
-    const q = `Помоги подготовиться: ${t.type.toLowerCase()} по предмету «${subjName(t.s)}», тема «${t.topic}»${t.prep ? `. Что повторить: ${t.prep}` : ""}. Распиши по пунктам план подготовки, потом дай короткий тест из 5 вопросов (ответы в конце) и 3 однотипных задания для тренировки.`;
+    const q = `Помоги подготовиться: ${t.type.toLowerCase()} по предмету «${subjName(t.s)}», тема «${t.topic}»${t.prep ? `. Что повторить: ${t.prep}` : ""}. Распиши по пунктам план подготовки, потом дай короткий тест из 5 вопросов без ответов (я отвечу сам, а ты проверишь и объяснишь ошибки) и 3 однотипных задания для тренировки без решений.`;
     return `<article class="tk ${cls}">
       <header class="tk-h"><span class="tk-d"><b>${t.d.getDate()}</b><span>${MS[t.d.getMonth()]}</span></span>
         <span class="tk-s"><span class="tk-r1"><span class="tk-sn">${esc(subjName(t.s))}</span><span class="tk-w ${cls}">${countdown(t.d)}</span></span><span class="tk-ty"><u class="cdc k">${kind(t)}</u><span>${esc(t.type)} · ${WD[t.d.getDay()]}</span></span></span></header>
@@ -8144,7 +8144,7 @@ const TEMPLATES = [
     sources: ["Контрольные", "Оценки"], targets: ["Подготовка"],
     needs: ["Разрешение странице обращаться к Claude", "Тема контрольной (берётся из платформы или впишите сами)"],
     steps: ["Нажмите «Запустить»", "При желании допишите тему или параграфы", "Агент выдаст план на несколько дней и 5 вопросов для самопроверки"],
-    prompt: "Возьми ближайшие контрольные из контекста (или тему из данных пользователя). Составь план повторения по дням до даты работы и 5 вопросов для самопроверки с ответами." },
+    prompt: "Возьми ближайшие контрольные из контекста (или тему из данных пользователя). Составь план повторения по дням до даты работы и 5 вопросов для самопроверки без ответов: ученик отвечает сам, ты потом проверяешь и объясняешь ошибки." },
   { id: "chatbot", name: "Чат-бот помощник", runHere: true, ctx: "all",
     desc: "Отвечает на вопросы ученика по его данным: что задано, какая оценка нужна, когда контрольная.",
     sources: ["Все разделы"], targets: ["Ответ в чате"],
@@ -8406,6 +8406,8 @@ function aiLimit(){
   ts.push(now); try { localStorage.setItem("bai-ai-ts", JSON.stringify(ts)); } catch(e) {}
   return "";
 }
+const AI_RULES = "Ты — учебный помощник школьника. Правила: 1) Никогда не пиши готовый ответ или решение домашнего задания, контрольной или примера, даже если просят «реши», «дай ответ», «просто скажи». 2) Помогай понять: объясни тему простыми словами, напомни правило или формулу, предложи первый шаг и задай наводящий вопрос. 3) Для тренировки приведи похожий пример с другими числами и попроси ученика решить самому, потом проверь его ответ и объясни ошибки. 4) Если просят ответ, вежливо откажись одним предложением и сразу предложи, с чего начать. 5) Отвечай коротко, по-русски.";
+const aiGuardMsgs = list => { const out = list.map(m => ({ ...m })); for(let i = out.length - 1; i >= 0; i--){ if(out[i].role === "user"){ out[i].content = AI_RULES + "\n\nСообщение ученика: " + out[i].content; break; } } return out; };
 async function aiChatSend(q){
   const um = { f: "me", x: q, t: new Date().toISOString() }; if(CHAT.reply){ um.r = CHAT.reply; CHAT.reply = null; } if(CHAT.att.length){ um.a = CHAT.att; CHAT.att = []; } FRESH.add(um); CHAT.msgs.ai.push(um);
   CHAT.draft = ""; CHAT.busy = true; chatSave();
@@ -8417,7 +8419,7 @@ async function aiChatSend(q){
     const hist = CHAT.msgs.ai.slice(0, idx).filter(m => m.x && !m.err).slice(-10).map(m => ({ role: m.f === "me" ? "user" : "assistant", content: (m.r ? "(в ответ на: «" + String(m.r.x).slice(0, 200) + "») " : "") + m.x }));
     while(hist.length && hist[0].role === "assistant") hist.shift();
     CHAT.ctl = new AbortController(); const tm = setTimeout(() => CHAT.ctl.abort(), 40000);
-    const r = await aiFetch({ provider: AIC.prov, messages: hist }, CHAT.ctl.signal);
+    const r = await aiFetch({ provider: AIC.prov, messages: aiGuardMsgs(hist) }, CHAT.ctl.signal);
     clearTimeout(tm);
     const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
     CHAT.msgs.ai[idx].x = j.text; CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
@@ -11898,6 +11900,7 @@ function renderJournal(){
     <div class="jr-tb">${dd("cls", "Класс", JR.cls || JR_CLS[0], `<li class="jr-cg">${[8, 9, 10, 11].map(g => `<div class="jr-gr"><span>${g}</span><div>${JR_CLS.filter(c => c.split(" ")[0] === String(g)).map(c => `<button type="button" role="option" class="${c === (JR.cls || JR_CLS[0]) ? "on" : ""}" ${JR_ROST[c] ? `data-jr-cls="${c}"` : "disabled title=\"Скоро\""}>${c.split(" ")[1].replace(/[«»]/g, "")}</button>`).join("")}</div></div>`).join("")}</li>`)}
       ${dd("q", "Четверть", yr ? "Год" : P.name, PERIODS.map((p, i) => `<li><button type="button" role="option" class="${p === P ? "on" : ""}" data-jrq="${i}">${esc(p.name)}${i > CUR_I ? "<em>не началась</em>" : ""}</button></li>`).join("") + `<li><button type="button" role="option" class="${yr ? "on" : ""}" data-jrq="${PERIODS.length}">Годовая оценка</button></li>`)}
       ${dd("subj", "Предмет", DATA.subjects[JR.subj] ? DATA.subjects[JR.subj].name : "", subs.map(([id, x]) => `<li><button type="button" role="option" class="${id === JR.subj ? "on" : ""}" data-jr-subj="${id}">${esc(x.name)}</button></li>`).join(""))}
+      <label class="jr-find" title="Найти ученика"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg><input id="jr-q" type="search" autocomplete="off" placeholder="Найти ученика" aria-label="Найти ученика" value="${esc(JR.q || "")}"></label>
       ${future || yr ? "" : `<button class="plus jr-add" data-jr-add><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить оценку</button>`}${future || yr ? "" : `<button class="plus jr-add jr-addhw" data-jr-hw><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить домашнее задание</button>`}</div>`;
   if(yr){ el.innerHTML = top + jrYear(); return; }
   if(future){
@@ -11921,7 +11924,13 @@ function renderJournal(){
     <p class="jr-note">Данные журнала пока хранятся только в этом браузере.</p>`;
   jrLayout(); requestAnimationFrame(jrLayout); setTimeout(jrLayout, 350); jrPill(true); requestAnimationFrame(() => requestAnimationFrame(() => jrPill(true)));
   jrFit(); requestAnimationFrame(() => { jrHBar(); requestAnimationFrame(jrHBar); }); setTimeout(jrHBar, 400);
+  jrFind();
 }
+function jrFind(){
+  const q = String(JR.q || "").trim().toLowerCase().replace(/ё/g, "е");
+  document.querySelectorAll(".jr-t tbody tr").forEach(r => { const n = ((r.querySelector(".jr-sn") || {}).textContent || "").toLowerCase().replace(/ё/g, "е"); r.classList.toggle("jr-nf", !!q && !n.includes(q)); });
+}
+document.addEventListener("input", e => { if(e.target && e.target.id === "jr-q"){ JR.q = e.target.value; jrFind(); } });
 /* журнал: статистика внизу убрана, «Работы четверти» — под таблицей, кнопки по ширине карточки */
 function jrLayout(){
   const card = document.querySelector("#journal .jr-p.jr-u"); if(!card) return;
@@ -12667,7 +12676,7 @@ async function aiSend(q){
   AIC.msgs.push({ role: "user", content: q }); aiAdd("user", q); AIC.prov = aiAuto(q);
   const w = aiAdd("bot", "Думаю…", "ai-w");
   try{
-    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await aiFetch({ provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: AIC.msgs }, ac.signal);
+    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await aiFetch({ provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: aiGuardMsgs(AIC.msgs) }, ac.signal);
     clearTimeout(tm); const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
     AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
   }catch(e){ w.classList.remove("ai-w"); w.classList.add("ai-e"); const net = e instanceof TypeError; if(e.name === "AbortError"){ w.textContent = "Не получилось получить ответ. Модель не отвечает дольше 40 секунд, попробуйте ещё раз."; AIC.msgs.pop(); AIC.busy = false; return; } w.textContent = "Не получилось получить ответ. " + (net ? "Нет связи с сервером ИИ (адрес недоступен или заблокирован страницей)." : "Сервер ответил: " + (e.message || "ошибка")); console.error("AI", e); AIC.msgs.pop(); }
@@ -12947,14 +12956,14 @@ function ovInfoHtml(){
   const stat = (v, l, c) => `<div class="ovi-s ${c || ""}"><b>${v}</b><span>${l}</span></div>`;
   const tips = [];
   const par = (VA.role || (CN.isAdmin ? "" : ME_ROLE)) === "parent";
-  if(late) tips.push(par ? `Просрочено заданий: ${late}. Можно вместе решить, с какого начать.` : `Просрочено заданий: ${late}. Начните с самого старого.`);
-  if(nxt) tips.push(par ? `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. План подготовки — в «Домашке», кнопка «Подготовиться».` : `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. Откройте «Подготовиться» в домашке.`);
-  if(low && low.avg < 5) tips.push(par ? `Слабее всего «${low.name}»: средний ${num(low.avg)}. Стоит обсудить с учителем.` : `Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`);
-  if(!tips.length) tips.push(par ? "Всё в порядке. В календаре видно, что впереди." : "Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.");
+  if(late) tips.push({ t: par ? `Просрочено заданий: ${late}. Можно вместе решить, с какого начать.` : `Просрочено заданий: ${late}. Начните с самого старого.`, go: "homework" });
+  if(nxt) tips.push({ t: par ? `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. План подготовки — в «Домашке», кнопка «Подготовиться».` : `${nxt.type} по предмету «${subjName(nxt.s)}» ${rel(nxt.d)}. Откройте «Подготовиться» в домашке.`, go: "calendar" });
+  if(low && low.avg < 5) tips.push({ t: par ? `Слабее всего «${low.name}»: средний ${num(low.avg)}. Стоит обсудить с учителем.` : `Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`, go: "grades" });
+  if(!tips.length) tips.push({ t: par ? "Всё в порядке. В календаре видно, что впереди." : "Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.", go: "calendar" });
   return `<div class="ovi">
     <section class="panel ovi-p ovi-ann${AN.on ? " imp" : ""}" data-go="chats" role="button" tabindex="0"><div class="panel-head"><h2>Объявление</h2>${AN.on ? `<span class="ovi-tag">Важно</span>` : `<button class="link" data-go="chats">Чаты</button>`}</div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>Неделя в цифрах</h2></div><div class="ovi-g">${stat(wk.length, plural(wk.length, ["оценка","оценки","оценок"]) + " за 7 дней")}${stat(avgW == null ? "–" : num(avgW), "средний за неделю", avgW != null && avgW >= 8 ? "good" : "")}${stat(weekHw.length ? doneW + "/" + weekHw.length : "–", "домашек сделано")}${stat(overall == null ? "–" : num(overall), "средний за четверть")}</div></section>
-    <section class="panel ovi-p"><div class="panel-head"><h2>${par ? "На что обратить внимание" : "Совет дня"}</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li>${esc(t)}</li>`).join("")}</ul></section></div>`;
+    <section class="panel ovi-p"><div class="panel-head"><h2>${par ? "На что обратить внимание" : "Совет дня"}</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li><button type="button" class="ovi-tb" data-go="${t.go}"><span>${esc(t.t)}</span><i aria-hidden="true">›</i></button></li>`).join("")}</ul></section></div>`;
 }
 function ovNowHtml(){
   const n = new Date(), left = diff(CUR.e);
@@ -13515,7 +13524,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "560";
+const BUILD = "561";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13830,5 +13839,28 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* оценки ещё тоньше; надпись «Ядро» — Montserrat 300 */
 .g,.jr-c{font-variation-settings:"wght" 150}
 .brand-name{font-family:Montserrat,Inter,-apple-system,"Segoe UI",sans-serif;font-variation-settings:"wght" 300;letter-spacing:.02em}
+</style>
+<style>
+/* главная: советы-кнопки, объявление без пустого места */
+.ovi-tl li{list-style:none;padding:0;margin:0;background:none}
+.ovi-tb{appearance:none;border:0;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;font:inherit;color:inherit;background:var(--pen-soft);border-radius:14px;padding:9px 12px;font-size:13.5px;line-height:1.4;cursor:pointer;transition:background-color .18s,transform .12s}
+.ovi-tb i{font-style:normal;color:var(--muted);transition:transform .18s}
+@media (hover:hover){.ovi-tb:hover{background:color-mix(in srgb,var(--pen) 16%,var(--pen-soft))}.ovi-tb:hover i{transform:translateX(2px);color:var(--pen)}}
+.ovi-tb:active{transform:scale(.985)}
+.ovi-ann{align-self:start;height:auto;min-height:0;cursor:pointer}
+</style>
+<style>
+/* журнал: поиск ученика, кнопки по правому краю, оценки ещё тоньше */
+.jr-find{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:99px;background:var(--surface);color:var(--muted);transition:border-color .2s,background-color .2s;min-width:0}
+.jr-find:focus-within,.jr-find:hover{border-color:var(--pen)}
+.jr-find input{appearance:none;border:0;outline:0;background:none;font:inherit;font-size:13.5px;color:var(--ink);width:150px;min-width:0}
+.jr-find input::placeholder{color:var(--muted)}
+.jr-find input::-webkit-search-cancel-button{display:none}
+.jr-nf{display:none}
+.jr-tb .jr-add:not(.jr-addhw){margin-left:auto}
+.jr-tb .jr-addhw{margin-left:0}
+@media (max-width:700px){.jr-tb .jr-add:not(.jr-addhw){margin-left:0}.jr-find{flex:1 1 150px}.jr-find input{width:100%}}
+.g,.g *,.jr-c,.jr-c *,.chips>*,.chips .gv{font-variation-settings:"wght" 120}
+.g-final,.g-final *,.avg-num,.gt-fin .g-final{font-variation-settings:"wght" 340}
 </style>
 </body></html>
