@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "568";
+const BUILD = "569";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13918,5 +13918,10 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* коэффициент: тёмная плашка с контрастным цифрой, внутри оценки, не обрезается */
 .jr-t .jr-c .g,.jr-t .jr-c .g .gv{overflow:visible!important}
 .jr-t .jr-c .g .k,.jr-t .jr-c .g .gv .k,.pf-mon .mon-t .g .k,.g .gv .k{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;top:-5px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:14px!important;height:14px!important;padding:0 4px!important;margin:0 0 0 3px!important;border-radius:999px!important;background:var(--ink)!important;color:var(--paper,#fff)!important;font-size:9.5px!important;line-height:1!important;font-variation-settings:"wght" 700!important;opacity:1!important;visibility:visible!important;transform:none!important}
+</style>
+<style id="coef-fix2">
+/* коэффициент — маленький значок в верхнем правом углу оценки, как степень, без сдвига строки */
+.jr-t .jr-c .g,.jr-t .jr-c .g .gv,.pf-mon .mon-t .g,.g{overflow:visible!important}
+.jr-t .jr-c .g .k,.jr-t .jr-c .g .gv .k,.pf-mon .mon-t .g .k,.g .gv .k{position:absolute!important;left:100%!important;top:-7px!important;right:auto!important;bottom:auto!important;margin:0 0 0 2px!important;transform:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:14px!important;height:14px!important;padding:0 3px!important;border-radius:7px!important;background:var(--ink)!important;color:#fff!important;font-size:9px!important;line-height:1!important;font-variation-settings:"wght" 700!important;opacity:1!important;visibility:visible!important;vertical-align:baseline!important}
 </style>
 </body></html>
