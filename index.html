@@ -9696,7 +9696,7 @@ function hwFeedPull(){
     try { renderAll(); } catch(_) {}
   }).catch(() => {});
 }
-function hwFeedStart(){ if(HWF.on) return; HWF.on = true; hwFeedPull(); setInterval(hwFeedPull, 600000); document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") hwFeedPull(); }); }
+function hwFeedStart(){ if(HWF.on) return; HWF.on = true; hwFeedPull(); }
 /* пустое состояние мониторинга */
 function monEmpty(){
   return `<div class="mon-emp"><span class="mon-emp-i" aria-hidden="true">○</span><b>Мониторингов пока нет</b><span>Здесь появятся результаты и средний балл, когда учитель загрузит тесты.</span><button type="button" class="ovnx-btn" data-go="homework">Подготовиться</button></div>`;
@@ -11342,8 +11342,7 @@ async function jrPull(){
 }
 function jrSyncStart(){
   if(JRS.on) return; let n = 0;
-  const go = () => { if(!DB){ if(++n < 40) setTimeout(go, 500); return; } JRS.on = true; jrPull(); setInterval(jrPull, 60000);
-    document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") jrPull(); }); };
+  const go = () => { if(!DB){ if(++n < 40) setTimeout(go, 500); return; } JRS.on = true; jrPull(); };
   go();
 }
 const jrSave = () => { try { localStorage.setItem("bai-journal-v3", JSON.stringify(JD)); } catch(e) {} try { jrTrack(); } catch(e) {} try { JRO.cache = {}; } catch(e) {} clearTimeout(jrSave._t); jrSave._t = setTimeout(() => { try { if(typeof vaData === "function") vaData(VA.uid); } catch(e) {} }, 80); };
@@ -13557,7 +13556,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "591";
+const BUILD = "592";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
