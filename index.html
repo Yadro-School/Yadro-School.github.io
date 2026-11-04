@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "585";
+const BUILD = "586";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14005,5 +14005,19 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .jr-t .jr-c .g sub,.jr-t .jr-c .g .k{font-size:9px!important}
 .jr-t .jr-fn .g,.jr-t .jr-fn .g *,.jr-t td .g.g-final,.jr-t td .g.g-final *{font-family:var(--f-body)!important;font-size:20px!important;font-weight:500!important;font-variation-settings:"wght" 500!important;color:var(--ink)!important}
 .jr-t thead .jr-av{text-transform:none!important;letter-spacing:0!important;font-size:12px!important;font-weight:500!important;color:var(--muted)!important}
+</style>
+<style id="mon-fill">
+/* мониторинг в профиле: 3 строки крупнее и на всю ширину, кнопка «Все» у низа карточки */
+.pf-mon{display:flex!important;flex-direction:column!important}
+.pf-mon .mon-t{font-size:14px!important}
+.pf-mon .mon-t th{font-size:11px!important;padding-bottom:6px!important}
+.pf-mon .mon-t tbody tr{height:44px!important}
+.pf-mon .mon-t td{padding:8px 10px!important;font-size:14px!important}
+.pf-mon .mon-t td:nth-child(4){font-size:16px!important}
+.pf-mon .mon-t .g{height:26px!important;min-width:30px!important;font-size:15px!important}
+.pf-mon .mon-rb{height:30px!important;padding:0 12px!important;font-size:13px!important}
+.pf-mon .mon-xw{flex:0 0 auto}
+.pf-mon .mon-xb{margin-top:auto!important;height:34px!important;font-size:13px!important}
+.pf-mon .mon-xw + .mon-xb,.pf-mon > .mon-xb{margin-top:auto!important}
 </style>
 </body></html>
