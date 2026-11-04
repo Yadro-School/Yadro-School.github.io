@@ -8000,6 +8000,9 @@ async function updCheck(){
   if(typeof renderAgents === "function" && document.getElementById("adm-ag")) try { renderAgents(); } catch(e) {}
 }
 setTimeout(updCheck, 3000); setInterval(updCheck, 3600000);
+/* новости про ВШЭ получают логотип вместо заглушки, если в ленте нет своей картинки */
+const NEWS_LOGO = "images/vshe-logo.png";
+const newsImgOf = x => x.img || (/вшэ|hse/i.test(x.src || "") ? NEWS_LOGO : "");
 const newsFresh = () => !!NEWS.upd && Date.now() - NEWS.upd < 172800000;
 const AGENTS = () => [
   /* ---- сбор данных ---- */
@@ -12994,14 +12997,14 @@ function ovNewsHtml(){
     const it = NEWS_F === "all" ? fl.filter(x => x.cat === "hse").slice(0, 3).concat(fl.filter(x => x.cat !== "hse")).slice(0, 6) : fl.slice(0, 6);
     return `<section class="panel ovn"><div class="panel-head"><h2>Интересное</h2><span class="ovn-ag on" data-tip="Агент новостей|Обновляет новости раз в час"><i></i>Агент новостей · ${newsAgo(new Date(NEWS.upd || NEWS.at).toISOString())}</span></div>
     <div class="ovn-f">${Object.entries(NEWS_CAT).map(([k, l]) => `<button type="button" class="${NEWS_F === k ? "on" : ""}" data-news-f="${k}">${l}</button>`).join("")}</div>
-    <div class="ovn-g nw">${it.map(x => `<button type="button" class="ovn-i nw ${x.img ? "hasimg" : ""}" data-news-i="${esc(x.link)}"><span class="ovn-cv ${x.cat}" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${NEWS_ICO[x.cat] || NEWS_ICO.school}"/></svg>${x.img ? `<img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span><span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><b>${esc(x.title)}</b>${x.text ? `<span class="ovn-tx">${esc(x.text)}</span>` : ""}<span>${esc(x.src)} · ${newsAgo(x.date)}</span></button>`).join("") || `<p class="empty">В этой рубрике пока пусто.</p>`}</div></section>`;
+    <div class="ovn-g nw">${it.map(x => `<button type="button" class="ovn-i nw ${newsImgOf(x) ? "hasimg" : ""}" data-news-i="${esc(x.link)}"><span class="ovn-cv ${x.cat}" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="${NEWS_ICO[x.cat] || NEWS_ICO.school}"/></svg>${newsImgOf(x) ? `<img src="${esc(newsImgOf(x))}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span><span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><b>${esc(x.title)}</b>${x.text ? `<span class="ovn-tx">${esc(x.text)}</span>` : ""}<span>${esc(x.src)} · ${newsAgo(x.date)}</span></button>`).join("") || `<p class="empty">В этой рубрике пока пусто.</p>`}</div></section>`;
   }
   const list = NEWS_SRC.filter(x => NEWS_F === "all" || x[0] === NEWS_F);
   return `<section class="panel ovn"><div class="panel-head"><h2>Интересное</h2><span class="ovn-ag" data-news-retry data-tip="Агент новостей|${NEWS_URL ? (NEWS.err ? NEWS.err + ". Нажмите — повторю" : "Загружаю новости…") : "Подключите функцию news-func — появятся свежие новости"}"><i></i>Агент новостей · ${NEWS_URL ? (NEWS.err ? "ошибка" : "загружаю") : "ждёт сервер"}</span></div>
     <div class="ovn-f">${Object.entries(NEWS_CAT).map(([k, l]) => `<button type="button" class="${NEWS_F === k ? "on" : ""}" data-news-f="${k}">${l}</button>`).join("")}</div>
     <div class="ovn-g">${list.map(([c, n, t, u]) => `<a class="ovn-i" href="${u}" target="_blank" rel="noopener"><span class="ovn-c ${c}">${NEWS_CAT[c]}</span><b>${n}</b><span>${t}</span><i>↗︎</i></a>`).join("")}</div></section>`;
 }
-document.addEventListener("click", e => { const ni = e.target.closest("[data-news-i]"); if(ni){ const x = (NEWS.items || []).find(y => y.link === ni.dataset.newsI); if(x){ tgModal(x.src, `<div class="nwm">${x.img ? `<img class="nwm-im" src="${esc(x.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}<span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><h3>${esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}<small>${esc(x.src)} · ${newsAgo(x.date)}</small></div>`, `<button type="button" class="tgm-btn" data-tgm-x>Закрыть</button><a class="tgm-btn pri nwm-a" href="${esc(x.link)}" target="_blank" rel="noopener">Читать на сайте ↗︎</a>`); } return; }
+document.addEventListener("click", e => { const ni = e.target.closest("[data-news-i]"); if(ni){ const x = (NEWS.items || []).find(y => y.link === ni.dataset.newsI); if(x){ tgModal(x.src, `<div class="nwm">${newsImgOf(x) ? `<img class="nwm-im" src="${esc(newsImgOf(x))}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}<span class="ovn-c ${x.cat}">${NEWS_CAT[x.cat] || ""}</span><h3>${esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ""}<small>${esc(x.src)} · ${newsAgo(x.date)}</small></div>`, `<button type="button" class="tgm-btn" data-tgm-x>Закрыть</button><a class="tgm-btn pri nwm-a" href="${esc(x.link)}" target="_blank" rel="noopener">Читать на сайте ↗︎</a>`); } return; }
   if(e.target.closest("[data-news-retry]")){ NEWS.err = ""; newsLoad(true); return; } const b = e.target.closest("[data-news-f]"); if(!b) return; NEWS_F = b.dataset.newsF; const o = document.querySelector("#overview .ovn"); if(o){ const t = document.createElement("div"); t.innerHTML = ovNewsHtml(); o.replaceWith(t.firstElementChild); const g = document.querySelector("#overview .ovn-g"); if(g) g.classList.add("swap"); } });
 /* Главное: объявление, неделя в цифрах, на что обратить внимание */
 function ovInfoHtml(){
@@ -13591,7 +13594,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "594";
+const BUILD = "595";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
