@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "570";
+const BUILD = "571";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13928,5 +13928,10 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* коэффициент — чёрный маленький индекс справа внизу, без обводки и плашки, везде */
 .g .k,.g .gv .k,.jr-t .jr-c .g .k,.jr-t .jr-c .g .gv .k,.pf-mon .mon-t .g .k,.pk-ls .g .k,.gt-row .g .k,.cc-add .g .k,.jp-gs .g .k,.gs-l .g .k{position:absolute!important;left:100%!important;top:auto!important;right:auto!important;bottom:-4px!important;margin:0 0 0 1px!important;padding:0!important;min-width:0!important;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;color:var(--ink)!important;opacity:1!important;visibility:visible!important;display:inline!important;font-size:10px!important;line-height:1!important;font-variation-settings:"wght" 700!important;font-weight:700!important;transform:none!important;vertical-align:baseline!important}
 .g.heavy .gv{transform:none}
+</style>
+<style id="coef-jn">
+/* журнал: коэффициент — <sub> в оценке. Был opacity .65 — делаем полностью чёрным и жирным */
+.jn sub,.jr-c sub,.g sub,.jr-t sub,.jr-c .jn sub,.pf-mon sub,.jn .k{opacity:1!important;color:var(--ink)!important;font-weight:700!important;font-variation-settings:"wght" 700!important;font-size:10.5px!important;top:3px!important;vertical-align:baseline!important}
+.jn,.jr-c .jn{color:var(--ink)}
 </style>
 </body></html>
