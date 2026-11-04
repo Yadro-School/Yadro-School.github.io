@@ -5799,7 +5799,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   var AI_URL = "https://functions.yandexcloud.net/d4eidkim00i3vsko02mm";
   window.yadroAi = function(payload, signal){ return fetch(AI_URL, { signal: signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload || {}, { t: tok || undefined })) }); };
   window.yadroSecClear = function(what){ return call("sec_clear", { what: what }); };
-  window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  window.yadroApi = function(a, b){ return /^(invite_|users_list$|user_set$|reg_link_make$|reg_list$)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   /* способы входа своего аккаунта (вкладка «Настройки» → «Вход и безопасность») */
   window.yadroAuth = {
     methods: function(){ return call("auth_methods"); },
@@ -10052,6 +10052,12 @@ const INV_CLR = ["teacher", "methodist", "zavuch", "deputy", "controller"];
 const invKey = t => String(t).toUpperCase().replace(/Ё/g, "Е").replace(/[^0-9A-ZА-Я]/g, "");
 function invCls(t){ const k = invKey(t); return k ? (JR_CLS.find(c => invKey(c) === k) || null) : ""; }
 const INVU = { open: "", code: {}, busy: "" };
+const REGL = { link: "", svg: "" };
+/* QR для ссылки регистрации: библиотека грузится один раз с cdnjs */
+function regQr(text){
+  return new Promise(res => { if(window.qrcode) return res(window.qrcode); const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; sc.onload = () => res(window.qrcode); sc.onerror = () => res(null); document.head.appendChild(sc); })
+    .then(q => { if(!q) return ""; const qr = q(0, "M"); qr.addData(text); qr.make(); return qr.createSvgTag({ cellSize: 4, margin: 2 }); });
+}
 function invLoad(force){
   if(!window.yadroApi || (INV.list && !force) || INV.busy) return; INV.busy = true;
   Promise.all([window.yadroApi("invite_list"), window.yadroApi("users_list")]).then(([a, b]) => { INV.list = a.invites || []; INV.users = b.users || []; INV.err = ""; })
@@ -10080,9 +10086,10 @@ function invHtml(inner){
     : f.role === "parent" ? `<select data-inv-f="child"><option value="">Выберите ученика…</option>${st.map(u => `<option value="${esc(u.id)}"${f.child === u.id ? " selected" : ""}>${esc(u.name)}${u.cls ? " · " + esc(u.cls) : ""}</option>`).join("")}</select>` : "";
   const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Коды доступа</h3><p>Первый вход — только по коду. Код одноразовый, на одного человека, действует 7 дней; роль и права задаёт код. После входа человек может привязать ключ доступа, почту или Яндекс ID.</p></div></div>
     <div class="inv-rd"><button type="button" class="inv-rdb" data-inv-rtog aria-expanded="${!!INV.ropen}"><span>${INV_RN[f.role] || f.role}</span><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></button>${INV.ropen ? `<ul class="inv-rdm" role="listbox">${INV_R.map(r => `<li><button type="button" role="option" aria-selected="${f.role === r[0]}" class="${f.role === r[0] ? "on" : ""}" data-inv-role="${r[0]}">${r[1]}</button></li>`).join("")}</ul>` : ""}</div>
-    <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button></div>
+    <div class="inv-fm"><input data-inv-f="name" placeholder="Имя (необязательно)" value="${esc(f.name)}" maxlength="80">${extra}<button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать код</button><button type="button" class="inv-go" data-reg-new${INV.busy ? " disabled" : ""}>Ссылка для регистрации</button></div>
     ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
     ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
+    ${REGL.link ? `<div class="inv-new reg-link"><span>Ссылка для регистрации · 24 часа</span><b>${esc(REGL.link)}</b><button type="button" data-inv-cp="${esc(REGL.link)}">Копировать</button><div class="reg-qr" style="background:#fff;padding:10px;border-radius:14px;width:max-content;margin-top:10px">${REGL.svg}</div></div>` : ""}
     ${INV.fresh ? `<div class="inv-new"><span>Новый код</span><b>${esc(INV.fresh)}</b><button type="button" data-inv-cp="${esc(INV.fresh)}">Копировать</button></div>` : ""}
     ${INV.list && INV.list.length ? `<ul class="inv-l">${INV.list.map(row).join("")}</ul>` : `<p class="inv-n">${INV.list ? "Кодов пока нет" : "Загружаем…"}</p>`}
     ${INV.users.length ? `<h4 class="inv-uh">Зарегистрированы · ${INV.users.length}</h4><ul class="inv-l inv-us">${INV.users.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "ru")).map(invUser).join("")}</ul>` : ""}
@@ -10096,6 +10103,19 @@ document.addEventListener("click", e => {
   if((x = g("[data-invu]"))){ INVU.open = INVU.open === x.dataset.invu ? "" : x.dataset.invu; INVU.done = ""; invRefresh(); return; }
   if((x = g("[data-invu-code]"))){ const id = x.dataset.invuCode; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("invite_create", { uid: id }).then(j => { INVU.code[id] = j.invite.c; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; INV.list = null; invLoad(true); }); return; }
   if((x = g("[data-invu-rv]"))){ const id = x.dataset.invuRv; INVU.busy = id; INV.err = ""; invRefresh(); window.yadroApi("user_set", { id, revoke: true }).then(() => { INVU.done = id; }).catch(err => { INV.err = err.message; }).then(() => { INVU.busy = ""; invRefresh(); }); return; }
+  if((x = g("[data-reg-new]"))){
+    const f = INV.f; INV.err = "";
+    if(f.role !== "student" && f.role !== "parent"){ INV.err = "Ссылка регистрации — только для ученика или родителя"; invRefresh(); return; }
+    if(f.role === "parent" && !f.child){ INV.err = "Выберите ученика для родителя"; invRefresh(); return; }
+    const cls = f.role === "student" ? invCls(f.cls) : "";
+    if(f.role === "student" && !cls){ INV.err = "Укажите класс, например 8А"; invRefresh(); return; }
+    INV.busy = true; invRefresh();
+    window.yadroApi("reg_link_make", { role: f.role, cls: cls || "", child: f.child })
+      .then(j => { REGL.link = location.origin + location.pathname + "?reg=" + j.token; return regQr(REGL.link).then(sv => { REGL.svg = sv; }); })
+      .catch(err => { INV.err = err.message; })
+      .then(() => { INV.busy = false; invRefresh(); });
+    return;
+  }
   if((x = g("[data-inv-rtog]"))){ INV.ropen = !INV.ropen; invRefresh(); return; }
   if((x = g("[data-inv-role]"))){ INV.f.role = x.dataset.invRole; INV.ropen = false; invRefresh(); return; }
   if((x = g("[data-inv-cp]"))){ const t = x.dataset.invCp; try { navigator.clipboard.writeText(t); x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1500); } catch(err) {} return; }
@@ -13537,7 +13557,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "589";
+const BUILD = "590";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
