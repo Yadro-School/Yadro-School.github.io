@@ -10652,7 +10652,7 @@ function renderProfile(){
     <div class="pf-row2">
       ${!MON.length ? `<section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2></div>${monEmpty()}</section>` : `      <section class="panel pf-mon"><div class="panel-head"><h2>Оценки по мониторингу</h2><span class="aside">средняя ${da(MON.reduce((a, g) => a + g.v, 0) / MON.length)}</span></div>
         ${(() => { const L = MON.slice().reverse(), row = g => `<tr><td>${g.date.getDate()} ${MS[g.date.getMonth()]}</td><td>${esc(g.c)}</td><td class="mon-rv"><button type="button" class="mon-rb" data-mon-res="${g.c}" data-tip="Посмотреть результат|Баллы, оценка и разбор по заданиям" aria-label="Посмотреть результат"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.500 12s3.500-6.500 9.500-6.500S21.500 12 21.500 12 18 18.500 12 18.500 2.500 12 2.500 12z"/><circle cx="12" cy="12" r="2.800"/></svg>Результат</button><button type="button" class="mon-rb" data-mon-review data-tip="Разобрать с помощником · скоро|Покажет ошибки, решения и даст похожие задания" aria-label="Разобрать с помощником"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Разобрать<em>скоро</em></button></td><td>${g.b}</td><td><span class="g ${band(g.v)} sm">${dv(g.v)}</span></td></tr>`;
-          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 4).map(row).join("")}</tbody></table>${L.length > 4 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(4).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
+          return `<table class="mon-t mon-p"><thead><tr><th>Дата</th><th>Тест</th><th></th><th>Балл</th><th>Оценка</th></tr></thead><tbody>${L.slice(0, 3).map(row).join("")}</tbody></table>${L.length > 3 ? `<div class="mon-xw"><div class="mon-xi"><table class="mon-t mon-p"><tbody>${L.slice(3).map(row).join("")}</tbody></table></div></div><button type="button" class="mon-xb" data-mon-more><span class="x1">Все · ${L.length}</span><span class="x2">Свернуть</span></button>` : ""}`; })()}
       </section>`}
       <div class="pf-kpi pf-kpi2 pf-kpi3">${pkTiles(all, heavy, n, tens, low, cnt, common, pct)}</div>
     </div>
@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "576";
+const BUILD = "577";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
