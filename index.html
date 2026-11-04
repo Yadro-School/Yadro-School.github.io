@@ -8407,7 +8407,10 @@ function aiLimit(){
   return "";
 }
 const AI_RULES = "Ты — учебный помощник школьника. Правила: 1) Никогда не пиши готовый ответ или решение домашнего задания, контрольной или примера, даже если просят «реши», «дай ответ», «просто скажи». 2) Помогай понять: объясни тему простыми словами, напомни правило или формулу, предложи первый шаг и задай наводящий вопрос. 3) Для тренировки приведи похожий пример с другими числами и попроси ученика решить самому, потом проверь его ответ и объясни ошибки. 4) Если просят ответ, вежливо откажись одним предложением и сразу предложи, с чего начать. 5) Отвечай коротко, по-русски.";
-const aiGuardMsgs = list => { const out = list.map(m => ({ ...m })); for(let i = out.length - 1; i >= 0; i--){ if(out[i].role === "user"){ out[i].content = AI_RULES + "\n\nСообщение ученика: " + out[i].content; break; } } return out; };
+const aiGuardMsgs = list => list.map(m => m.role === "user" ? { ...m, content: AI_RULES + "\n\nСообщение ученика: " + m.content } : { ...m });
+/* если в ответе всё же есть готовое решение («Ответ: 12», «3 + 9 = 12») — не показываем его */
+const AI_SOLVED = /(^|\n)\s*(\*\*)?\s*(ответ|итог|результат)\s*(\*\*)?\s*[:—–-]|\b\d+\s*[+\-*/×x]\s*\d+\s*=\s*-?\d/i;
+function aiSafe(t){ t = String(t || ""); return AI_SOLVED.test(t) ? "Готовый ответ не даю, чтобы ты сам разобрался. Давай вместе: какое правило или формулу нужно применить? Расскажи, что у тебя получилось на первом шаге, и я помогу проверить." : t; }
 async function aiChatSend(q){
   const um = { f: "me", x: q, t: new Date().toISOString() }; if(CHAT.reply){ um.r = CHAT.reply; CHAT.reply = null; } if(CHAT.att.length){ um.a = CHAT.att; CHAT.att = []; } FRESH.add(um); CHAT.msgs.ai.push(um);
   CHAT.draft = ""; CHAT.busy = true; chatSave();
@@ -8422,7 +8425,7 @@ async function aiChatSend(q){
     const r = await aiFetch({ provider: AIC.prov, messages: aiGuardMsgs(hist) }, CHAT.ctl.signal);
     clearTimeout(tm);
     const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
-    CHAT.msgs.ai[idx].x = j.text; CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
+    CHAT.msgs.ai[idx].x = aiSafe(j.text); CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
   }catch(e){
     CHAT.msgs.ai[idx].err = true;
     CHAT.msgs.ai[idx].x = e && e.name === "AbortError" ? "Остановлено или модель отвечает слишком долго. Попробуй ещё раз." : e instanceof TypeError ? "Нет связи с сервером ИИ. Помощник работает на основном сайте платформы, не в предпросмотре." : "Не получилось получить ответ. " + (e.message || "");
@@ -12678,7 +12681,7 @@ async function aiSend(q){
   try{
     const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await aiFetch({ provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: aiGuardMsgs(AIC.msgs) }, ac.signal);
     clearTimeout(tm); const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
-    AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
+    j.text = aiSafe(j.text); AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
   }catch(e){ w.classList.remove("ai-w"); w.classList.add("ai-e"); const net = e instanceof TypeError; if(e.name === "AbortError"){ w.textContent = "Не получилось получить ответ. Модель не отвечает дольше 40 секунд, попробуйте ещё раз."; AIC.msgs.pop(); AIC.busy = false; return; } w.textContent = "Не получилось получить ответ. " + (net ? "Нет связи с сервером ИИ (адрес недоступен или заблокирован страницей)." : "Сервер ответил: " + (e.message || "ошибка")); console.error("AI", e); AIC.msgs.pop(); }
   AIC.busy = false; const m = document.getElementById("ai-m"); if(m) m.scrollTop = m.scrollHeight;
 }
@@ -13534,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "564";
+const BUILD = "565";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
