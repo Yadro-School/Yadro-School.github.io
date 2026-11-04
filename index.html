@@ -109,7 +109,7 @@
 </style></head><body>
 <title>Ядро</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@100..900&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@100..900&family=Montserrat:wght@100..900&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: школьная тетрадь — шапка «в клетку» с красными полями, вкладки-закладки, сводка сверху, детали ниже */
 :root{
@@ -13515,7 +13515,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "559";
+const BUILD = "560";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13825,5 +13825,10 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* оценки тоньше; средний и итог как были */
 .g,.jr-c{font-variation-settings:"wght" 230}
 .g-final,.avg-num,.gt-fin .g-final{font-variation-settings:"wght" 340}
+</style>
+<style>
+/* оценки ещё тоньше; надпись «Ядро» — Montserrat 300 */
+.g,.jr-c{font-variation-settings:"wght" 150}
+.brand-name{font-family:Montserrat,Inter,-apple-system,"Segoe UI",sans-serif;font-variation-settings:"wght" 300;letter-spacing:.02em}
 </style>
 </body></html>
