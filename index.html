@@ -5769,7 +5769,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 @media(max-width:600px){.ap-ev li{grid-template-columns:44px minmax(0,1fr)}.ap-ev em{display:none}}
 </style>
 <script>try{var __an=Element.prototype.animate;Element.prototype.animate=function(k,o){if(document.documentElement.dataset.motion==="off"){o=typeof o==="number"?{duration:0}:Object.assign({},o,{duration:0,delay:0})}return __an.call(this,k,o)}}catch(e){}</script>
-<script>try{if(location.hash.indexOf("access_token=")<0&&location.hash.indexOf("type=")<0&&location.hash)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
+<script>try{if(location.hash.indexOf("access_token=")>=0)history.replaceState(null,"",location.pathname+location.search)}catch(e){}</script>
 <script>/* Ядро: переходник для сайта вне Claude. Даёт странице тот же window.claude (db, user, downloads), но данные и вход идут на сервер в Yandex Cloud. */
 (function(){
   var API = "https://functions.yandexcloud.net/d4emaagg63hplr8c38ok";
@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "584";
+const BUILD = "585";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
