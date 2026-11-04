@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "575";
+const BUILD = "576";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13966,5 +13966,9 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* журнал: коэффициент как у оценок — цвет оценки, то же место внизу справа */
 .jn sub,.jr-c .jn sub{color:var(--gc,var(--ink))!important;position:absolute!important;left:100%!important;bottom:-2px!important;top:auto!important}
 .jn,.jr-c .jn{color:var(--gc,var(--ink))}
+</style>
+<style id="pk-coef">
+/* профиль: коэффициент в списках оценок — цвет оценки и меньше */
+.pk-ls .g .k,.pk-ls .g sub,.pk-l .g .k,.pk-l .g sub,.pk3 .g .k,.pk3 .g sub,.pk-bars .g .k,.pk-bars .g sub{color:var(--gc,var(--ink))!important;opacity:1!important;font-size:7px!important;font-weight:700!important;font-variation-settings:"wght" 700!important;position:absolute!important;left:100%!important;bottom:-2px!important;top:auto!important;line-height:1!important;background:none!important;border:0!important;padding:0!important}
 </style>
 </body></html>
