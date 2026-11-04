@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "571";
+const BUILD = "572";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13933,5 +13933,21 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 /* журнал: коэффициент — <sub> в оценке. Был opacity .65 — делаем полностью чёрным и жирным */
 .jn sub,.jr-c sub,.g sub,.jr-t sub,.jr-c .jn sub,.pf-mon sub,.jn .k{opacity:1!important;color:var(--ink)!important;font-weight:700!important;font-variation-settings:"wght" 700!important;font-size:10.5px!important;top:3px!important;vertical-align:baseline!important}
 .jn,.jr-c .jn{color:var(--ink)}
+</style>
+<style id="coef-v3">
+/* коэффициент: внизу справа, цвет оценки, белый при наведении на оценку */
+.g sub,.g .k,.jn sub,.jr-c sub,.pf-mon sub{top:auto!important;bottom:-3px!important;vertical-align:baseline!important;position:relative!important;color:var(--gc)!important;opacity:1!important}
+.g .k{position:absolute!important;bottom:-4px!important}
+.jn sub{color:var(--ink)!important}
+.g:hover,.g:hover .gv{color:#fff!important}
+.g:hover sub,.g:hover .k,.jn:hover sub{color:#fff!important}
+/* профиль: мониторинг по высоте как виджеты «Оценок», «Десяток» и «Ниже 4» */
+.pf-mon .mon-t th{padding-top:0!important;padding-bottom:2px!important;font-size:10px!important}
+.pf-mon .mon-t tbody tr{height:22px!important}
+.pf-mon .mon-t td{padding:1px 4px!important;line-height:1.1!important}
+.pf-mon .mon-rb,.pf-mon .mon-t .mon-rb{height:20px!important;padding:0 7px!important;font-size:11px!important;gap:4px!important}
+.pf-mon .mon-t td.mon-rv{padding-top:0!important;padding-bottom:0!important}
+.pf-mon .mon-xb{height:22px!important;font-size:11px!important;margin-top:2px!important}
+.pf-mon .mon-t .g{height:18px!important;min-width:22px!important;font-size:12px!important}
 </style>
 </body></html>
