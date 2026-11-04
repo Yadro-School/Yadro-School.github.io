@@ -9445,7 +9445,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
   if(CN.isAdmin && typeof rsBuild === "function") rsBuild();
   if(CN.isAdmin && user && typeof window.yadroTg === "function"){ remindStart(user); jrSyncStart(); }
-  try { vaApply(); setTimeout(vaApply, 300); setTimeout(vaApply, 1200); const h0 = (location.hash || "").slice(1); if(h0 && h0 !== state.tab) showTab(h0, false); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
+  try { vaApply(); setTimeout(vaApply, 300); setTimeout(vaApply, 1200); const restoreH = () => { const h = (location.hash || "").slice(1), b = h && document.getElementById("tab-" + h); if(h && b && !b.hidden && state.tab !== h){ try { showTab(h, false); } catch(e) {} } }; [0, 400, 1000, 2000, 3500].forEach(t => setTimeout(restoreH, t)); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
   /* после обновления страницы остаёмся в выбранном режиме просмотра («от лица…») и на той же вкладке */
   if(CN.isAdmin){ try { const sv = JSON.parse(localStorage.getItem("bai-va") || "null"); if(sv && sv.role && ADM.perm[sv.role]){ vaStart(sv.role, sv.uid); const h = (location.hash || "").slice(1); if(h) showTab(h, false); } } catch(e) {} }
   if(!CN.isAdmin){ CN.loaded = true; return; }
@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "578";
+const BUILD = "579";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
