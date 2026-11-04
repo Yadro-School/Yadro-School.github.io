@@ -13009,8 +13009,8 @@ async function cfCheck(){
   try { const r = await fetch(location.origin + location.pathname + "?cfcheck=" + Date.now(), { method: "HEAD", cache: "no-store" });
     CF.on = !!(r.headers.get("cf-ray") || /cloudflare/i.test(r.headers.get("server") || "")); }
   catch(e) { CF.on = null; }
-  const was = CF.at; CF.at = Date.now();
-  if(typeof secQuiet === "function") try { secQuiet(); } catch(e) {}
+  const prev = CF.prev; CF.prev = CF.on; CF.at = Date.now();
+  if(prev !== CF.on && typeof secQuiet === "function") try { secQuiet(); } catch(e) {}   // полная проверка (с запросом к серверу) — только когда статус Cloudflare изменился
   try { if(SEC.el && SEC.el.isConnected && ADM.tab === "security") renderAdmSec(SEC.el); } catch(e) {}
 }
 cfCheck(); setInterval(cfCheck, 10 * 60 * 1000);
@@ -13537,7 +13537,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "586";
+const BUILD = "587";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
