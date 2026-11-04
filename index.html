@@ -11894,7 +11894,7 @@ function renderJournal(){
   const P = jrP(), yr = JR.pi >= PERIODS.length, future = !yr && JR.pi > CUR_I, subs = jrSubjects();
   if(!JR.subj || !DATA.subjects[JR.subj]) JR.subj = (subs[0] || [])[0];
   const dd = (key, label, val, items) => `<div class="jr-dd" data-dd="${key}"><button type="button" class="jr-ddb" data-jr-dd="${key}" aria-haspopup="listbox" aria-label="${label}: ${esc(val)}">${key === "q" ? "" : `<span>${label}</span>`}<b>${esc(val)}</b><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><div class="jr-ddm gl-scroll"><ul class="glist jr-dl" role="listbox">${items}</ul><span class="gl-bar" aria-hidden="true"><i></i></span></div></div>`;
-  const top = `<div class="view-head"><div class="hello">${jroOn() ? `<button type="button" class="jro-b sm jro-over" data-jro-over>‹ Все классы</button>` : ""}<p class="eyebrow">${jroOn() ? esc((ROLES_ALL.find(r => r.id === (VA.role || ME_ROLE)) || {}).name || "Журнал") : VA.role ? "Преподаватель" : "Журнал преподавателя"}</p><h1 class="headline">Журнал</h1></div></div>
+  const top = `<div class="view-head"><div class="hello">${jroOn() ? `<button type="button" class="jro-b sm jro-over" data-jro-over>‹ Все классы</button>` : ""}<h1 class="headline">Журнал</h1></div></div>
     <div class="jr-tb">${dd("cls", "Класс", JR.cls || JR_CLS[0], `<li class="jr-cg">${[8, 9, 10, 11].map(g => `<div class="jr-gr"><span>${g}</span><div>${JR_CLS.filter(c => c.split(" ")[0] === String(g)).map(c => `<button type="button" role="option" class="${c === (JR.cls || JR_CLS[0]) ? "on" : ""}" ${JR_ROST[c] ? `data-jr-cls="${c}"` : "disabled title=\"Скоро\""}>${c.split(" ")[1].replace(/[«»]/g, "")}</button>`).join("")}</div></div>`).join("")}</li>`)}
       ${dd("q", "Четверть", yr ? "Год" : P.name, PERIODS.map((p, i) => `<li><button type="button" role="option" class="${p === P ? "on" : ""}" data-jrq="${i}">${esc(p.name)}${i > CUR_I ? "<em>не началась</em>" : ""}</button></li>`).join("") + `<li><button type="button" role="option" class="${yr ? "on" : ""}" data-jrq="${PERIODS.length}">Годовая оценка</button></li>`)}
       ${dd("subj", "Предмет", DATA.subjects[JR.subj] ? DATA.subjects[JR.subj].name : "", subs.map(([id, x]) => `<li><button type="button" role="option" class="${id === JR.subj ? "on" : ""}" data-jr-subj="${id}">${esc(x.name)}</button></li>`).join(""))}
@@ -13515,7 +13515,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "558";
+const BUILD = "559";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13820,5 +13820,10 @@ document.addEventListener("input", e => { if(e.target.id === "ap-ann"){ const c 
 *,*::before,*::after{font-variation-settings:"wght" 340;font-variant-numeric:tabular-nums}
 h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .headline,.brand-name,.prof-name{letter-spacing:-.02em}
+</style>
+<style>
+/* оценки тоньше; средний и итог как были */
+.g,.jr-c{font-variation-settings:"wght" 230}
+.g-final,.avg-num,.gt-fin .g-final{font-variation-settings:"wght" 340}
 </style>
 </body></html>
