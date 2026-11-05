@@ -10027,7 +10027,7 @@ const REGA = { list: null, sup: null, photo: {}, busy: "", err: "" };
 function regaLoad(force){
   if(!window.yadroApi || (REGA.list && !force) || REGA.busy) return; REGA.busy = "l";
   Promise.all([window.yadroApi("reg_list"), window.yadroApi("support_list").catch(() => ({ items: [] }))]).then(([j, k]) => { REGA.list = j.apps || []; REGA.sup = k.items || []; REGA.err = ""; })
-    .catch(e => { REGA.err = e.message || "Не удалось загрузить заявки"; REGA.list = REGA.list || []; })
+    .catch(e => { REGA.err = e.message || "Не удалось загрузить заявки"; REGA.list = REGA.list || []; if(/перегруж/.test(REGA.err) && !REGA.retry){ REGA.retry = 1; setTimeout(() => { REGA.retry = 0; regaLoad(true); }, 120000); } })
     .then(() => { REGA.busy = ""; invRefresh(); });
 }
 function regaHtml(){
@@ -13565,7 +13565,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "601";
+const BUILD = "602";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
