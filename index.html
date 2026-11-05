@@ -13566,7 +13566,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "604";
+const BUILD = "605";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14138,7 +14138,7 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
     sub.textContent = "";
     body.innerHTML = '<div class="ok"><b>Заявка отправлена</b>Администратор проверит её. Когда заявку одобрят, на почту придёт код для входа и инструкция.</div>';
   }
-  window.ydSupport = ydSupport;
+  /* ydSupport объявлен глобально в скрипте ниже (support-form); здесь ссылка на него не нужна */
   call("reg_check", { token: token })
     .then(function(j){ formStep(j.role); })
     .catch(function(e){ sub.textContent = "Ссылка не работает"; body.innerHTML = '<p class="e">' + String(e.message || "") + '</p><p>Попросите у администратора новую ссылку или <a href="#" id="yd-reg-help" style="color:#d9663d">напишите в поддержку</a>.</p>'; var h = body.querySelector("#yd-reg-help"); if(h) h.onclick = function(ev){ ev.preventDefault(); ydSupport(); }; });
