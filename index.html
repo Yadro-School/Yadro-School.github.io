@@ -6140,7 +6140,7 @@ const DATA = {
     { id: "q3", name: "III четверть", start: "12.01", end: "20.03" },
     { id: "q4", name: "IV четверть",  start: "30.03", end: "25.05" }
   ],
-  current: "q1",        // пример: I четверть закончилась, итоговые выставлены
+  current: "q2",        // II четверть (с 05.11); I закрыта, итоги сохранены
   // группы ученика по предметам, где класс делится: показываются только этот учитель, его кабинет и его задания
   myGroups: { eng: "Погребняк Д.А." },
   scheduleWeek: "19.10", // неделя, которую по умолчанию показывает «Расписание»
@@ -6332,43 +6332,7 @@ const DATA = {
     mus: "",
     ver: ""
   },
-  homework: [
-    { id:"h1",  s:"rus",  given:"22.10", due:"05.11", text:"Упр. 186; подготовиться к проверочной по теме «Обособленные определения»" },
-    { id:"h2",  s:"hist", given:"21.10", due:"05.11", text:"§ 9, письменно ответить на вопросы 1–4", must:true },
-    { id:"h3",  s:"inf",  given:"19.10", due:"05.11", text:"Написать 3 программы на Python с циклом for" },
-    { id:"h4",  s:"chem", given:"20.10", due:"06.11", text:"§ 11, составить формулы десяти оксидов" },
-    { id:"h5",  s:"alg",  given:"23.10", due:"06.11", text:"Решить тренировочный вариант к контрольной", must:true },
-    { id:"h6",  s:"eng", teacher:"Погребняк Д.А.",  given:"22.10", due:"06.11", text:"Workbook, с. 34, упр. 1–3; слова Unit 3" },
-    { id:"h7",  s:"phy",  given:"21.10", due:"09.11", text:"§ 14, задачи 3–5. Повторить формулы к контрольной", must:true },
-    { id:"h8",  s:"econ", given:"21.10", due:"09.11", text:"Конспект параграфа «Спрос и предложение»" },
-    { id:"h9",  s:"geo",  given:"22.10", due:"10.11", text:"№ 520–523, повторить признаки параллелограмма", must:true },
-    { id:"h10", s:"geog", given:"22.10", due:"10.11", text:"Контурная карта: крупные формы рельефа России" },
-    { id:"h11", s:"proj", given:"22.10", due:"10.11", text:"Сформулировать тему и цель проекта" },
-    { id:"h12", s:"lit",  given:"23.10", due:"11.11", text:"Дочитать «Капитанскую дочку», главы 8–10", must:true },
-    { id:"h13", s:"bio",  given:"23.10", due:"11.11", text:"§ 10, таблица «Ткани организма человека». Подготовка к тесту по теме «Ткани»" },
-    { id:"h14", s:"ver",  given:"23.10", due:"11.11", text:"№ 87, 89, 92: среднее арифметическое и медиана" },
-    { id:"h15", s:"econ", given:"14.10", due:"21.10", text:"Мини-сообщение: роль семьи в экономике", must:true },
-    { id:"h16", s:"rus",  given:"19.10", due:"22.10", text:"Упр. 179", done:true, grade:9 },
-    { id:"h17", s:"geog", given:"15.10", due:"22.10", text:"Контурная карта: часовые пояса", done:true },
-    { id:"h18", s:"alg",  given:"20.10", due:"23.10", text:"№ 398–402", done:true, grade:8 },
-    { id:"h19", s:"bio",  given:"16.10", due:"23.10", text:"§ 9, вопросы после параграфа", done:true, grade:7 },
-    { id:"h20", s:"hist", given:"15.10", due:"19.10", text:"§ 8, составить хронологическую таблицу", done:true },
-    { id:"h21", s:"inf",  given:"14.10", due:"19.10", text:"Задачи на условный оператор, 1–5", done:true, grade:10 },
-    { id:"h22", s:"chem", given:"15.10", due:"20.10", text:"§ 10, упр. 3–6", done:true, grade:9 },
-    { id:"h23", s:"alg",  given:"16.10", due:"20.10", text:"Повторить тему «Рациональные дроби»", done:true },
-    { id:"h24", s:"eng", teacher:"Погребняк Д.А.",  given:"16.10", due:"20.10", text:"Выучить слова Unit 2, письменно упр. 4", done:true },
-    { id:"h25", s:"rus",  given:"15.10", due:"19.10", text:"Упр. 171, выучить правило" },
-    { id:"h26", s:"chem", given:"16.10", due:"20.10", text:"Лабораторная работа: оформить вывод" },
-    { id:"h27", s:"phy",  given:"16.10", due:"21.10", text:"§ 13, задачи 1–3" },
-    { id:"h28", s:"eng", teacher:"Погребняк Д.А.",  given:"17.10", due:"22.10", text:"Writing: письмо другу, 80 слов" },
-    { id:"h29", s:"mus",  given:"19.10", due:"23.10", text:"Подготовить сообщение о композиторе" },
-    { id:"h30", s:"phy", given:"12.10", due:"15.10", text:"§ 11, вопросы 1–5", done:true },
-    { id:"h31", s:"geo", given:"12.10", due:"15.10", text:"№ 120–124", done:true },
-    { id:"h32", s:"lit", given:"09.10", due:"14.10", text:"Прочитать главы 4–6, ответить на вопросы", done:true },
-    { id:"h33", s:"bio", given:"09.10", due:"14.10", text:"§ 8, зарисовать схему", done:true },
-    { id:"h34", s:"eng", given:"08.10", due:"13.10", text:"Workbook, c. 28, упр. 1–2", done:true },
-    { id:"h35", s:"rus", given:"08.10", due:"13.10", text:"Упр. 160, выписать словосочетания", done:true }
-  ],
+  homework: [],
   // w — вес будущей оценки
   tests: [
     { s:"alg",  date:"06.11", type:"Контрольная работа", w:2, topic:"Квадратные корни", prep:"Свойства корней, вынесение множителя из-под знака корня" },
@@ -14234,5 +14198,15 @@ function ydSupport(){
 .hw-tools .hwq-t{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;cursor:pointer;transition:transform .15s,background-color .2s}
 .hw-tools .hwq-t:hover{background:var(--pen-soft)}
 .hw-tools .hwq-t:active{transform:scale(.96)}
+</style>
+<style id="ink-coef-final">
+/* коэффициенты и итоговые оценки — цвет как у имени ученика, без цвета по оценке */
+.g sub,.g .k,.g .gv .k,.jn sub,.jr-c sub,.jr-t sub,.jr-t .jr-c .g .k,.jr-t .jr-c .g sub,.pf-mon sub,.pk-ls .g sub,.pk-ls .g .k,.pk-l .g sub,.pk3 .g sub,.pk-bars .g sub{color:var(--ink)!important;opacity:1!important}
+.jn,.jr-c .jn,.jr-t .jr-c .g{color:var(--ink)!important}
+.g-final,.g-final.off,.g-final.off.bt,.g-final.off.bl,.g-final.off.bz,.off-cell .g-final,.gt-fin .g-final{--oc:var(--ink)!important;color:var(--ink)!important}
+</style>
+<style id="news-logo-contain">
+/* новости: логотип ВШЭ и картинки целиком, без обрезки */
+.ovn-i.nw .ovn-cv img,.nwm-im{object-fit:contain!important;box-sizing:border-box;padding:12px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
 </style>
 </body></html>
