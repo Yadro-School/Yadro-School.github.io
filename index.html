@@ -5979,10 +5979,11 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   })();
 
   var meP = null;
-  function me(){ if(!meP) meP = call("me").then(function(j){
+  function meTry(n){ return call("me").catch(function(e){ if(n <= 0) throw e; return new Promise(function(r){ setTimeout(r, 1200 * (5 - n)); }).then(function(){ return meTry(n - 1); }); }); }
+  function me(){ if(!meP) meP = meTry(4).then(function(j){
       if(!j.user && j.need2){ var go = function(){ loginUI({ need2: j.need2, name: j.name }); }; if(document.body) go(); else document.addEventListener("DOMContentLoaded", go); return new Promise(function(){}); }
       if(!j.user){ logout(); return new Promise(function(){}); }
-      USER = j.user; window.__ydUser = USER; window.__ydWeak2 = !!j.weak2; return USER; }); return meP; }
+      USER = j.user; window.__ydUser = USER; window.__ydWeak2 = !!j.weak2; return USER; }, function(e){ meP = null; throw e; }); return meP; }
 
   function mkDb(){
     function docRef(path){
@@ -13565,7 +13566,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "602";
+const BUILD = "603";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
