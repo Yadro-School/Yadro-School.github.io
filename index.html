@@ -14211,4 +14211,16 @@ function ydSupport(){
 /* новости: логотип ВШЭ и картинки целиком, без обрезки */
 .ovn-i.nw .ovn-cv img,.nwm-im{object-fit:contain!important;box-sizing:border-box;padding:12px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
 </style>
+<style id="grades-one-grid">
+/* таблица оценок: одна сетка и одна ширина для всех четвертей (текущая, закрытая, будущая, пустая) */
+@media(min-width:521px){
+#grades .gt-head,#grades .gt-row,#grades .gt-row:has(.gt-fin){grid-template-columns:var(--name-w) minmax(0,var(--chips-w)) 112px 40px 18px!important;grid-template-areas:none!important}
+#grades .gt-closed .gt-row{grid-template-columns:var(--name-w) minmax(0,var(--chips-w)) 112px 18px!important;grid-template-areas:none!important}
+#grades .gt-line{grid-template-columns:minmax(0,1fr) 64px!important}
+#grades .gt-row .avg{min-width:112px;display:flex!important;align-items:center;gap:8px}
+#grades .gt-row .spark{width:50px;height:18px;flex:none}
+#grades .gt-row .chips{display:grid!important;grid-template-columns:repeat(7,minmax(0,var(--chip-w)))!important;min-width:0}
+#grades .gt-soonrow .chips{display:flex!important}
+}
+</style>
 </body></html>
