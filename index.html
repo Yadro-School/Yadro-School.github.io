@@ -12922,6 +12922,9 @@ function ovStatus(){
   const hol = holidayOf(TODAY), nx = PERIODS.find(p => p.s > TODAY);
   if(hol){ const back = addDays(hol.b, 1); return `Каникулы · учёба с ${back.getDate()} ${MG[back.getMonth()]}`; }
   if(TODAY.getDay() === 0 || TODAY.getDay() === 6) return "Выходной";
+  /* идёт четверть по календарю — счётчик до её конца */
+  const now = PERIODS.find(p => TODAY >= p.s && TODAY <= p.e);
+  if(now){ const d = diff(now.e); return d > 0 ? `${now.name} · до конца ${d} ${plural(d, ["день","дня","дней"])}` : `${now.name} · последний день`; }
   const left = diff(CUR.e);
   if(CUR.finals && nx) return `${nx.name} с ${nx.s.getDate()} ${MG[nx.s.getMonth()]}`;
   return left > 0 ? `${CUR.name} · до конца ${left} ${plural(left, ["день","дня","дней"])}` : CUR.name;
@@ -13594,7 +13597,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "596";
+const BUILD = "597";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
