@@ -13566,7 +13566,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "603";
+const BUILD = "604";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13577,7 +13577,7 @@ const REG_CHECKS = [
   ["Плашка настроек двигается и без анимаций", p => /transform/.test(getComputedStyle(p("set-pill")).transitionProperty)],
   ["Выключенные анимации отключают и скрипты", () => { const r = document.documentElement, was = r.getAttribute("data-motion"); r.setAttribute("data-motion", "off"); let ok = false; try { const d = document.createElement("div"); document.body.appendChild(d); const a = d.animate([{ opacity: 0 }, { opacity: 1 }], 500); ok = a.effect.getTiming().duration === 0; a.cancel(); d.remove(); } catch(e) {} if(was === null) r.removeAttribute("data-motion"); else r.setAttribute("data-motion", was); return ok; }],
   ["Новости: ВШЭ идут первыми", () => Object.keys(NEWS_CAT)[1] === "hse"],
-  ["Агент новостей подключён", () => !!NEWS_URL && !NEWS.err],
+  ["Агент новостей подключён", () => !!NEWS_URL && (!!NEWS.items?.length || !NEWS.err)],
   ["Выбор вкладки: серая плашка + контур", () => !!TABS_NAMES.plateo],
   ["Оценки: статистика рядом с четвертью, виджеты под таблицей", () => typeof gStatsHtml === "function" && String(gradesSide).indexOf("Последние оценки") < 0],
   ["Оценки: 4 вида итога и режим без цвета", () => Object.keys(FIN_NAMES).length === 4 && !!GCOLOR_NAMES.off],
