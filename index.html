@@ -10697,7 +10697,6 @@ function renderProfile(){
           <svg viewBox="0 0 80 80" width="92" height="92" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pick)" stroke-width="7"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pen)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * frac).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg>
           <span class="pf-rv"><b>${da(overall)}</b><small>средний</small></span>
         </div>
-        <p class="pf-avgn"><b>Средний балл ${da(overall)}</b><span>Среднее по предметам. Внутри каждого предмета оценки учитываются с весом: работа с коэффициентом 2 считается вдвое весомее обычной.</span></p>
       </section>
       <section class="panel c4 pf-day"><div class="panel-head"><h2>${nd ? ndLabel : "Расписание"}</h2><button class="link" data-pf-day="${nd ? isoDate(nd) : ""}">Всё</button></div>
         
@@ -13598,7 +13597,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "598";
+const BUILD = "599";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14213,20 +14212,19 @@ function ydSupport(){
 (function(){ if(new URLSearchParams(location.search).get("help") === "1") ydSupport(); })();
 </script>
 <style id="vshe-cover">.ovn-cv img[src="images/vshe-logo.png"]{object-fit:contain;padding:10px 0;background:#0d2f68}</style>
-<style id="ui-598">
-.pf-avgn{flex-basis:100%;width:100%;margin:6px 0 0;font-size:13px;line-height:1.45;color:var(--muted);display:grid;gap:2px}
-.pf-avgn b{font:500 15px var(--f-display,inherit);color:var(--ink)}
-.pf-hero{flex-wrap:wrap}
+<style id="ui-599">
 .pf-cls{font-weight:500}
 @media (max-width:600px){
-  .pf-tl2 li{padding:4px 6px!important}
-  .pf-tl2 .n{font-size:14px}
+  .pf-hero{flex-wrap:nowrap!important;gap:12px}
+  .pf-hero .pf-ring{display:block!important;flex:none}
+  .pf-hero .pf-ring svg{width:64px!important;height:64px!important}
+  .pf-hero .pf-rv b{font-size:15px}
+  .pf-hero .pf-rv small{font-size:10px}
+  .pf-day .panel-head{margin-bottom:2px}
+  .pf-tl2 li{padding:3px 6px!important;white-space:nowrap}
+  .pf-tl2 .n{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+  .pf-tl2 .n i{display:none}
   .pf-tl2 li time{font-size:12.5px}
-  .pf-day .panel-head{margin-bottom:4px}
-}
-@media (max-width:900px){
-  #bnav{background:color-mix(in srgb,var(--surface) 97%,transparent)}
-  .bnav.bnav-more{background:color-mix(in srgb,var(--surface) 97%,transparent)}
 }
 </style>
 </body></html>
