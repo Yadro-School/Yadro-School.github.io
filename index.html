@@ -6717,11 +6717,10 @@ function dayRow(L, wide){
   const flat = L.sid === "line";
   return `<li class="dr ${flat ? "dr-flat" : ""} ${L.sub.graded === false && !L.sub.soon ? "ng" : ""} ${L.now ? "is-now" : ""}" data-lesson>
     <div class="dr-row" ${flat ? "" : `role="button" tabindex="0" aria-expanded="false"`}>
-      <span class="dr-m ${mk ? "m-" + mk.c : ""}" ${mk ? `title="${esc(mk.t)}"` : ""}>${mk ? (mk.type === "ДЗ" ? `ДЗ` : (TEST_SHORT[mk.type] || "КР")) : ""}</span>
       <span class="dr-n">${L.num || ""}</span>
       <span class="dr-t">${a || "—"}${b ? `<i>–${b}</i>` : ""}</span>
-      <span class="dr-s">${esc(L.sub.name)}${lessonGrades(L)}${extra ? `<small>${esc(extra)}</small>` : ""}</span>
-      ${hasNote ? `<span class="dr-nt" title="Есть заметка">✎</span>` : ""}
+      <span class="dr-s">${esc(L.sub.name)}${lessonGrades(L)}</span>
+      <span class="dr-tg">${hasNote ? `<span class="dr-nt" title="Есть заметка">✎</span>` : ""}<span class="dr-m ${mk ? "m-" + mk.c : ""}" ${mk ? `title="${esc(mk.t)}"` : ""}>${mk ? (mk.type === "ДЗ" ? `ДЗ` : (TEST_SHORT[mk.type] || "КР")) : ""}</span></span>
       ${flat ? `<span></span>` : `<svg class="dr-c" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
     </div>
     ${flat ? "" : `<div class="dr-d"><div class="dr-di">${info.join("")}</div></div>`}
@@ -7054,7 +7053,7 @@ function renderSchedule(){
       : wend ? emptyDay("rest", "Выходной", "Уроков нет")
       : emptyDay("none", "Уроков нет", "В этот день занятий не запланировано");
     return { d, n, off: !!hol || !lessons.length,
-      html: `<div class="sd-head"><b>${WDL[d.getDay()]}</b><span>${d.getDate()} ${MG[d.getMonth()]}${cnt ? " · " + cnt : ""}${span}</span></div>${body}` };
+      html: `<div class="sd-head"><h2>${n === 0 ? "Сегодня, " : ""}${d.getDate()} ${MG[d.getMonth()]}${span ? `<span class="sx-tm">${span.replace(" · ", "")}</span>` : ""}</h2><span class="sx-ch">${WDL[d.getDay()]}</span></div>${body}` };
   });
   if(state.schedIdx == null || state.schedIdx >= cols.length){
     const ti = cols.findIndex(c => c.n === 0);
@@ -7062,7 +7061,7 @@ function renderSchedule(){
   }
   SCHED_PANELS = cols.map(c => c.html);
   const tabs = cols.map((c, i) => `<button class="sdt ${c.n === 0 ? "is-today" : ""} ${c.off ? "is-off" : ""} ${i === state.schedIdx ? "is-on" : ""}" data-sday="${i}" aria-pressed="${i === state.schedIdx}" aria-label="${WDL[c.d.getDay()]}, ${c.d.getDate()} ${MG[c.d.getMonth()]}"><span class="sdt-w">${WD[c.d.getDay()]}</span><span class="sdt-n">${c.d.getDate()}</span></button>`).join("");
-  const nowBar = wkDiff !== 0 || (!nowL && !nextL) ? "" : `<div class="nowbar">
+  const nowBar = true || wkDiff !== 0 || (!nowL && !nextL) ? "" : `<div class="nowbar">
     ${nowL ? `<div class="nb-i"><span class="nb-l">Сейчас</span><b>${esc(nowL.L.sub.name)}</b><span class="nb-s">до ${hhmm(nowL.L.time[1])}${roomShort(nowL.L.room) ? " · " + esc(roomShort(nowL.L.room)) : ""}</span></div>` : ""}
     ${nextL ? `<div class="nb-i nb-next"><span class="nb-l">Дальше</span><b>${esc(nextL.L.sub.name)}</b><span class="nb-s">в ${hhmm(nextL.L.time[0])}${roomShort(nextL.L.room) ? " · " + esc(roomShort(nextL.L.room)) : ""}</span></div>` : `<div class="nb-i"><span class="nb-l">Дальше</span><b>Уроков сегодня больше нет</b></div>`}
   </div>`;
@@ -13072,7 +13071,7 @@ function ovInfoHtml(){
   if(low && low.avg < 5) tips.push({ t: par ? `Слабее всего «${low.name}»: средний ${num(low.avg)}. Стоит обсудить с учителем.` : `Слабее всего «${low.name}»: средний ${num(low.avg)}. Можно разобрать тему с ботом.`, go: "grades" });
   if(!tips.length) tips.push({ t: par ? "Всё в порядке. В календаре видно, что впереди." : "Всё в порядке. Загляните в календарь и спланируйте неделю вперёд.", go: "calendar" });
   return `<div class="ovi">
-    <section class="panel ovi-p ovi-ann${AN.on ? " imp" : ""}" data-go="chats" role="button" tabindex="0"><div class="panel-head"><h2>Объявление</h2>${AN.on ? `<span class="ovi-tag">Важно</span>` : `<button class="link" data-go="chats">Чаты</button>`}</div><p class="ovi-t">${esc(annTxt)}</p><small class="muted">${esc(annWho)}</small></section>
+    <section class="panel ovi-p ovi-ann${AN.on ? " imp" : ""}" data-go="chats" role="button" tabindex="0"><div class="ovi-ah"><svg class="ovi-bell" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.5-2V11a4.500 4.500 0 0 0-9 0v4zM10 20a2 2 0 0 0 4 0"/></svg><b>Объявление</b>${AN.on ? `<span class="ovi-tag">Важно</span>` : ""}<button class="link sx-wk" data-go="chats">В чат<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div><p class="ovi-t">${esc(annTxt)}</p><div class="ovi-au"><span class="ovi-av">${esc(annWho.split(/\s+/).slice(0, 2).map(w => w[0] || "").join("").toUpperCase())}</span><span class="ovi-an"><b>${esc(annWho)}</b></span></div></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>Неделя в цифрах</h2></div><div class="ovi-g">${stat(wk.length, plural(wk.length, ["оценка","оценки","оценок"]) + " за 7 дней")}${stat(avgW == null ? "–" : num(avgW), "средний за неделю", avgW != null && avgW >= 8 ? "good" : "")}${stat(weekHw.length ? doneW + "/" + weekHw.length : "–", "домашек сделано")}${stat(overall == null ? "–" : num(overall), "средний за четверть")}</div></section>
     <section class="panel ovi-p"><div class="panel-head"><h2>${par ? "На что обратить внимание" : "Совет дня"}</h2></div><ul class="ovi-tl">${tips.slice(0, 3).map(t => `<li><button type="button" class="ovi-tb" data-go="${t.go}"><span>${esc(t.t)}</span><i aria-hidden="true">›</i></button></li>`).join("")}</ul></section></div>`;
 }
@@ -13091,7 +13090,7 @@ function ovTodayHtml(){
   const nxt = TESTS.find(t => diff(t.d) > 0);
   const tHtml = tt.map(t => `<div class="ovt-i kr"><b>${esc(subjName(t.s))}</b><em>${esc(t.type)}${t.w > 1 ? " · вес ×" + t.w : ""}</em><p>${esc(t.topic)}</p>${t.prep ? `<small>Повторить: ${esc(t.prep)}</small>` : ""}</div>`).join("");
   const hHtml = dueToday.map(h => `<button type="button" class="ovt-i hw" data-hwgo="${h.id}"><b>${esc(subjName(h.s))}</b><em>сдать сегодня</em><p>${esc(h.text)}</p></button>`).join("");
-  return `<div class="ov-top"><section class="panel ovs"><div class="panel-head"><h2>Сегодня по расписанию</h2><button class="link" data-go="schedule">Вся неделя</button></div>
+  return `<div class="ov-top"><section class="panel ovs"><div class="panel-head ovs-h"><div><h2>Сегодня, ${TODAY.getDate()} ${MG[TODAY.getMonth()]}${L.length ? `<span class="sx-tm">${hhmm(L[0].time[0])}–${hhmm(L[L.length - 1].time[1])}</span>` : ""}</h2><div class="sx-chips"><span class="sx-ch">${WDL[TODAY.getDay()]}</span></div></div><button class="link sx-wk" data-go="schedule">Вся неделя<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></div>
     ${L.length ? `<ul class="dl">${L.map(l => dayRow(l, true)).join("")}</ul>` : emptyDay("rest", hol ? "Каникулы" : "Сегодня уроков нет", hol ? hol.name || "" : "Можно отдохнуть или заняться домашкой.")}</section>
     <section class="panel ovtd"><div class="panel-head"><h2>Напоминание на сегодня</h2></div>
     ${tHtml || `<p class="ovt-no">Сегодня контрольных и проверочных нет.</p>`}${hHtml}
@@ -14019,6 +14018,61 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 @media (hover:hover){.ovi-tb:hover{background:color-mix(in srgb,var(--pen) 16%,var(--pen-soft))}.ovi-tb:hover i{transform:translateX(2px);color:var(--pen)}}
 .ovi-tb:active{transform:scale(.985)}
 .ovi-ann{align-self:start;height:auto;min-height:0;cursor:pointer}
+
+/* ===== расписание по макету (sx) ===== */
+.dr+.dr::before{display:none}
+.dr-row,.ovs .dr-row,.wk-card .dr-row{grid-template-columns:30px 118px minmax(0,1fr) auto 24px;gap:0 10px;align-items:start;padding:11px 8px;border-radius:16px;font-size:16px}
+.ovs .dr-s small{font-size:13px}
+.dr-n{font:500 22px/24px var(--f-body);color:var(--muted)}
+.dr-t{display:block;font:500 16px/22px Inter,var(--f-body);font-variant-numeric:tabular-nums;letter-spacing:-.01em;padding-top:2px;transform-origin:0 0;transition:transform .3s cubic-bezier(.3,.7,.3,1)}
+.dr.open .dr-t,.dr.is-now .dr-t{transform:scale(1.2)}
+.dr-s{font-size:16px;line-height:24px}
+.dr-tg{display:flex;gap:6px;align-items:center;height:24px}
+.dr-m{max-width:none;min-width:0;height:22px;padding:0 9px;font-size:11.5px;border-radius:999px;justify-self:auto}
+.dr-m:empty{display:none}
+.dr-m.m-hw{box-shadow:none}
+.dr-c{align-self:start;margin-top:6px;width:14px;height:14px;justify-self:center}
+.dr.is-now .dr-m.m-hw{background:var(--surface)}
+@media (hover:hover){.dr-row:hover{background:none;box-shadow:inset 0 0 0 1.5px var(--pen)}}
+.dr.open .dr-row,.dr.open .dr-row:hover{box-shadow:none}
+.sx-tm{color:var(--muted);opacity:.75;font-weight:400;margin-left:10px;white-space:nowrap}
+.sx-chips{display:flex;gap:6px;margin-top:8px}
+.sx-ch{height:26px;padding:0 11px;border-radius:999px;display:inline-flex;align-items:center;font-size:13px;font-weight:500;background:var(--pick);color:var(--muted);white-space:nowrap}
+.sx-wk{height:36px;padding:0 14px;border-radius:999px;background:var(--pick);display:inline-flex;gap:6px;align-items:center;font-size:13px;font-weight:500;color:var(--ink);text-decoration:none;flex:none;transition:box-shadow .15s}
+.sx-wk svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sx-wk:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.ovs-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ovs-h h2,.sd-head h2{margin:0;font:500 22px/1.2 var(--f-body);letter-spacing:-.01em}
+.sd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:2px 4px 12px;border-bottom:0;margin-bottom:0}
+.sd-panel{border:0;border-radius:24px;padding:18px 16px 10px}
+.sdtabs{gap:8px;margin-bottom:12px}
+.sdt{border-radius:14px;background:var(--surface);padding:10px 0 9px;transition:box-shadow .15s}
+.sdt-w{font-size:11px;letter-spacing:.06em}
+.sdt-n{font:500 24px/1.15 var(--f-body)}
+.sdt:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.sdt.is-on .sdt-n{color:var(--ink)}
+.sdt.is-on .sdt-w{color:var(--pen)}
+.sdt.is-today,.sdt.is-today.is-on{background:var(--pen-soft)}
+.sdt.is-today .sdt-n{color:var(--pen)}
+.sdt.is-off{opacity:.6}
+.sdtabs .seg-pill{z-index:2;pointer-events:none;border-radius:14px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--pen)}
+.empty-day .ed-ic{width:60px;height:60px;margin-bottom:10px;background:var(--pen-soft);color:var(--pen)}
+.empty-day b{font-size:18px}
+.ovi-ann{background:var(--surface);border:1.5px solid var(--pen);border-radius:24px;gap:10px}
+.ovi-ann.imp{background:var(--pen-soft)}
+.ovi-ah{display:flex;align-items:center;gap:8px}
+.ovi-ah>b{font-weight:500;color:var(--pen);font-size:15px}
+.ovi-ah .sx-wk{margin-left:auto!important}
+.ov-top{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)!important}
+@media(max-width:900px){.ov-top{grid-template-columns:minmax(0,1fr)!important}}
+.ovi-bell{width:22px;height:22px;stroke:var(--pen);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ovi-ann .ovi-t{font-size:17px}
+.ovi-au{display:flex;align-items:center;gap:10px}
+.ovi-av{width:34px;height:34px;border-radius:50%;background:var(--pen-soft);color:var(--pen);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.ovi-an b{font-weight:500;font-size:14px}
+@media(max-width:600px){.dr-row,.ovs .dr-row,.wk-card .dr-row{grid-template-columns:24px 112px minmax(0,1fr) auto 22px;gap:0 8px;font-size:16px;padding:11px 10px}}
+@media(max-width:520px){.dr-t{font-size:15px}.dr.open .dr-t,.dr.is-now .dr-t{transform:none}.dr-m{display:none}}
+@media(max-width:420px){.sx-tm{display:block;margin:2px 0 0;font-size:15px}.ovs-h h2,.sd-head h2{font-size:20px}}
 </style>
 <style>
 /* журнал: поиск ученика, кнопки по правому краю, оценки ещё тоньше */
