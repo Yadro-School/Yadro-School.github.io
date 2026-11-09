@@ -10826,7 +10826,7 @@ function monDetailHtml(g){
   const cmp = d == null ? "первый тест" : d === 0 ? `столько же, сколько в прошлом тесте (${pv.b})` : d > 0 ? `на ${d} больше, чем в прошлом тесте (${pv.b})` : `на ${-d} меньше, чем в прошлом тесте (${pv.b})`;
   const head = `<div class="ms-head panel"><div class="mv-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pick)" stroke-width="7"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--pen)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(C * fr).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)"/></svg><span><b>${g.b}</b><small>из ${tot}</small></span></div>
     <div class="mv-h"><b>${esc(g.title || g.label)}</b><span>${esc(g.c)}${g.variant ? " · вариант " + g.variant : ""} · ${g.date.getDate()} ${MS[g.date.getMonth()]}, ${g.t}</span><div class="mv-chips"><span class="mv-c">оценка <i class="g ${band(g.v)} sm">${dv(g.v)}</i></span>${pv ? `<span class="mv-cmp" data-tip="${esc("Прошлый тест: " + pv.c + "|" + pv.date.getDate() + " " + MS[pv.date.getMonth()] + " · " + pv.b + " баллов, оценка " + dv(pv.v))}"><span>прошлый тест</span><b>${pv.b}</b><svg viewBox="0 0 16 10" width="14" height="10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 5h13M10 1l4 4-4 4"/></svg><b>${g.b}</b><em class="${d > 0 ? "up" : d < 0 ? "dn" : "eq"}">${d > 0 ? "+" + d : d < 0 ? "−" + (-d) : "без изменений"}</em></span>` : `<span class="mv-c">первый тест</span>`}${g.b === best ? `<span class="mv-c best">лучший результат</span>` : ""}</div></div>
-    <div class="ms-ha">${g.url ? `<a class="tgm-btn" href="${esc(g.url)}" target="_blank" rel="noopener">На сайте</a>` : ""}<button type="button" class="tgm-btn" data-mon-review>Разобрать с помощником</button></div>${monScaleHtml(g)}</div>`;
+    <div class="ms-ha">${g.url ? `<a class="tgm-btn" href="${esc(g.url)}" target="_blank" rel="noopener">На сайте</a>` : ""}<button type="button" class="tgm-btn" data-mon-review>Разобрать с помощником</button></div><div class="ms-ha" style="margin-top:8px"><button type="button" class="tgm-btn ms-sc-b" data-mon-scale>Шкала оценок</button></div>${monScaleHtml(g)}</div>`;
   if(!qs.length) return head + `<div class="panel mv-empty"><b>Разбор по заданиям ещё не загружен</b><span>Пришлите страницу результата и скриншоты заданий — или подключим агента «Траектория», и разбор появится сам.</span></div>`;
   const f = MONS.f, show = q => f === "all" || (f === "ok") === q.ok;
   const opt = (q, k) => { const n = k + 1, cls = n === q.a ? (q.ok ? "ok" : "bad") : (!q.ok && n === q.r ? "ok" : ""); return `<li class="mq-o ${cls}"><span class="mq-on">${n}</span><span class="mq-ot">${txt(/[а-яё$]/i.test(q.o[k]) ? q.o[k] : "$" + q.o[k] + "$")}</span>${n === q.a ? `<em>${q.ok ? "ваш ответ · верно" : "ваш ответ"}</em>` : cls === "ok" ? `<em>верный ответ</em>` : ""}</li>`; };
@@ -10845,7 +10845,7 @@ function renderMonitoring(){
   if(!MON.length){ el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Тесты «Траектории» · не входят в итог</p><h1 class="headline">Мониторинг</h1></div></div>${monEmpty()}`; return; }
   const list = MON.slice().reverse(), sel = MON.find(x => x.c === MONS.sel) || list[0]; MONS.sel = sel.c;
   const avgV = MON.reduce((a, g) => a + g.v, 0) / MON.length, avgB = MON.reduce((a, g) => a + g.b, 0) / MON.length;
-  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Тесты «Траектории» · не входят в итог</p><h1 class="headline">Мониторинг</h1></div><button type="button" class="tgm-btn ms-sc-b" data-mon-scale>Шкала оценок</button></div>
+  el.innerHTML = `<div class="view-head"><div class="hello"><p class="eyebrow">Тесты «Траектории» · не входят в итог</p><h1 class="headline">Мониторинг</h1></div></div>
     <div class="ms-lay"><aside class="ms-side">
       <section class="panel ms-sum"><div class="ms-k"><span>Средняя оценка</span><b>${da(avgV)}</b></div><div class="ms-k"><span>Средний балл</span><b>${num(avgB, 1)}</b></div><div class="ms-k"><span>Тестов</span><b>${MON.length}</b></div></section>
       <section class="panel ms-list"><h3>Тесты</h3><ul>${list.map(g => `<li><button type="button" class="${g.c === sel.c && MONS.pk ? "on" : ""}" data-ms-sel="${esc(g.c)}"><span class="ms-d"><b>${g.date.getDate()}</b><i>${MS[g.date.getMonth()].slice(0, 3)}</i></span><span class="ms-t"><b>${esc(g.c)}</b><small>${g.b} баллов${(g.q || []).length ? " · есть разбор" : ""}</small></span><span class="g ${band(g.v)} sm">${dv(g.v)}</span></button></li>`).join("")}</ul></section>
@@ -13658,7 +13658,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "610";
+const BUILD = "611";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
