@@ -6898,7 +6898,7 @@ function renderHomework(partial){
     </li>`;
   };
   const wkOf = d => Math.round((mondayOf(d) - BASE_MONDAY) / (7*DAY));
-  const offs = HW.length ? HW.map(h => wkOf(h.dueD)) : [0];
+  const offs = HW.length ? HW.map(h => wkOf(h.dueD)) : [-8, 8];
   const minW = Math.min(...offs), maxW = Math.max(...offs);
   state.hwWeek = Math.max(minW, Math.min(maxW, state.hwWeek));
   const mon = addDays(BASE_MONDAY, state.hwWeek * 7), sun = addDays(mon, 6);
@@ -13658,7 +13658,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "614";
+const BUILD = "615";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
