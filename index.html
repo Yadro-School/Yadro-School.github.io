@@ -6524,6 +6524,7 @@ const LS = "bai-network-hw-v1";
 let doneMap = {};
 try { doneMap = JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch(e) { doneMap = {}; }
 const isDone = h => (h.id in doneMap) ? !!doneMap[h.id] : !!h.done;
+const hwdIco = on => on ? '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="m7.5 12.5 3 3 6-6" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/></svg>';
 const isLate = h => !isDone(h) && diff(h.dueD) < 0;
 function setDone(id, v){ doneMap[id] = v; try { localStorage.setItem(LS, JSON.stringify(doneMap)); } catch(e) {} try { clearTimeout(setDone.t); setDone.t = setTimeout(() => remindPush(), 3000); } catch(e) {} }
 function hwRank(a, b){
@@ -6880,7 +6881,7 @@ function renderHomework(partial){
       const wd = test ? test.d : h.dueD;
       info.push(`<div class="di di-act"><span class="di-l">Напоминание</span><span><span class="hwd-act is-soon" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M9 3.5v4M15 3.5v4M12 13v4M10 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span><b>Добавить в календарь</b><small>${esc(kind)} · ${fmtShort(wd)}</small></span><span class="soon">скоро</span></span></span></div>`);
     }
-    info.unshift(`<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>${done ? "Выполнено ✓" : "Не выполнено"}</button></span></div>`);
+    info.unshift(`<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}">${hwdIco(done)}${done ? "Выполнено ✓" : "Не выполнено"}</button></span></div>`);
     const tb = TEXTBOOKS[h.s];
     info.push(`<div class="di di-act"><span class="di-l">Онлайн-учебник</span><span class="hwd-tb">
       ${tb ? `<a class="hwd-act" href="${esc(tb.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(tb.title)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗︎</i></a>`
@@ -12604,7 +12605,7 @@ document.addEventListener("click", e => {
   const stp = e.target.closest("[data-hwstep]"); if(stp){ stp.classList.toggle("open"); return; }
   const fold = e.target.closest("[data-hwfold]"); if(fold){ const g = fold.closest(".hwg"); g.querySelectorAll(".hwr.open").forEach(x => { x.classList.remove("open"); x.querySelector(".hwr-row").setAttribute("aria-expanded", "false"); }); g.classList.remove("has-open"); return; }
   const pwr = e.target.closest("[data-par-wr]"); if(pwr){ const nmP = pwr.dataset.parWr; try { tgMakeChat("one", nmP, [nmP], "родитель"); } catch(_) {} showTab("chats", true); return; }
-  const hd = e.target.closest("[data-hwdone]"); if(hd){ const hid = hd.dataset.hwdone, was = !!doneMap[hid]; const hdT = (window.__hwdT = window.__hwdT || {}); clearTimeout(hdT[hid]); setDone(hid, !was); hd.classList.toggle("is-on", !was); hd.lastChild.textContent = !was ? "Выполнено ✓" : "Не выполнено"; if(!was){ hdT[hid] = setTimeout(() => { try { renderAll(); } catch(_) {} }, 2000); tgToast("Готово — через 2 секунды уйдёт в историю"); } else { try { renderAll(); } catch(_) {} tgToast("Возвращено в работу"); } return; }
+  const hd = e.target.closest("[data-hwdone]"); if(hd){ const hid = hd.dataset.hwdone, was = !!doneMap[hid]; const hdT = (window.__hwdT = window.__hwdT || {}); clearTimeout(hdT[hid]); setDone(hid, !was); hd.classList.toggle("is-on", !was); hd.firstElementChild.outerHTML = hwdIco(!was); hd.lastChild.textContent = !was ? "Выполнено ✓" : "Не выполнено"; if(!was){ hdT[hid] = setTimeout(() => { try { renderAll(); } catch(_) {} }, 2000); tgToast("Готово — через 2 секунды уйдёт в историю"); } else { try { renderAll(); } catch(_) {} tgToast("Возвращено в работу"); } return; }
   const hr = e.target.closest(".hwr-row"); if(hr && !e.target.closest(".check")){ const li = hr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); hr.setAttribute("aria-expanded", on); const g = li.closest(".hwg"); if(g) g.classList.toggle("has-open", !!g.querySelector(".hwr.open")); return; }
   const lr = e.target.closest(".dr-row"); if(lr && lr.closest(".dr-flat")) return; if(lr){ const li = lr.parentElement, on = !li.classList.contains("open"); li.classList.toggle("open", on); lr.setAttribute("aria-expanded", on); return; }
   const sdb = e.target.closest("[data-sday]"); if(sdb){ pickSchedDay(+sdb.dataset.sday); return; }
@@ -13659,7 +13660,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "617";
+const BUILD = "618";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
