@@ -5653,6 +5653,7 @@ a.nwm-a{text-decoration:none;display:inline-flex;align-items:center}
 .hwd-done:hover{background:color-mix(in srgb,var(--ink) 10%,transparent);transform:translateY(-1px)}.hwd-done:active{transform:scale(.96)}
 .hwd-done.is-on{color:#fff;background:var(--good);border-color:var(--good);box-shadow:0 4px 14px -6px var(--good)}
 .hwd-done.is-on:hover{background:var(--good);filter:brightness(.95)}
+.hwd-task{margin:2px 0 14px;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line)}.hwd-task-l{display:block;font:600 11px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.hwd-task p{margin:0;font:500 17px/1.45 var(--f-body);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:600px){.hwr-row{grid-template-columns:minmax(0,1fr) 14px}.hwr-s{grid-column:1}.hwr-t{grid-column:1}.hwr-c{grid-column:2;grid-row:1}.hwr-mk{grid-column:1}}
 
 /* ===== календарь: фильтры, кнопка события, компактная «Зам» ===== */
@@ -6881,7 +6882,7 @@ function renderHomework(partial){
       const wd = test ? test.d : h.dueD;
       info.push(`<div class="di di-act"><span class="di-l">Напоминание</span><span><span class="hwd-act is-soon" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M9 3.5v4M15 3.5v4M12 13v4M10 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span><b>Добавить в календарь</b><small>${esc(kind)} · ${fmtShort(wd)}</small></span><span class="soon">скоро</span></span></span></div>`);
     }
-    info.unshift(`<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}">${hwdIco(done)}${done ? "Выполнено ✓" : "Не выполнено"}</button></span></div>`);
+    info.unshift(`<div class="hwd-task"><span class="hwd-task-l">Задание</span><p>${esc(h.text)}</p></div>`, `<div class="di di-act"><span class="di-l">Статус</span><span><button type="button" class="hwd-done ${done ? "is-on" : ""}" data-hwdone="${h.id}">${hwdIco(done)}${done ? "Выполнено ✓" : "Не выполнено"}</button></span></div>`);
     const tb = TEXTBOOKS[h.s];
     info.push(`<div class="di di-act"><span class="di-l">Онлайн-учебник</span><span class="hwd-tb">
       ${tb ? `<a class="hwd-act" href="${esc(tb.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5c2.5-.9 4.8-.9 7 .5 2.2-1.4 4.5-1.4 7-.5v12.5c-2.5-.9-4.8-.9-7 .5-2.2-1.4-4.5-1.4-7-.5z M12 6v12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><span><b>${esc(tb.title)}</b><small>Открыть на сайте</small></span><i aria-hidden="true">↗︎</i></a>`
@@ -13660,7 +13661,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "619";
+const BUILD = "620";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
