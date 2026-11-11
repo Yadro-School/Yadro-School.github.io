@@ -9569,6 +9569,34 @@ function admPill(){
   if(!ADM.pill){ p.style.transition = "none"; }
   requestAnimationFrame(() => { const p = document.querySelector("#admin .adm-nav .adm-pill") || p0; p.style.opacity = "1"; p.style.transform = `translate(${n[0]}px,${n[3]}px)`; p.style.width = n[1] + "px"; p.style.height = n[2] + "px"; if(!ADM.pill){ void p.offsetWidth; p.style.transition = ""; } ADM.pill = n; });
 }
+/* ---- Коннекторы: разметка из макета (сборка 639) ---- */
+const CN_Q = { ok: "g", manual: "w", wait: "w", idea: "n" }, CN_D = { ok: "g", manual: "o", wait: "w", idea: "n" };
+function renderAdmConn(el){
+  const built = CONNECTORS();
+  const custom = CN.list.map(c => ({ ...c, cat: "Свои коннекторы", status: "custom", custom: true, used: [], keys: c.keyVar ? [{ name: c.keyVar, note: "на сервере" }] : [{ name: "Ключ не указан", note: "" }], steps: ["Подготовьте сервер платформы", "Сохраните ключ на сервере в переменной " + (c.keyVar || "с понятным именем"), "Код подключения пишется по документации сервиса"] }));
+  const all = [...built, ...custom], cnt = k => all.filter(c => CN_STATUS[c.status][0] === k).length, cats = [...new Set(all.map(c => c.cat))];
+  const card = c => { const [st, stt] = CN_STATUS[c.status], open = CN.open === c.id, ch = CN.checks[c.id];
+    return `<section class="ac zcard ${open ? "open" : ""}"><div class="zrow"><b>${esc(c.name)}</b><span class="zq zq-${CN_Q[st]}">${esc(stt)}</span></div><p>${esc(c.what || "")}</p>${ch ? `<p class="zcn-ck ${ch.busy ? "" : ch.ok ? "ok" : "bad"}">${esc(ch.t)}</p>` : ""}
+${open ? `<div class="zcn-how"><small>Что сделать и где</small><ol>${c.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol><small>Где используется</small><p>${c.used && c.used.length ? esc(c.used.join(", ")) : "Пока нигде"}</p><small>Ключи и секреты</small><ul>${c.keys.map(k => `<li><code>${esc(k.name)}</code>${k.note ? " " + esc(k.note) : ""}</li>`).join("")}</ul>${c.notes ? `<p>${esc(c.notes)}</p>` : ""}${c.url ? `<p>${esc(c.url)}</p>` : ""}</div>` : ""}
+<div class="zbs">${c.check ? `<button type="button" class="zb" data-cn-check="${c.id}">Проверить</button>` : ""}<button type="button" class="zb" data-cn-open="${c.id}" aria-expanded="${open}">${open ? "Свернуть" : "Как подключить"}</button>${c.custom ? `<button type="button" class="zb" data-cn-edit="${c.id}">Настроить</button>${CN.confirmDel === c.id ? `<button type="button" class="zb pr" data-cn-del="${c.id}">Точно удалить</button><button type="button" class="zb" data-cn-delno>Нет</button>` : `<button type="button" class="zb" data-cn-delask="${c.id}">Удалить</button>`}` : ""}</div></section>`; };
+  el.innerHTML = admHead("Коннекторы", "") + mkWrap("con", `<div id="ap-con" class="zpn"><div class="zh"><span>Коннекторы</span><div><button type="button" class="zb pr" data-cn-new aria-expanded="${CN.form}">Добавить коннектор</button></div></div>
+<section class="ac zsum"><span><i class="zd g"></i>Подключено <b>${cnt("ok")}</b></span><span><i class="zd o"></i>Вручную <b>${cnt("manual")}</b></span><span><i class="zd w"></i>Ждёт доступа <b>${cnt("wait")}</b></span><span><i class="zd n"></i>Не подключено <b>${cnt("idea")}</b></span><button type="button" class="zb ${IMP.open ? "pr" : ""}" data-imp-open aria-pressed="${IMP.open}">${IMP.open ? "Скрыть загрузку" : "Загрузить расписание"}</button></section>
+</div>`) + (IMP.open ? importPanelHtml() : "") + (CN.form ? cnFormHtml() : "") + mkWrap("con", `${cats.map(cat => { const l = all.filter(c => c.cat === cat); return `<div class="zk">${esc(cat)} <i>${l.length}</i></div><div class="zg2">${l.map(card).join("")}</div>`; }).join("")}
+<section class="ac" id="sec-tg">${tgHtml()}</section>
+${CN.loaded && !CN.db ? `<p class="zp">Общее хранилище недоступно в этом окне: свои коннекторы добавлять нельзя.</p>` : ""}
+<section class="ac zcn-safe"><p class="zp"><b>Где хранятся ключи.</b> Ключи и токены не вводятся на этой странице: её видят все, кому вы её покажете. Они хранятся только на сервере платформы. Здесь видно, какой ключ нужен каждому сервису и подключён ли он.</p></section>`);
+  try { tgFetch(false); } catch(e) {}
+}
+function tgHtml(){
+  const d = TGS.d, stt = d ? (d.linked ? "привязан" : d.token ? "ждёт привязки" : "не создан") : "", q = d && d.linked ? "g" : d && d.token ? "w" : "n";
+  const head = `<div class="zrow"><b>Telegram-бот</b>${stt ? `<span class="zq zq-${q}">${stt}</span>` : ""}</div>`, msg = TGS.msg ? `<p class="zp">${esc(TGS.msg)}</p>` : "";
+  if(!d) return head + `<p class="zp">${TGS.err ? esc(TGS.err) + `. <button type="button" class="zlk" data-tg="retry">Повторить</button>` : "Загружаем…"}</p>`;
+  const tog = (k, l, tip) => `<button type="button" class="zq zq-${d.on[k] ? "w" : "n"}" data-tg="tog:${k}" title="${tip}" aria-pressed="${!!d.on[k]}">${l}: ${d.on[k] ? "вкл" : "выкл"}</button>`;
+  if(!d.token) return head + `<p class="zp">Бот присылает вам в Telegram тревоги, входы на сайт и сводку за сутки. Как создать:</p><ol class="zcn-ol"><li>В Telegram откройте <b>@BotFather</b>, отправьте <b>/newbot</b>, придумайте имя. Он пришлёт токен.</li><li>В Яндекс Облаке в функции <b>yadro-api</b> добавьте переменную <b>TG_TOKEN</b> и вставьте токен. Больше его никому не показывайте.</li><li>Создайте новую версию функции и нажмите здесь «Проверить».</li></ol><div class="zbs"><button type="button" class="zb" data-tg="retry">Проверить</button></div>`;
+  if(!d.linked) return head + `<p class="zp">${d.pull ? (d.seen ? "Воркер Cloudflare на связи." : "Воркер Cloudflare ещё не выходил на связь: он заходит раз в минуту.") : "Токен на сервере есть."} Осталось привязать ваш Telegram: бот будет писать только вам.</p><div class="zbs">${TGS.link ? `<a class="zb pr" href="${esc(TGS.link)}" target="_blank" rel="noopener">Открыть бота в Telegram</a><span class="zp">Нажмите там Start. Ссылка действует 10 минут.</span>` : `<button type="button" class="zb pr" data-tg="link" ${TGS.busy ? "disabled" : ""}>${TGS.busy ? "Готовлю…" : "Привязать Telegram"}</button>`}</div>${msg}${TGS.msg && /посредник/.test(TGS.msg) ? tgRelay() : ""}`;
+  return head + `<p class="zp">Привязан${d.name ? ": " + esc(d.name) : ""}. Команды в боте: /status — сводка, /plan — план на сегодня, /zavtra — что на завтра, /news — обновить новости.</p><div class="zbs">${tog("alert", "Тревоги", "Подбор кода, сканеры, лимиты")}${tog("login", "Входы", "Сообщение при каждом входе на сайт")}${tog("daily", "Сводка", "Утренняя сводка за вчера")}${tog("remind", "Напоминания", "Утром план дня, вечером сроки на завтра")}</div><div class="zbs"><button type="button" class="zb" data-tg="test">Отправить тест</button><button type="button" class="zb ${TGS.ask ? "pr" : ""}" data-tg="unlink">${TGS.ask ? "Точно отвязать?" : "Отвязать"}</button></div>${msg}<details class="zcn-det"><summary>Чтобы сводка и напоминания приходили сами</summary><p class="zp">В Яндекс Облаке: Cloud Functions → Триггеры → Создать → Таймер, функция <b>yadro-api</b>. Утро: <b>0 2 * * ? *</b> (7:00 по Перми). Вечер: второй таймер <b>0 14 * * ? *</b> (19:00 по Перми).</p></details>`;
+}
+
 function admAnimate(){
   admPill();
   const d = ADM.anim; ADM.anim = ""; if(!d) return;
@@ -9580,49 +9608,7 @@ function _renderAdmin(){
   const el = document.getElementById("admin"); if(!el) return;
   if(!CN.isAdmin){ el.innerHTML = ""; return; }
   if(ADM.tab !== "conn"){ admSection(el); return; }
-  const built = CONNECTORS();
-  const custom = CN.list.map(c => ({ ...c, cat: "Свои коннекторы", status: "custom", custom: true, used: [], keys: c.keyVar ? [{ name: c.keyVar, note: "на сервере" }] : [{ name: "Ключ не указан", note: "" }], steps: ["Подготовьте сервер платформы", "Сохраните ключ на сервере в переменной " + (c.keyVar || "с понятным именем"), "Код подключения пишется по документации сервиса"] }));
-  const all = [...built, ...custom];
-  const cnt = k => all.filter(c => CN_STATUS[c.status][0] === k).length;
-  const cats = [...new Set(all.map(c => c.cat))];
-  const row = c => {
-    const [st, stt] = CN_STATUS[c.status], open = CN.open === c.id, ch = CN.checks[c.id];
-    return `<li class="reg-item cn-card ${open ? "open" : ""}">
-      <div class="reg-row">
-        <span class="dot ${st}"></span>
-        <div class="reg-main"><b>${esc(c.name)}</b><span class="reg-desc">${esc(c.what || "")}</span>
-          <span class="cn-keys">${c.keys.map(k => `<span class="cn-key ${/^[A-Z][A-Z0-9_]+$/.test(k.name) ? "var" : ""}" title="${esc(k.note || "")}">${esc(k.name)}</span>`).join("")}</span>
-          ${ch ? `<span class="cn-check ${ch.busy ? "" : ch.ok ? "ok" : "bad"}">${esc(ch.t)}</span>` : ""}</div>
-        <span class="st st-${st}">${esc(stt)}</span>
-        <div class="reg-acts">
-          ${c.check ? `<button class="btn" data-cn-check="${c.id}">Проверить</button>` : ""}
-          <button class="btn" data-cn-open="${c.id}" aria-expanded="${open}">${open ? "Свернуть" : "Как подключить"}</button>
-          ${c.custom ? `<button class="btn" data-cn-edit="${c.id}">Настроить</button>${CN.confirmDel === c.id ? `<button class="btn danger" data-cn-del="${c.id}">Точно удалить</button><button class="btn" data-cn-delno>Нет</button>` : `<button class="btn" data-cn-delask="${c.id}">Удалить</button>`}` : ""}
-        </div>
-      </div>
-      ${open ? `<div class="cn-how">
-        <div><h4>Что сделать и где</h4><ol class="step-list">${c.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>
-        <div><h4>Где используется</h4><p class="muted">${c.used && c.used.length ? esc(c.used.join(", ")) : "Пока нигде"}</p>${c.url ? `<p class="muted cn-notes">${esc(c.url)}</p>` : ""}<h4>Ключи и секреты</h4><ul class="cn-keylist">${c.keys.map(k => `<li><span class="cn-key ${/^[A-Z][A-Z0-9_]+$/.test(k.name) ? "var" : ""}">${esc(k.name)}</span><span class="muted">${esc(k.note || "")}</span></li>`).join("")}</ul>${c.notes ? `<p class="muted cn-notes">${esc(c.notes)}</p>` : ""}</div>
-      </div>` : ""}
-    </li>`;
-  };
-  el.innerHTML = `
-    <div class="view-head"><div class="hello"><p class="eyebrow">Администратор</p><h1 class="headline">Коннекторы</h1></div>
-      <button class="plus" data-cn-new aria-expanded="${CN.form}"><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить коннектор</button></div>
-    ${admNav()}
-    <div class="cn-bar"><div class="cn-sum">
-      <span><span class="dot ok"></span>Подключено <b>${cnt("ok")}</b></span>
-      <span><span class="dot manual"></span>Вручную <b>${cnt("manual")}</b></span>
-      <span><span class="dot wait"></span>Ждёт доступа <b>${cnt("wait")}</b></span>
-      <span><span class="dot idea"></span>Не подключено <b>${cnt("idea")}</b></span>
-    </div><button class="chip imp-toggle" data-imp-open aria-pressed="${IMP.open}" title="Загрузить из PDF, Excel, фото или таблицы">${IMP.open ? "Скрыть загрузку" : "Загрузить расписание"}</button></div>
-    ${IMP.open ? importPanelHtml() : ""}
-    ${CN.form ? cnFormHtml() : ""}
-    ${cats.map(cat => { const l = all.filter(c => c.cat === cat); return `<section class="cn-g"><h2 class="cn-gh">${esc(cat)} <span>${l.length}</span></h2><ul class="reg-list cn-grid">${l.map(row).join("")}</ul></section>`; }).join("")}
-    <section class="panel sec-tgp" id="sec-tg">${tgHtml()}</section>
-    ${CN.loaded && !CN.db ? `<p class="muted reg-note">Общее хранилище недоступно в этом окне: свои коннекторы добавлять нельзя.</p>` : ""}
-    <section class="panel cn-safe"><b>Где хранятся ключи.</b> Ключи и токены не вводятся на этой странице: её содержимое видят все, кому вы её покажете. Они хранятся только на сервере платформы в переменных окружения. Здесь видно, какой ключ нужен каждому сервису, где его взять и подключён ли сервис.</section>`;
-  try { tgFetch(false); } catch(e) {}
+  renderAdmConn(el);
 }
 
 /* ================= Пользователи, роли и доступ ================= */
@@ -9810,17 +9796,15 @@ function renderAdmSched(el){
   if(SCH.data === null && !SCH.loading){ SCH.loading = true; setTimeout(() => schLoad(SCH.cls), 0); }
   const cls = SCH.cls, day = SCH.data ? (SCH.data[SCH.day] || []) : [];
   const clsGroups = {}; JR_CLS.forEach(c => { const m = c.match(/^(\d+)\s+(.+)$/); if(!m) return; (clsGroups[m[1]] = clsGroups[m[1]] || []).push([c, m[2].replace(/[«»]/g, "")]); });
-  const clsChips = Object.keys(clsGroups).map(g => `<div class="sch-gr"><span class="sch-gn">${g}</span>${clsGroups[g].map(([c, t]) => `<button type="button" class="sch-cl ${c === cls ? "on" : ""}" data-sch-cls="${esc(c)}" title="${esc(c)}">${esc(t)}</button>`).join("")}</div>`).join("");
-  const dayChips = SCH_DAYS.map(([d, t]) => `<button type="button" class="sch-d ${d === SCH.day ? "on" : ""}" data-sch-day="${d}">${t}${SCH.data && (SCH.data[d] || []).length ? `<em>${(SCH.data[d] || []).length}</em>` : ""}</button>`).join("");
-  const body = SCH.data === null ? `<p class="muted">Загружаем…</p>` : (day.length ? day.map(schLesson).join("") : (SCH.ed === "new" ? "" : `<p class="muted">На этот день уроков нет. Добавьте урок или загрузите расписание.</p>`));
+  const clsChips = Object.keys(clsGroups).map(g => `<div class="zcl"><span>${g}</span>${clsGroups[g].map(([c, t]) => `<button type="button" class="${c === cls ? "on" : ""}" data-sch-cls="${esc(c)}" title="${esc(c)}">${esc(t)}</button>`).join("")}</div>`).join("");
+  const dayChips = SCH_DAYS.map(([d, t]) => `<button type="button" class="${d === SCH.day ? "on" : ""}" data-sch-day="${d}">${t}${SCH.data && (SCH.data[d] || []).length ? `<i>${(SCH.data[d] || []).length}</i>` : ""}</button>`).join("");
+  const body = SCH.data === null ? `<p class="zp zemp">Загружаем…</p>` : (day.length ? day.map(schLesson).join("") : (SCH.ed === "new" ? "" : `<p class="zp zemp">На этот день уроков нет. Добавьте урок или загрузите расписание.</p>`));
   const newForm = SCH.ed === "new" ? schForm({ n: day.length + 1, t: "", s: "", teacher: "", room: "" }, "new") : "";
-  el.innerHTML = admHead("Расписание", "") + `<div class="adm-body sch">
-    <section class="panel sch-p"><div class="sch-top"><div class="sch-cls">${clsChips}</div><div class="sch-days">${dayChips}</div></div>
-      <div class="sch-list">${body}${newForm}</div>
-      <div class="sch-bar"><button type="button" class="sch-add" data-sch-new ${SCH.data === null ? "disabled" : ""}>+ Добавить урок</button><button type="button" class="sch-up" data-sch-imp>Загрузить</button><span class="sch-sp"></span><button type="button" class="sch-save" data-sch-save ${SCH.busy || SCH.data === null ? "disabled" : ""}>${SCH.busy ? "Сохраняем…" : "Сохранить расписание " + esc(cls)}</button></div>
-      ${SCH.imp ? `<div class="sch-imp"><p class="muted">Вставьте расписание, которое прислали в чате (JSON: по дням 1–6, в каждом списке уроки с полями n, t, s, teacher, room). Проверю и покажу таблицу, потом сохраните.</p><textarea id="sch-json" rows="6">${esc(SCH.impTxt)}</textarea><div class="sch-fb"><button type="button" data-sch-check>Проверить</button><button type="button" data-sch-file>Выбрать файл</button><input type="file" id="sch-file" accept=".json,application/json" hidden><button type="button" data-sch-imp>Отмена</button></div></div>` : ""}
-      ${SCH.msg ? `<p class="sch-msg">${esc(SCH.msg)}</p>` : ""}
-    </section></div>`;
+  el.innerHTML = admHead("Расписание", "") + mkWrap("sch", `<div id="ap-sch" class="zpn"><div class="zh"><span>Расписание</span><div></div></div><section class="ac"><div class="zcls">${clsChips}</div><div class="zhr"></div><div class="zdays">${dayChips}</div>
+<div class="adm-body sch"><div class="sch-list">${body}${newForm}</div></div>
+<div class="zfoot"><div class="zbs"><button type="button" class="zb" data-sch-new ${SCH.data === null ? "disabled" : ""}>+ Добавить урок</button><button type="button" class="zb ${SCH.imp ? "pr" : ""}" data-sch-imp>Загрузить</button></div><button type="button" class="zb pr" data-sch-save ${SCH.busy || SCH.data === null ? "disabled" : ""}>${SCH.busy ? "Сохраняем…" : "Сохранить расписание " + esc(cls)}</button></div>
+${SCH.imp ? `<div class="zsch-imp"><p class="zp">Вставьте расписание, которое прислали в чате (JSON: по дням 1–6, в каждом списке уроки с полями n, t, s, teacher, room). Проверю и покажу таблицу, потом сохраните.</p><textarea id="sch-json" rows="6">${esc(SCH.impTxt)}</textarea><div class="zbs"><button type="button" class="zb" data-sch-check>Проверить</button><button type="button" class="zb" data-sch-file>Выбрать файл</button><input type="file" id="sch-file" accept=".json,application/json" hidden><button type="button" class="zb" data-sch-imp>Отмена</button></div></div>` : ""}
+${SCH.msg ? `<p class="zp">${esc(SCH.msg)}</p>` : ""}</section></div>`);
 }
 async function schImportAll(j){
   const weeks = j.weeks || {}, subs = j.subjects || {}, classes = Object.keys(weeks);
@@ -13442,21 +13426,6 @@ function tgPoll(n){   // ждём, пока вы нажмёте Start в Telegra
   TGS.poll = setTimeout(() => tgCall("tg_status").then(j => { TGS.d = j; if(j.linked){ TGS.link = ""; TGS.msg = "Готово, Telegram привязан"; tgRedraw(); } else tgPoll(n + 1); }).catch(() => tgPoll(n + 1)), 3000);
 }
 const tgRelay = () => `<details class="sec-tgd" open><summary>Яндекс не достаёт до Telegram: нужен посредник</summary><p>Бесплатный воркер Cloudflare раз в минуту сам забирает сообщения у сервера и отправляет их в Telegram. Что сделать: 1) в Cloudflare создайте воркер с кодом посредника (я прислал в чате); 2) в нём добавьте переменные TG_TOKEN, PULL_KEY, API_URL и Cron-триггер раз в минуту; 3) в функции yadro-api вместо TG_TOKEN и TG_API_BASE задайте только TG_PULL_KEY с тем же значением, что PULL_KEY; 4) создайте версию и подождите минуту.</p></details>`;
-function tgHtml(){
-  const d = TGS.d, head = `<div class="panel-head"><h2>Telegram-бот</h2><span class="aside">${d ? (d.linked ? "привязан" : d.token ? "ждёт привязки" : "не создан") : ""}</span></div>`;
-  if(!d) return head + `<p class="sec-demo">${TGS.err ? esc(TGS.err) + `. <button type="button" class="link" data-tg="retry">Повторить</button>` : "Загружаем…"}</p>`;
-  const tog = (k, l, tip) => `<button type="button" class="sec-fb ${d.on[k] ? "on" : ""}" data-tg="tog:${k}" data-tip="${tip}" aria-pressed="${!!d.on[k]}">${l}: ${d.on[k] ? "вкл" : "выкл"}</button>`;
-  if(!d.token) return head + `<p class="sec-demo">Бот присылает вам в Telegram тревоги, входы на сайт и сводку за сутки. Как создать:</p>
-    <ol class="sec-st-l"><li>В Telegram откройте <b>@BotFather</b>, отправьте <b>/newbot</b>, придумайте имя. Он пришлёт токен.</li><li>В Яндекс Облаке в функции <b>yadro-api</b> добавьте переменную <b>TG_TOKEN</b> и вставьте токен. Больше его никому не показывайте.</li><li>Создайте новую версию функции и нажмите здесь «Проверить».</li></ol>
-    <div class="sec-tgb"><button type="button" class="btn" data-tg="retry">Проверить</button></div>`;
-  if(!d.linked) return head + `<p class="sec-demo">${d.pull ? (d.seen ? "Воркер Cloudflare на связи." : "Воркер Cloudflare ещё не выходил на связь: он заходит раз в минуту.") : "Токен на сервере есть."} Осталось привязать ваш Telegram: бот будет писать только вам.</p>
-    <div class="sec-tgb">${TGS.link ? `<a class="btn" href="${esc(TGS.link)}" target="_blank" rel="noopener">Открыть бота в Telegram</a><span class="sec-demo">Нажмите там Start. Ссылка действует 10 минут.</span>` : `<button type="button" class="btn ${TGS.busy ? "busy" : ""}" data-tg="link" ${TGS.busy ? "disabled" : ""}>Привязать Telegram</button>`}</div>${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}${TGS.msg && /посредник/.test(TGS.msg) ? tgRelay() : ""}`;
-  return head + `<p class="sec-demo">Привязан${d.name ? ": " + esc(d.name) : ""}. Команды в боте: /status — сводка, /plan — план на сегодня, /zavtra — что на завтра, /news — обновить новости.</p>
-    <div class="sec-fs">${tog("alert", "Тревоги", "Подбор кода, сканеры, лимиты")}${tog("login", "Входы", "Сообщение при каждом входе на сайт")}${tog("daily", "Сводка", "Утренняя сводка за вчера")}${tog("remind", "Напоминания", "Утром план дня, вечером сроки на завтра")}</div>
-    <div class="sec-tgb"><button type="button" class="btn" data-tg="test">Отправить тест</button><button type="button" class="sec-fb ${TGS.ask ? "ask sec-clr" : ""}" data-tg="unlink">${TGS.ask ? "Точно отвязать?" : "Отвязать"}</button></div>
-    ${TGS.msg ? `<p class="sec-demo">${esc(TGS.msg)}</p>` : ""}
-    <details class="sec-tgd"><summary>Чтобы сводка и напоминания приходили сами</summary><p>В Яндекс Облаке: Cloud Functions → Триггеры → Создать → Таймер, функция <b>yadro-api</b>. Утро (сводка, план дня, новости): <b>0 2 * * ? *</b> — это 7:00 по Перми. Вечер (сроки на завтра): второй таймер <b>0 14 * * ? *</b> — 19:00 по Перми.</p></details>`;
-}
 const SEC_PR = { crit: ["Критично", "bad"], imp: ["Важно", "warn"], nice: ["Желательно", "off"] };
 const secState = c => c === "lock" ? (SECSTAT.data && SECSTAT.data.lock ? "ok" : "off") : c === "live" ? (SECSTAT.data ? "ok" : "off") : c === "part" ? "part" : c ? "ok" : "off";
 /* ---- плитки слева и журнал подключений справа ---- */
@@ -13990,7 +13959,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "638";
+const BUILD = "641";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14210,18 +14179,19 @@ function renderAdmPlan(el){
   const D = PLN_D, n = D.length, on = D.filter(x => PLN.on[x.id]).length, me = D.filter(x => x.nd || x.z).length, zd = [...new Set(D.filter(x => x.z).map(x => x.d.toLowerCase()))];
   const left = Math.max(0, Math.ceil((PLN_END - new Date().setHours(0, 0, 0, 0)) / 86400000));
   const vis = x => PLN.fl === "all" || (PLN.fl === "me" ? !!(x.nd || x.z) : x.g === +PLN.fl);
-  const chv = `<svg class="ag3-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+  const chv = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>', play = '<svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg>';
   const row = x => { const o = PLN.open === x.id, w = !!PLN.on[x.id];
-    return `<li class="pn-i ${w ? "pl" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i></i><span><b>${x.t}</b><small>${x.s}</small></span><em class="dy">${x.d}</em><em class="who ${x.nd || x.z ? "w" : "ok"}">${x.nd ? "Нужен ты" : x.z ? "Нужен ZIP" : "Сам"}</em><button type="button" class="pn-go" data-pn-go="${x.id}" title="${w ? "Снять отметку" : "Отметить и скопировать промпт"}">${w ? "В работе" : "В работу"}</button>${chv}</div>${o ? `<div class="pn-d"><p>${x.w}</p>${x.nd || x.z ? `<p class="pn-nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="mx3-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div>` : ""}</li>`; };
-  el.innerHTML = admHead("План") + `<div class="adm-body pn" id="pn">
-    <div class="pn-k"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${on}</b><small>в работе</small></div><div class="w"><b>${zd.length}</b><small>${plural(zd.length, ["загрузка", "загрузки", "загрузок"])} ZIP от тебя: ${zd.join(" и ")}</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы, 13 ноября</small></div></div>
-    <div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» ставит отметку и копирует промпт для Claude</span></div>
-    ${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => PLN.on[x.id]).length;
-      return `<section class="panel pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} в работе</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
-  </div>`;
+    return `<li class="pn-i ${w ? "pl" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i class="zd ${w ? "g" : "n"}"></i><span><b>${x.t}</b><small>${x.s}</small></span><em class="dy">${x.d}</em><em class="who ${x.nd || x.z ? "w" : "ok"}">${x.nd ? "Нужен ты" : x.z ? "Нужен ZIP" : "Сам"}</em><button type="button" class="pn-go" data-pn-go="${x.id}" title="${w ? "Снять отметку" : "Отметить и скопировать промпт"}">${w ? "В работе" : play + "В работу"}</button>${chv}</div><div class="pn-d" ${o ? "" : "hidden"}><p>${x.w}</p>${x.nd || x.z ? `<p class="nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="pn-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div></li>`; };
+  el.innerHTML = admHead("План") + mkWrap("pln", `<div id="ap-pln" class="zpn"><div class="zh"><span>Работа без Claude <span class="pn-dl">до пятницы, 13 ноября</span></span><div><button type="button" class="zb pr" data-pn-all title="Отметить все задачи и скопировать все промпты">${on === n ? "Всё в работе" : "Запустить всё"}</button></div></div><div id="pn">
+<div class="zst4"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${on}</b><small>в работе</small></div><div class="w"><b>${zd.length}</b><small>${plural(zd.length, ["загрузка", "загрузки", "загрузок"])} ZIP от тебя: ${zd.join(" и ")}</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы</small></div></div>
+<div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» ставит отметку и копирует промпт для Claude</span></div>
+${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => PLN.on[x.id]).length;
+  return `<section class="pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} в работе</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
+</div></div>`);
 }
+document.addEventListener("click", e => { const x = e.target.closest(".mk-pln [data-pn-all]"); if(!x) return; const L = PLN_D.filter(t => !PLN.on[t.id]); if(!L.length) return; L.forEach(t => { PLN.on[t.id] = Date.now(); }); plnSave(); ag3Copy(null, L.map((t, i) => (i + 1) + ". " + t.t + "\n" + t.p).join("\n\n")); const el = document.getElementById("admin"); if(el && ADM.tab === "plan") renderAdmPlan(el); });
 document.addEventListener("click", e => {
-  if(!e.target.closest("#pn")) return; const el = document.getElementById("admin"); let x;
+  if(!e.target.closest("#pn") || e.target.closest("[data-pn-all]")) return; const el = document.getElementById("admin"); let x;
   const rr = () => { if(el && ADM.tab === "plan") renderAdmPlan(el); };
   if((x = e.target.closest("[data-pn-f]"))){ PLN.fl = x.dataset.pnF; return rr(); }
   if((x = e.target.closest("[data-pn-go]"))){ const id = x.dataset.pnGo, t = PLN_D.find(q => q.id === id); if(PLN.on[id]) delete PLN.on[id]; else { PLN.on[id] = Date.now(); ag3Copy(null, t.p); } plnSave(); return rr(); }
@@ -15969,6 +15939,25 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 :is(#admin,#mk-layer) .mk .zd-txt p{margin:6px 0}
 :is(#admin,#mk-layer) .mk .zlk{cursor:pointer}
 :is(#admin,#mk-layer) .mk .zbs{display:flex;gap:8px;flex-wrap:wrap}
+.mk-con+.mk-con{margin-top:12px}
+:is(#admin,#mk-layer) .mk .zcn-how{font-size:13px;color:var(--ink);background:var(--pl);border-radius:12px;padding:10px 12px}
+:is(#admin,#mk-layer) .mk .zcn-how small{display:block;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:8px 0 4px}
+:is(#admin,#mk-layer) .mk .zcn-how small:first-child{margin-top:0}
+:is(#admin,#mk-layer) .mk .zcn-how ol,:is(#admin,#mk-layer) .mk .zcn-how ul,:is(#admin,#mk-layer) .mk .zcn-ol{margin:0;padding-left:18px;line-height:1.5}
+:is(#admin,#mk-layer) .mk .zcn-how p{margin:0;color:var(--ink);font-size:13px}
+:is(#admin,#mk-layer) .mk .zcn-how code{font-size:12px;background:var(--card);border-radius:6px;padding:1px 6px}
+:is(#admin,#mk-layer) .mk .zcn-ck{font-size:12.5px!important;flex:none!important}
+:is(#admin,#mk-layer) .mk .zcn-ck.ok{color:var(--ok)!important}:is(#admin,#mk-layer) .mk .zcn-ck.bad{color:#C23B3B!important}
+:is(#admin,#mk-layer) .mk #sec-tg{display:flex;flex-direction:column;gap:10px}
+:is(#admin,#mk-layer) .mk #sec-tg .zq{cursor:pointer}
+:is(#admin,#mk-layer) .mk .zcn-det summary{cursor:pointer;color:var(--acc);font-size:13px}
+:is(#admin,#mk-layer) .mk .zcn-safe{margin-top:12px}
+:is(#admin,#mk-layer) .mk .zdays button i{font-style:normal;font-size:11px;margin-left:5px;color:var(--mut)}
+:is(#admin,#mk-layer) .mk-sch .adm-body.sch{padding:0;margin:0}
+:is(#admin,#mk-layer) .mk .zsch-imp{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+:is(#admin,#mk-layer) .mk .zsch-imp textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:10px;font:13px/1.4 ui-monospace,monospace;background:var(--card);color:var(--ink)}
+:is(#admin,#mk-layer) .mk-pln .pn-r>svg:last-child{fill:none!important;stroke:var(--mut);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;width:16px;height:16px;transition:transform .2s}
+:is(#admin,#mk-layer) .mk-pln .pn-i.open .pn-r>svg:last-child{transform:rotate(180deg)}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
