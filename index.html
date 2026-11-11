@@ -10095,11 +10095,18 @@ function admChk(u){
   const f = u.name.split(" ").slice(0, 2).join(" ");
   return !ADM.users.some(p => p.role === "parent" && String((p.v || {}).kids || "").includes(f));
 }
+function admGrpSt(r, all){
+  if(!all.length) return `<span class="ug-st">пока никого</span>`;
+  const off = all.filter(u => u.st === "off").length;
+  if(r.id === "student"){ const par = ADM.users.filter(u => u.role === "parent"); const n = all.filter(u => { const f = u.name.split(" ").slice(0, 2).join(" "); return !par.some(p => String((p.v || {}).kids || "").includes(f)); }).length; if(n) return `<span class="ug-st w">${n} без родителей</span>`; }
+  if(r.id === "parent"){ const n = all.filter(u => !String((u.v || {}).kids || "").trim()).length; if(n) return `<span class="ug-st w">${n} без ребёнка</span>`; }
+  return off ? `<span class="ug-st w">${off} ${plural(off, ["заблокирован", "заблокированы", "заблокированы"])}</span>` : `<span class="ug-st ok">в норме</span>`;
+}
 function admRowsHtml(){
   const q = ADM.q.trim().toLowerCase(), cmp = (a, b) => a.name.localeCompare(b.name, "ru");
   const srt = ADM.us === "za" ? (a, b) => cmp(b, a) : ADM.us === "blk" ? (a, b) => ((b.st === "off") - (a.st === "off")) || cmp(a, b) : cmp;
   const chev = `<svg class="ug-c" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 5.200 4 4 4-4"/></svg>`;
-  const sec = (key, title, count, open, inner, cls, color) => `<section class="ug ${cls || ""} ${open ? "open" : ""}" style="--rc:${color}"><button type="button" class="ug-h" data-adm-grp="${esc(key)}" aria-expanded="${open}"><span class="ug-d"></span><b>${title}</b><em>${count}</em>${chev}</button><div class="ug-b"><div class="ug-in">${inner}</div></div></section>`;
+  const sec = (key, title, count, open, inner, cls, color, stt) => `<section class="ug ${cls || ""} ${open ? "open" : ""}" style="--rc:${color}"><button type="button" class="ug-h" data-adm-grp="${esc(key)}" aria-expanded="${open}"><span class="ug-d"></span><b>${title}</b><em>${count}</em>${stt || ""}${chev}</button><div class="ug-b"><div class="ug-in">${inner}</div></div></section>`;
   const out = ROLES.map(r => {
     const all = ADM.users.filter(u => u.role === r.id), us = all.filter(u => admChk(u) && (!q || (u.name + " " + r.name + " " + admSummary(u) + " " + (r.id === "student" || r.id === "parent" ? admCls(u) + " " + admKid(u) : "")).toLowerCase().includes(q))).sort(srt);
     if((q || ADM.chk) && !us.length) return "";
@@ -10112,7 +10119,7 @@ function admRowsHtml(){
         if(!n) return "";
         const cu = ADM.users.find(t => t.role === "teacher" && String((t.v || {}).head || "").trim() === k); return sec(key, esc(k) + (cu ? `<small class="ug-cu">куратор: ${esc(cu.name.split(" ").slice(0, 2).join(" "))}</small>` : ""), n + " " + (r.id === "student" ? "уч." : "род."), !!q || ADM.grp.has(key), `<ul class="adm-list">${by[k].map(admUserRow).join("")}</ul>`, "sub", r.c); }).join("")}${q ? "" : `<div class="ug-soon"><span>Остальные классы — скоро:</span>${ks.filter(k => !(by[k] || []).length).map(k => `<i>${esc(k)}</i>`).join("")}</div>`}</div>`;
     } else inner = us.length ? `<ul class="adm-list">${us.map(admUserRow).join("")}</ul>` : `<p class="adm-none">Пока никого</p>`;
-    return sec(r.id, r.pl, cnt, open, inner, "", r.c);
+    return sec(r.id, r.pl, cnt, open, inner, "", r.c, admGrpSt(r, all));
   }).join("");
   return out || `<p class="adm-none">Никого не найдено</p>`;
 }
@@ -10135,19 +10142,23 @@ function regaLoad(force){
     .catch(e => { REGA.err = e.message || "Не удалось загрузить заявки"; REGA.list = REGA.list || []; if(/перегруж/.test(REGA.err) && !REGA.retry){ REGA.retry = 1; setTimeout(() => { REGA.retry = 0; regaLoad(true); }, 120000); } })
     .then(() => { REGA.busy = ""; invRefresh(); });
 }
-function regaHtml(){
-  const pend = (REGA.list || []).filter(a => a.status === "pending");
+function regaApps(){
+  if(REGA.list === null) return `<p class="lk-0">Загружаем…</p>`;
+  const pend = REGA.list.filter(a => a.status === "pending");
   const row = a => {
     const ph = REGA.photo[a.id];
-    return `<li class="inv-i rega-i"><div class="rega-top">${ph ? `<img class="rega-ava" alt="" src="${ph}">` : `<button type="button" class="rega-ph" data-rega-ph="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Фото</button>`}<div><b>${esc(a.name)}</b><span class="inv-r">${INV_RN[a.role] || a.role}${a.cls ? " · " + esc(a.cls) : ""}</span><span class="inv-s">${esc(a.phone)} · ${esc(a.email)}</span></div></div>
+    return `<li class="inv-i rega-i"><div class="rega-top">${ph ? `<img class="rega-ava" alt="" src="${ph}">` : `<button type="button" class="rega-ph" data-rega-ph="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Фото</button>`}<div><b>${esc(a.name)}</b><span class="inv-r">${INV_RN[a.role] || a.role}${a.cls ? " · " + esc(a.cls) : ""}</span><span class="inv-s">${esc([a.phone, a.email].filter(Boolean).join(" · "))}</span></div></div>
       <div class="rega-act"><button type="button" data-rega-ok="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Принять</button><button type="button" class="x" data-rega-no="${esc(a.id)}"${REGA.busy ? " disabled" : ""}>Отклонить</button></div></li>`;
   };
-  if(REGA.list === null) return `<div class="rega-p"><h4 class="inv-uh">Заявки на регистрацию</h4><p class="inv-n">Загружаем…</p></div>`;
+  return `${REGA.err ? `<p class="inv-e">${esc(REGA.err)}</p>` : ""}${pend.length ? `<ul class="inv-l">${pend.map(row).join("")}</ul>` : `<p class="lk-0">Новых заявок нет</p>`}`;
+}
+function regaSup(){
+  if(REGA.sup === null) return `<p class="lk-0">Загружаем…</p>`;
   const openSup = (REGA.sup || []).filter(x => x.status === "open");
   const sup = x => `<li class="inv-i rega-i"><div><b>${esc(x.name || "Без имени")}</b><span class="inv-r">${esc(x.contact)}</span><span class="inv-s">${esc(x.text)}</span></div><div class="rega-act"><button type="button" class="x" data-sup-close="${esc(x.id)}"${REGA.busy ? " disabled" : ""}>Закрыть</button></div></li>`;
-  return `<div class="rega-p"><h4 class="inv-uh">Заявки на регистрацию · ${pend.length}</h4>${REGA.err ? `<p class="inv-e">${esc(REGA.err)}</p>` : ""}${pend.length ? `<ul class="inv-l">${pend.map(row).join("")}</ul>` : `<p class="inv-n">Новых заявок нет</p>`}
-    <h4 class="inv-uh">Обращения в поддержку · ${openSup.length}</h4>${openSup.length ? `<ul class="inv-l">${openSup.map(sup).join("")}</ul>` : `<p class="inv-n">Открытых обращений нет</p>`}</div>`;
+  return openSup.length ? `<ul class="inv-l">${openSup.map(sup).join("")}</ul>` : `<p class="lk-0">Открытых обращений нет</p>`;
 }
+const regaHtml = () => regaApps() + regaSup();
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
   if((x = g("[data-sup-close]"))){ const id = x.dataset.supClose; REGA.busy = "s"; invRefresh();
@@ -10178,23 +10189,56 @@ function invUser(u){
       <div class="inv-ua"><button type="button" data-invu-code="${esc(u.id)}"${INVU.busy ? " disabled" : ""}>${c ? "Новый код" : "Код для входа"}</button><button type="button" class="x" data-invu-rv="${esc(u.id)}"${INVU.busy ? " disabled" : ""}>${INVU.done === u.id ? "Сеансы закрыты" : "Выйти везде"}</button></div></div>` : ""}</li>`;
 }
 function invRefresh(){ const p = document.getElementById("inv-p"); if(p) p.outerHTML = invHtml(true); }
+/* панель «ссылки и коды» во вкладке «Пользователи» (сборка 628, по макету) */
+const LK = { acc: {}, links: [], qr: {} };
+const lkLinkRole = r => r === "student" || r === "parent";
+const lkChev = `<svg class="lk-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+function lkAcc(k, title, n, inner, hot){ const o = !!LK.acc[k]; return `<div class="lk-b${o ? " open" : ""}"><button type="button" class="lk-bh" data-lk-acc="${k}" aria-expanded="${o}"><b>${title} <i class="${hot ? "hot" : ""}">${n}</i></b>${lkChev}</button>${o ? `<div class="lk-w">${inner}</div>` : ""}</div>`; }
+function lkLinks(){
+  if(!LK.links.length) return "";
+  return `<ul class="lk-ls">${LK.links.map((x, i) => `<li class="lk-i"><div class="lk-it"><span class="lk-w2"><b>${esc(x.who)}</b><small>до ${ag3hm(x.exp)}${new Date(x.exp).toDateString() !== new Date().toDateString() ? " " + new Date(x.exp).toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) : ""}</small></span><code>${esc(x.url)}</code><span class="lk-ib"><button type="button" class="pr" data-inv-cp="${esc(x.url)}">Копировать</button><button type="button" data-lk-qr="${i}" aria-expanded="${!!LK.qr[i]}">QR</button></span></div>${LK.qr[i] ? `<div class="lk-qr">${LK.qr[i]}</div>` : ""}</li>`).join("")}</ul>`;
+}
 function invHtml(inner){
   if(!window.yadroApi) return "";
   if(INV.list === null) setTimeout(invLoad, 0);
   if(REGA.list === null) setTimeout(regaLoad, 0);
   const f = INV.f, st = INV.users.filter(u => u.role === "student");
-  const html = `<section class="panel inv-p" id="inv-p"><div class="inv-h"><div><h3>Коды доступа</h3><p>Первый вход — только по коду. Код одноразовый, на одного человека; роль и права задаёт код. После входа человек может привязать ключ доступа, почту или Яндекс ID.</p></div></div>
+  const pend = (REGA.list || []).filter(a => a.status === "pending").length, sup = (REGA.sup || []).filter(x => x.status === "open").length;
+  const act = (INV.list || []).filter(i => cdxState(i) === "act").length;
+  return `<div class="lk" id="inv-p">
     ${cdxForm(f, st)}
-    ${f.role === "parent" && !st.length && INV.list ? `<p class="inv-n">Родителю нужен зарегистрированный ученик: сначала создайте код ученику.</p>` : ""}
-    ${INV.err ? `<p class="inv-e">${esc(INV.err)}</p>` : ""}
-    ${regaHtml()}
-    ${REGL.link ? `<div class="inv-new reg-link"><span>Ссылка для регистрации · 24 часа</span><b>${esc(REGL.link)}</b><button type="button" data-inv-cp="${esc(REGL.link)}">Копировать</button><div class="reg-qr" style="background:#fff;padding:10px;border-radius:14px;width:max-content;margin-top:10px">${REGL.svg}</div></div>` : ""}
+    <p class="lk-n">${lkLinkRole(f.role) ? "Создаётся ссылка на регистрацию: она действует 24 часа и подходит одному человеку. Заявка придёт сюда, после одобрения человеку на почту придёт код входа." : "Для сотрудников создаётся одноразовый код входа: роль и права задаёт код."}</p>
+    ${f.role === "parent" && !st.length && INV.list ? `<p class="lk-e">Родителю нужен зарегистрированный ученик: сначала зарегистрируйте ученика.</p>` : ""}
+    ${INV.err ? `<p class="lk-e">${esc(INV.err)}</p>` : ""}
+    ${lkLinks()}
     ${INV.fresh ? `<div class="inv-new"><span>Новый код</span><b>${esc(INV.fresh)}</b><button type="button" data-inv-cp="${esc(INV.fresh)}">Копировать</button></div>` : ""}
-    ${cdxList()}
-    ${INV.users.length ? `<h4 class="inv-uh">Зарегистрированы · ${INV.users.length}</h4><ul class="inv-l inv-us">${INV.users.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "ru")).map(invUser).join("")}</ul>` : ""}
-    <p class="inv-n">Ученик видит своё, родитель — только своего ребёнка, учитель — свои классы, завуч и директор — всю школу.</p></section>`;
-  return html;
+    ${lkAcc("rega", "Заявки на регистрацию", REGA.list === null ? "…" : pend, regaApps(), pend)}
+    ${lkAcc("sup", "Обращения в поддержку", REGA.sup === null ? "…" : sup, regaSup(), sup)}
+    ${lkAcc("codes", "Выданные коды", INV.list === null ? "…" : act, cdxList())}
+    ${INV.users.length ? lkAcc("reg", "Зарегистрированы", INV.users.length, `<ul class="inv-l inv-us">${INV.users.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "ru")).map(invUser).join("")}</ul>`) : ""}
+  </div>`;
 }
+function lkMake(){
+  const f = INV.f, picked = Object.keys(CDX.picked); INV.err = "";
+  if(f.role === "parent" && !f.child){ INV.err = "Выберите ученика для родителя"; invRefresh(); return; }
+  if(f.role === "student" && !picked.length){ INV.err = "Выберите класс"; invRefresh(); return; }
+  const child = f.role === "parent" ? INV.users.find(u => u.id === f.child) : null;
+  const base = f.role === "student" ? picked.map(c => ({ role: "student", cls: c, child: "" })) : [{ role: "parent", cls: "", child: f.child }];
+  const jobs = []; base.forEach(b => { for(let i = 0; i < CDX.count; i++) jobs.push(b); });
+  INV.busy = true; invRefresh();
+  jobs.reduce((p, b) => p.then(() => window.yadroApi("reg_link_make", b).then(j => {
+    LK.links.unshift({ url: location.origin + location.pathname + "?reg=" + j.token, exp: j.exp || Date.now() + 864e5, who: b.role === "student" ? "Ученик · " + cdxShort(b.cls) : "Родитель" + (child ? " · " + fioShort(child.name) : "") });
+    LK.qr = {};
+  })), Promise.resolve())
+    .then(() => tgToast(jobs.length > 1 ? "Ссылки созданы: " + jobs.length : "Ссылка создана"))
+    .catch(err => { INV.err = err.message; })
+    .then(() => { INV.busy = false; invRefresh(); });
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g("[data-lk-acc]"))){ const k = x.dataset.lkAcc; LK.acc[k] = !LK.acc[k]; invRefresh(); return; }
+  if((x = g("[data-lk-qr]"))){ const i = +x.dataset.lkQr; if(LK.qr[i]){ delete LK.qr[i]; invRefresh(); return; } const l = LK.links[i]; if(!l) return; regQr(l.url).then(sv => { LK.qr[i] = sv || `<p class="lk-0">QR не загрузился</p>`; invRefresh(); }); return; }
+});
 /* ===== коды входа: создание пачками, фильтры, продление, массовые действия ===== */
 const CDX = { flt: "act", q: "", sel: {}, picked: {}, fpick: {}, days: 7, count: 1, open: "", ext: null, extD: 0, busy: false };
 const CDX_DAYS = [[1, "1 день"], [2, "2 дня"], [7, "7 дней"], [30, "30 дней"], [90, "90 дней"]];
@@ -10218,10 +10262,9 @@ function cdxForm(f, st){
   return `<div class="cdx-fm">${cdxDd("role", INV_RN[f.role] || f.role, roleMenu)}
     ${needCls ? cdxDd("cls", cdxSum(CDX.picked, "Класс"), cdxGrid("p", CDX.picked)) : ""}
     ${f.role === "parent" ? cdxDd("child", child ? esc(fioShort(child.name)) : "Ученик", childMenu) : ""}
-    <input class="cdx-in" data-inv-f="name" placeholder="ФИО (необязательно)" value="${esc(f.name)}" maxlength="80" autocomplete="off">
-    ${cdxDd("days", dl, daysMenu)}
-    <div class="cdx-step"><button type="button" data-cdx-mn aria-label="Меньше">−</button><input data-cdx-cnt inputmode="numeric" maxlength="2" value="${CDX.count}" aria-label="Сколько кодов"><button type="button" data-cdx-pl aria-label="Больше">+</button></div>
-    <button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>Создать</button><button type="button" class="cdx-sec" data-reg-new${INV.busy ? " disabled" : ""}>Ссылка для регистрации</button></div>`;
+    ${lkLinkRole(f.role) ? "" : cdxDd("days", dl, daysMenu)}
+    <div class="cdx-step" title="${lkLinkRole(f.role) ? "Сколько ссылок" : "Сколько кодов"}"><button type="button" data-cdx-mn aria-label="Меньше">−</button><input data-cdx-cnt inputmode="numeric" maxlength="2" value="${CDX.count}" aria-label="${lkLinkRole(f.role) ? "Сколько ссылок" : "Сколько кодов"}"><button type="button" data-cdx-pl aria-label="Больше">+</button></div>
+    <button type="button" class="inv-go" data-inv-new${INV.busy ? " disabled" : ""}>${INV.busy ? "Создаю…" : lkLinkRole(f.role) ? "Создать ссылку" : "Создать код"}</button></div>`;
 }
 function cdxRows(){
   const q = CDX.q.trim().toLowerCase(), fk = Object.keys(CDX.fpick);
@@ -10308,6 +10351,7 @@ document.addEventListener("click", e => {
   if((x = g("[data-inv-cp]"))){ const t = x.dataset.invCp; if(x.classList.contains("cdx-code")){ try { navigator.clipboard.writeText(t); tgToast("Код скопирован"); } catch(err) {} return; } try { navigator.clipboard.writeText(t); x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1500); } catch(err) {} return; }
   if((x = g("[data-inv-rv]"))){ window.yadroApi("invite_revoke", { id: x.dataset.invRv }).catch(err => { INV.err = err.message; }).then(() => { INV.list = null; invLoad(true); }); return; }
   if((x = g("[data-inv-new]"))){
+    if(lkLinkRole(INV.f.role)){ lkMake(); return; }
     const f = INV.f; INV.err = ""; const picked = Object.keys(CDX.picked);
     if(f.role === "parent" && !f.child){ INV.err = "Выберите ученика для родителя"; invRefresh(); return; }
     if(f.role === "student" && !picked.length){ INV.err = "Выберите класс"; invRefresh(); return; }
@@ -10315,19 +10359,20 @@ document.addEventListener("click", e => {
     const jobs = f.role === "student" ? picked.map(c => ({ ...base, cls: c })) : [{ ...base, classes: INV_CLR.includes(f.role) ? picked : [], child: f.child }];
     INV.busy = true; invRefresh();
     jobs.reduce((p, b) => p.then(() => window.yadroApi("invite_create", b)), Promise.resolve())
-      .then(() => { INV.f.name = ""; CDX.flt = "act"; tgToast(jobs.length * (f.role === "parent" ? 1 : CDX.count) > 1 ? "Коды созданы" : "Код создан"); }).catch(err => { INV.err = err.message; }).then(() => { INV.busy = false; INV.list = null; invLoad(true); });
+      .then(() => { INV.f.name = ""; CDX.flt = "act"; LK.acc.codes = true; tgToast(jobs.length * (f.role === "parent" ? 1 : CDX.count) > 1 ? "Коды созданы" : "Код создан"); }).catch(err => { INV.err = err.message; }).then(() => { INV.busy = false; INV.list = null; invLoad(true); });
   }
 });
 
 function renderAdmUsers(el){
-  const cur = UA_SORT.find(x => x[0] === ADM.us) || UA_SORT[0];
-  el.innerHTML = admHead("Пользователи", `<button class="plus" data-adm-new><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить пользователя</button>`) + `
+  ADM.q = "";
+  el.innerHTML = admHead("Пользователи") + `
     <div class="adm-body adm-2"><div class="adm-nw">
-    <div class="ua-bar"><label class="adm-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="adm-q" type="text" inputmode="search" placeholder="Найти по имени, роли, классу" autocomplete="off" value="${esc(ADM.q)}"></label>
-      <div class="jr-dd" data-dd="us"><button type="button" class="jr-ddb" data-jr-dd="us" aria-haspopup="listbox"><span>Сортировка</span><b>${cur[1]}</b><svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button><ul class="jr-ddm jr-ddr" role="listbox">${UA_SORT.map(([k, t]) => `<li><button type="button" role="option" class="${k === cur[0] ? "on" : ""}" data-adm-us="${k}">${t}</button></li>`).join("")}</ul></div></div>
+    <section class="panel uz" id="uz"><h3 class="uz-h">Пользователи</h3>
     ${invHtml()}
-    <section class="panel reg ug-p" id="adm-groups">${admRowsHtml()}</section>
-    <p class="muted reg-note">Заблокированный пользователь не может войти в платформу и не получает уведомлений, а его данные сохраняются; доступ можно вернуть значком замка. Пока список хранится в этом браузере: когда появится сервер платформы, пользователей можно будет загружать из ЭПОС и входить по почте или через Госуслуги.</p></div>${admSide()}</div>`;
+    <div class="uz-th" aria-hidden="true"><span>Группа</span><span>Всего</span><span>Статус</span></div>
+    <div class="uz-g" id="adm-groups">${admRowsHtml()}</div>
+    <p class="uz-n">Ученик видит своё, родитель — только своего ребёнка, учитель — свои классы, завуч и директор — всю школу.</p></section>
+    </div>${admSide()}</div>`;
 }
 function admSide(){
   const us = ADM.users, tot = Math.max(1, us.length);
@@ -13755,7 +13800,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "627";
+const BUILD = "628";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14275,6 +14320,75 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 </style>
 <style id="act-short">.act-all{appearance:none;border:0;background:none;color:var(--pen);font:500 12.5px var(--f-body);cursor:pointer;padding:0 0 0 8px}.act-all:hover{text-decoration:underline}</style>
 <style id="ag-cols">@media(min-width:900px){#adm-ag .reg2 .ag-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:18px}}</style>
+<style id="uz-css">
+#admin .uz{padding:16px 16px 14px}
+.uz-h{margin:0 0 10px;font-size:15px;font-weight:500}
+#admin .lk{margin:0 0 14px;padding:12px;border-radius:18px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);display:flex;flex-direction:column;gap:8px}
+#admin .lk .cdx-fm{margin:0}
+#admin .lk .lk-n{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+#admin .lk .lk-e{margin:0;font-size:12.5px;color:var(--pen)}
+.lk-b{border-radius:14px;background:var(--surface);transition:box-shadow .18s}
+.lk-b:hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 35%,transparent)}
+.lk-b.open{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 55%,transparent)}
+.lk-bh{appearance:none;border:0;background:none;font:inherit;color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 14px;text-align:left;border-radius:14px}
+.lk-bh:focus-visible{outline:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--pen) 55%,transparent)}
+.lk-bh b{font-size:13.5px;font-weight:500}
+.lk-bh b i{font-style:normal;color:var(--muted);margin-left:4px;font-weight:500}
+.lk-bh b i.hot{color:var(--pen)}
+.lk-ch{width:16px;height:16px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;flex:none}
+.lk-b.open .lk-ch{transform:rotate(180deg);stroke:var(--pen)}
+.lk-w{padding:0 12px 12px}
+.lk-w .inv-l{margin:0}
+.lk-w .cdx-bar{margin-top:0}
+.lk-0{margin:2px 2px 0;font-size:13px;color:var(--muted)}
+.lk-ls{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lk-i{border-radius:14px;background:var(--surface);padding:8px 8px 8px 14px;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 45%,transparent)}
+.lk-it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center}
+.lk-w2 b{display:block;font-size:13px;font-weight:500;white-space:nowrap}
+.lk-w2 small{display:block;font-size:11.5px;color:var(--muted)}
+.lk-i code{font:12px/1.3 var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lk-ib{display:flex;gap:6px}
+.lk-ib button{appearance:none;border:0;font:inherit;cursor:pointer;height:30px;padding:0 12px;border-radius:99px;font-size:12.5px;color:var(--ink);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .15s,color .15s,transform .1s}
+.lk-ib button:hover,.lk-ib button.pr,.lk-ib button[aria-expanded="true"]{box-shadow:inset 0 0 0 1.5px var(--pen);color:var(--pen)}
+.lk-ib button:active{transform:scale(.96)}
+.lk-qr{margin:10px 0 4px;background:#fff;padding:10px;border-radius:14px;width:max-content}
+.lk-qr svg{display:block}
+.uz-th{display:grid;grid-template-columns:minmax(0,1fr) 72px 150px 16px;gap:10px;padding:0 14px 6px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#uz .uz-g{display:grid;gap:6px}
+#uz .uz-g>.ug{border:0;border-radius:16px;background:color-mix(in srgb,var(--ink) 3.5%,transparent);margin:0}
+#uz .uz-g>.ug>.ug-h{display:grid;grid-template-columns:minmax(0,1fr) 72px 150px 16px;gap:10px;align-items:center;padding:12px 14px;border-radius:16px;transition:box-shadow .18s,background-color .18s}
+#uz .uz-g>.ug>.ug-h:hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 40%,transparent)}
+#uz .uz-g>.ug>.ug-h>.ug-d{display:none}
+#uz .uz-g>.ug>.ug-h>b{font-size:14.5px;font-weight:500;text-align:left}
+#uz .uz-g>.ug>.ug-h>em{font-style:normal;font-size:13px;color:var(--muted);text-align:left;background:none;padding:0;min-width:0}
+#uz .uz-g>.ug.open>.ug-h{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.ug-st{justify-self:start;display:inline-flex;align-items:center;height:26px;padding:0 12px;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.ug-st.ok{color:var(--good);box-shadow:inset 0 0 0 1.5px var(--good)}
+.ug-st.w{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.lk-w .rega-i{display:flex;flex-direction:column;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.lk-w .rega-i:first-child{border-top:0;padding-top:2px}
+.lk-w .rega-top{display:flex;gap:12px;align-items:center;min-width:0}
+.lk-w .rega-top>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lk-w .rega-top b{font-size:13.5px;font-weight:500}
+.lk-w .rega-i .inv-r,.lk-w .rega-i .inv-s{display:block;margin:0;flex:none;width:auto;min-width:0;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.lk-w .rega-i>div:first-child:not(.rega-top){display:flex;flex-direction:column;gap:2px}
+.lk-w .rega-act{display:flex;gap:6px;flex-wrap:wrap}
+.lk-w .rega-act button,.lk-w .rega-ph{appearance:none;border:0;font:inherit;cursor:pointer;height:30px;padding:0 14px;border-radius:99px;font-size:12.5px;background:transparent;color:var(--good);box-shadow:inset 0 0 0 1.5px var(--good);transition:background-color .15s,color .15s,transform .1s}
+.lk-w .rega-act button:hover{background:color-mix(in srgb,var(--good) 12%,transparent)}
+.lk-w .rega-act button.x,.lk-w .rega-ph{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.lk-w .rega-act button.x:hover,.lk-w .rega-ph:hover{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen);background:transparent}
+.lk-w .rega-act button:active,.lk-w .rega-ph:active{transform:scale(.96)}
+.lk-w .rega-act button[disabled]{opacity:.5;cursor:default}
+.lk-w2{min-width:0}
+.lk-w2 b{overflow:hidden;text-overflow:ellipsis}
+.uz-n{margin:12px 2px 0;font-size:12px;line-height:1.5;color:var(--muted)}
+@media(max-width:700px){
+#admin .uz{padding:12px}
+.uz-th{display:none}
+#uz .uz-g>.ug>.ug-h{grid-template-columns:minmax(0,1fr) auto auto 16px}
+.lk-it{grid-template-columns:minmax(0,1fr) auto}.lk-i code{grid-column:1/-1;grid-row:2}
+}
+</style>
 <style id="adm-sub-css">
 #admin .adm-nav .adm-tab .adm-cnt{margin-left:2px}
 .adm-sub{display:flex;flex-wrap:wrap;gap:4px;margin:-4px 0 12px;padding:0 2px}
