@@ -13748,7 +13748,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "625";
+const BUILD = "626";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14546,9 +14546,9 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
     '#yd-reg .av label.f{margin:0;padding:9px 14px;border-radius:12px;background:#f1ede4;color:#1f1d1a;cursor:pointer;font-size:14px;transition:background-color .2s}#yd-reg .av label.f:hover{background:#e7e1d4}' +
     '#yd-reg .ck{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#3a3732;margin:4px 0 14px}#yd-reg .ck input{margin-top:3px}' +
     '#yd-reg button{width:100%;height:46px;border-radius:14px;border:0;font:500 15px system-ui,sans-serif;cursor:pointer;background:#d9663d;color:#fff;margin-bottom:8px;transition:transform .15s,filter .2s}' +
-    '#yd-reg button:hover:not(:disabled){filter:brightness(.95)}#yd-reg button:active:not(:disabled){transform:scale(.97)}#yd-reg button:disabled{opacity:.6;cursor:default}' +
+    '#yd-reg button:hover:not(:disabled){filter:brightness(.95)}#yd-reg button.x{background:#f1ede4;color:#1f1d1a}#yd-reg button:active:not(:disabled){transform:scale(.97)}#yd-reg button:disabled{opacity:.6;cursor:default}' +
     '#yd-reg .e{color:#c0392b;font-size:13.5px;min-height:18px;margin:0 0 8px}#yd-reg .ok{text-align:center;padding:12px 0}#yd-reg .ok b{display:block;font:500 22px Georgia,serif;margin-bottom:8px}' +
-    '@media(prefers-color-scheme:dark){#yd-reg{background:#141311;color:#f2efe8}#yd-reg .c{background:#1e1d1a;border-color:#2e2c28}#yd-reg input{background:#161513;color:#f2efe8;border-color:#3a3833}#yd-reg .av label.f{background:#262522;color:#f2efe8}}' +
+    '@media(prefers-color-scheme:dark){#yd-reg{background:#141311;color:#f2efe8}#yd-reg .c{background:#1e1d1a;border-color:#2e2c28}#yd-reg input{background:#161513;color:#f2efe8;border-color:#3a3833}#yd-reg .av label.f,#yd-reg button.x{background:#262522;color:#f2efe8}}' +
     '</style><div class="c"><h1>Регистрация</h1><p id="yd-reg-sub">Проверяем ссылку…</p><div id="yd-reg-body"></div></div>';
   document.body.appendChild(el);
   var body = el.querySelector("#yd-reg-body"), sub = el.querySelector("#yd-reg-sub");
@@ -14569,7 +14569,9 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
       img.src = url;
     });
   }
+  var ROLE = "", PREV = null;
   function formStep(role){
+    ROLE = role;
     sub.textContent = role === "parent" ? "Регистрация родителя" : "Регистрация ученика";
     body.innerHTML = '<div class="av"><img id="yd-reg-ava" alt="" hidden><label class="f">Выбрать фото<input id="yd-reg-f" type="file" accept="image/*" hidden></label></div>' +
       '<label for="yd-reg-n">Фамилия, имя, отчество</label><input id="yd-reg-n" type="text" autocomplete="name">' +
@@ -14578,6 +14580,8 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
       '<label class="ck"><input id="yd-reg-c" type="checkbox"><span>Я согласен(на) на обработку персональных данных для работы платформы. Текст согласия будет уточнён.</span></label>' +
       '<p class="e"></p><button id="yd-reg-go" type="button">Отправить код на почту</button>';
     var file = null, go = body.querySelector("#yd-reg-go");
+    if(PREV){ body.querySelector("#yd-reg-n").value = PREV.n; body.querySelector("#yd-reg-p").value = PREV.p; body.querySelector("#yd-reg-e").value = PREV.m; body.querySelector("#yd-reg-c").checked = true; file = PREV.file;
+      var im0 = body.querySelector("#yd-reg-ava"); im0.src = file; im0.hidden = false; body.querySelector("#yd-reg-e").focus(); }
     body.querySelector("#yd-reg-f").onchange = function(ev){
       var f = ev.target.files[0]; if(!f) return;
       avatarFrom(f).then(function(d){ file = d; var im = body.querySelector("#yd-reg-ava"); im.src = d; im.hidden = false; err(""); }).catch(function(e){ err(e.message); });
@@ -14591,15 +14595,18 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
       if(!body.querySelector("#yd-reg-c").checked) return err("Нужно согласие на обработку данных");
       go.disabled = true; err("");
       call("reg_apply", { token: token, name: n, phone: p, email: m, avatar: file })
-        .then(function(j){ codeStep(j.appId); })
+        .then(function(j){ PREV = { n: n, p: p, m: m, file: file }; codeStep(j.appId, m); })
         .catch(function(e){ err(e.message); go.disabled = false; });
     };
   }
-  function codeStep(appId){
+  function codeStep(appId, mail){
     sub.textContent = "Введите код из письма";
-    body.innerHTML = '<label for="yd-reg-code">Код из письма</label><input id="yd-reg-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">' +
-      '<p class="e"></p><button id="yd-reg-ok" type="button">Подтвердить</button>';
+    body.innerHTML = '<p>Код отправлен на ' + String(mail || "почту").replace(/[<>&"]/g, "") + '. Письмо может прийти через пару минут, загляните и в «Спам».</p>' +
+      '<label for="yd-reg-code">Код из письма</label><input id="yd-reg-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code">' +
+      '<p class="e"></p><button id="yd-reg-ok" type="button">Подтвердить</button><button id="yd-reg-back" class="x" type="button">Изменить почту</button>';
     var b = body.querySelector("#yd-reg-ok"), c = body.querySelector("#yd-reg-code"); c.focus();
+    c.onkeydown = function(e){ if(e.key === "Enter") b.click(); };
+    body.querySelector("#yd-reg-back").onclick = function(){ formStep(ROLE); };
     b.onclick = function(){
       var code = c.value.replace(/\D/g, "");
       if(code.length !== 6) return err("Введите 6 цифр");
