@@ -10601,14 +10601,14 @@ function renderAdmDocs(el){
   const list = DOCS.list.filter(d => DOCS.cat === "all" || d.cat === DOCS.cat);
   const ICO = { "Лицей": "M4 20V9l8-5 8 5v11M9 20v-6h6v6", "Оценивание": "M12 3l2.6 5.4 5.9.8-4.3 4.2 1 5.900L12 16.500 6.800 19.300l1-5.900L3.500 9.200l5.900-.8z", "Учебный процесс": "M5 4h14v16H5zM9 9h6M9 13h6M9 17h3", "Другое": "M7 4h10l3 3v13H4V4zM8 11h8M8 15h5" };
   el.innerHTML = admHead("Правила", `<button class="plus" data-doc-new><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить документ</button>`) + `
-    <div class="adm-body">
+    <div class="adm-body"><section class="panel dc-p">
       <div class="adm-filter">${[["all", "Все"], ...DOC_CATS.map(c => [c, c])].map(([id, n]) => `<button class="chip" data-doc-cat="${esc(id)}" aria-pressed="${DOCS.cat === id}">${esc(n)} <span class="cnt">${cnt(id)}</span></button>`).join("")}</div>
       <label class="adm-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.500-3.500"/></svg><input id="dc-q" type="search" placeholder="Найти в правилах" autocomplete="off" value="${esc(DOCS.q)}"></label>
       <div class="dc-list">${list.length ? list.map(d => { const open = DOCS.open === d.id, pv = (d.body.split("\n").find(l => /^-\s/.test(l)) || "").replace(/^-\s*/, ""); return `<article class="dc ${open ? "open" : ""}" data-doc="${esc(d.id)}" data-hay="${esc((d.title + " " + d.body).toLowerCase())}">
         <button type="button" class="dc-h" data-doc-t="${esc(d.id)}" aria-expanded="${open}"><span class="dc-i"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICO[d.cat] || ICO["Другое"]}"/></svg></span><span class="dc-m"><b>${esc(d.title)}</b><small>${esc(d.cat)} · обновлено ${docDate(d.upd)}</small></span><span class="dc-pv">${esc(pv)}</span><span class="chev" aria-hidden="true"></span></button>
         <div class="dc-b"><div class="dc-bi"><div class="dc-txt">${mdLite(d.body)}</div><div class="dc-a"><button type="button" class="btn" data-doc-edit="${esc(d.id)}">Изменить</button><button type="button" class="btn" data-doc-copy="${esc(d.id)}">Копировать текст</button><button type="button" class="btn" data-doc-del="${esc(d.id)}">Удалить</button></div></div></div>
       </article>`; }).join("") : `<p class="muted">В этой категории документов пока нет.</p>`}</div>
-    </div>`;
+    </section></div>`;
   docsFilter();
 }
 function docsFilter(){
@@ -13839,7 +13839,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "630";
+const BUILD = "631";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14411,6 +14411,19 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .sjd-m button:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .sjd-m button.on{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
 .sjd-m .sec-fl{transform:scale(.85)}
+.dc-p{padding:14px 14px 10px}
+.dc-p .adm-filter{margin:0 0 10px}
+.dc-p .adm-q{margin:0 0 8px;display:flex;width:100%;max-width:none}
+.dc-p .dc-list{display:block}
+.dc-p .dc{border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;border-top:1px solid var(--line)!important;margin:0!important}
+.dc-p .dc:first-child{border-top:0!important}
+.dc-p .dc-h{border-radius:14px;padding-top:12px;padding-bottom:12px}
+.dc-p .dc-h:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.dc-p .dc.open{background:color-mix(in srgb,var(--ink) 3%,transparent)!important;border-radius:14px!important}
+.dc-p .dc-i{display:none}
+.dc-p .dc-h{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 18px!important}
+.dc-p .dc-txt,.dc-p .dc-a{padding-left:16px!important}
+@media(max-width:700px){.dc-p .dc-h{grid-template-columns:minmax(0,1fr) 18px!important}}
 .act-f2 .sj-f{margin:0}
 .act-q2{height:34px;min-width:0;flex:1 1 180px;max-width:280px;border:0;outline:0;border-radius:99px;background:color-mix(in srgb,var(--ink) 5%,transparent);padding:0 14px;font:inherit;font-size:13px;color:var(--ink);transition:box-shadow .15s}
 .act-q2:focus{box-shadow:inset 0 0 0 1.5px var(--pen)}
