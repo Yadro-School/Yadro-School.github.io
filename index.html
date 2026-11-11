@@ -13839,7 +13839,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "629";
+const BUILD = "630";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13940,15 +13940,19 @@ function actBody(){
   L.slice(0, 400).forEach(a => { const d = new Date(a.t), key = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); let g = groups[groups.length - 1]; if(!g || g.key !== key){ g = { key, d, items: [] }; groups.push(g); } g.items.push(a); });
   return `<p class="act-n">Записей: <b>${LA.length}</b>${L.length > 400 ? " · показаны последние 400" : ""}${LA.length > 30 ? ` <button type="button" class="act-all" data-act-all>${ACT.all ? "Свернуть до 30" : "Все · " + LA.length}</button>` : ""}</p>` + (groups.length ? groups.map(g => `<section class="panel act-g"><h3>${g.d.getDate()} ${MG[g.d.getMonth()]} ${g.d.getFullYear()}</h3><ul class="act-l">${g.items.map(a => `<li><time>${tm(a.t)}</time><span class="act-k k-${a.k}">${esc(kn[a.k] || "Другое")}</span><span class="act-x">${esc(a.x)}</span><em>${esc(a.w)}</em></li>`).join("")}</ul></section>`).join("") : `<section class="panel"><p class="empty">По выбранным фильтрам ничего нет.</p></section>`);
 }
+function actDd(id, l, v, items){
+  const op = ACT.dd === id;
+  return `<div class="sjd ${op ? "open" : ""}"><button type="button" class="sjd-b" data-act-dd="${id}" aria-expanded="${op}"><small>${l}</small><b>${esc(v)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>${op ? `<div class="sjd-m" role="listbox">${items.map(x => `<button type="button" role="option" class="${x[2] ? "on" : ""}" ${x[3]}="${esc(x[0])}"><span>${esc(x[1])}</span></button>`).join("")}</div>` : ""}</div>`;
+}
 function renderAdmActLog(el){
   ACT.open = true;
   const who = [...new Set(ACT.list.map(a => a.w))].sort();
   el.innerHTML = admHead("Журнал действий", `<div class="adm-hb"><button type="button" class="btn" data-act-csv>Скачать CSV</button><button type="button" class="btn" data-act-clr>Очистить</button></div>`) + `
     <div class="adm-body">
-    <section class="panel act-f"><input type="text" class="tgm-in act-q" id="act-q" placeholder="Поиск по действиям и людям" autocomplete="off" value="${esc(ACT.q)}">
-      <div class="adm-filter">${ACT_PER.map(([k, t]) => `<button type="button" class="chip" data-act-per="${k}" aria-pressed="${ACT.per === k}">${t}</button>`).join("")}</div>
-      <div class="adm-filter">${ACT_TYPES.map(([k, t]) => `<button type="button" class="chip" data-act-f="${k}" aria-pressed="${ACT.f === k}">${t}</button>`).join("")}</div>
-      ${who.length > 1 ? `<div class="adm-filter"><button type="button" class="chip" data-act-who="all" aria-pressed="${ACT.who === "all"}">Все участники</button>${who.slice(0, 12).map(w => `<button type="button" class="chip" data-act-who="${esc(w)}" aria-pressed="${ACT.who === w}">${esc(w)}</button>`).join("")}</div>` : ""}
+    <section class="panel act-f act-f2"><div class="sj-f"><input type="text" class="act-q2" id="act-q" placeholder="Поиск" autocomplete="off" value="${esc(ACT.q)}">
+      ${actDd("per", "Период", (ACT_PER.find(x => x[0] === ACT.per) || ACT_PER[2])[1], ACT_PER.map(([k, t]) => [k, t, ACT.per === k, "data-act-per"]))}
+      ${actDd("f", "Действия", ACT.f === "all" ? "Все действия" : (ACT_TYPES.find(x => x[0] === ACT.f) || ["", "Все"])[1], ACT_TYPES.map(([k, t]) => [k, k === "all" ? "Все действия" : t, ACT.f === k, "data-act-f"]))}
+      ${who.length > 1 ? actDd("who", "Участники", ACT.who === "all" ? "Все участники" : ACT.who, [["all", "Все участники", ACT.who === "all", "data-act-who"]].concat(who.slice(0, 30).map(w => [w, w, ACT.who === w, "data-act-who"]))) : ""}</div>
       <p class="muted act-hint">Журнал ведётся на этом устройстве. Общий журнал всех участников появится вместе с серверной частью.</p></section>
     <div id="act-body">${actBody()}</div></div>`;
 }
@@ -13956,9 +13960,11 @@ document.addEventListener("click", e => { if(e.target.closest("[data-act-all]"))
 document.addEventListener("input", e => { if(e.target.id === "act-q"){ ACT.q = e.target.value; const b = document.getElementById("act-body"); if(b) b.innerHTML = actBody(); } });
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
-  if((x = g("[data-act-per]"))){ ACT.per = x.dataset.actPer; renderAdmActLog(document.getElementById("admin")); return; }
-  if((x = g("[data-act-f]"))){ ACT.f = x.dataset.actF; renderAdmActLog(document.getElementById("admin")); return; }
-  if((x = g("[data-act-who]"))){ ACT.who = x.dataset.actWho; renderAdmActLog(document.getElementById("admin")); return; }
+  if((x = g("[data-act-dd]"))){ ACT.dd = ACT.dd === x.dataset.actDd ? null : x.dataset.actDd; renderAdmActLog(document.getElementById("admin")); const q = document.getElementById("act-q"); return; }
+  if(ACT.dd && !g(".sjd")){ ACT.dd = null; if(document.querySelector(".act-f2")) renderAdmActLog(document.getElementById("admin")); }
+  if((x = g("[data-act-per]"))){ ACT.dd = null; ACT.per = x.dataset.actPer; renderAdmActLog(document.getElementById("admin")); return; }
+  if((x = g("[data-act-f]"))){ ACT.dd = null; ACT.f = x.dataset.actF; renderAdmActLog(document.getElementById("admin")); return; }
+  if((x = g("[data-act-who]"))){ ACT.dd = null; ACT.who = x.dataset.actWho; renderAdmActLog(document.getElementById("admin")); return; }
   if(g("[data-act-csv]")){ const q = v => '"' + String(v).replace(/"/g, '""') + '"', rows = [["Время", "Тип", "Действие", "Кто"].map(q).join(";"), ...actFiltered().map(a => [new Date(a.t).toLocaleString("ru-RU"), (Object.fromEntries(ACT_TYPES)[a.k] || a.k), a.x, a.w].map(q).join(";"))]; const bl = new Blob(["﻿" + rows.join("\n")], { type: "text/csv;charset=utf-8" }), l = document.createElement("a"); l.href = URL.createObjectURL(bl); l.download = "journal-actions.csv"; document.body.appendChild(l); l.click(); l.remove(); return; }
   if(g("[data-act-clr]")){ admConfirm("Очистить журнал действий?", "Все записи журнала на этом устройстве будут удалены без возможности вернуть.", "Очистить", () => { ACT.list.length = 0; try { localStorage.setItem(ACT_KEY, "[]"); } catch(_) {} renderAdmActLog(document.getElementById("admin")); tgToast("Журнал действий очищен"); }); return; }
 });
@@ -14405,6 +14411,11 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 .sjd-m button:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
 .sjd-m button.on{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
 .sjd-m .sec-fl{transform:scale(.85)}
+.act-f2 .sj-f{margin:0}
+.act-q2{height:34px;min-width:0;flex:1 1 180px;max-width:280px;border:0;outline:0;border-radius:99px;background:color-mix(in srgb,var(--ink) 5%,transparent);padding:0 14px;font:inherit;font-size:13px;color:var(--ink);transition:box-shadow .15s}
+.act-q2:focus{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.act-f2 .act-hint{margin:8px 2px 0}
+@media(max-width:600px){.act-l li .act-k{justify-self:start;width:max-content}}
 .sj-clr{appearance:none;border:0;font:inherit;cursor:pointer;margin-left:auto;height:34px;padding:0 14px;border-radius:99px;font-size:13px;color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1px var(--line);transition:color .15s,box-shadow .15s}
 .sj-clr:hover{color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)}
 .sj-l .sj-day{list-style:none;padding:12px 6px 4px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none!important}
