@@ -13316,7 +13316,7 @@ const SEC_FIX = {
 };
 function secFlash(sel){ const el = document.querySelector(sel); if(!el) return; el.scrollIntoView({ block: "center", behavior: "smooth" }); el.classList.remove("sec-hl"); void el.offsetWidth; el.classList.add("sec-hl"); setTimeout(() => el.classList.remove("sec-hl"), 2400); }
 function secOpenRow(id){ const b = document.querySelector('[data-sec-o="' + id + '"]'); if(!b) return; if(!b.parentElement.classList.contains("open")) b.click(); secFlash('[data-sec-o="' + id + '"]'); }
-function secPaint(){ const w = document.getElementById("sec-scan-w"); if(w) w.innerHTML = secScanHtml(); const b = document.querySelector("[data-sec-scan]"); if(b){ b.disabled = SEC.busy; b.classList.toggle("busy", SEC.busy); b.textContent = SEC.busy ? "Проверяю…" : "Проверить снова"; } }
+function secPaint(){ try { if(document.getElementById("sj-sa")){ sjRedraw("sj-sa", sjSa()); sjRedraw("sj-ck", sjChecks()); } } catch(e) {} }
 function secRun(){
   if(SEC.busy) return; SEC.busy = true; SEC.step = 0; SEC.res = []; SEC.cur = SEC_STEPS[0][1];
   const w = document.getElementById("sec-scan-w"); if(w) w.classList.add("open"); secPaint();
@@ -13587,30 +13587,189 @@ document.addEventListener("click", e => {
   if(pk){ const [k, v] = pk.dataset.secPick.split("|"); if(k === "tm") SEC_T.tm = v; else if(k === "r") SEC_T.f = v; else SEC_T.cc = v; SEC_T.dd = null; SEC_T.fo = null; redraw(); return; }
   if(SEC_T.dd && !e.target.closest(".sjd")){ SEC_T.dd = null; redraw(); }
 });
+/* ---- Безопасность: разметка и поведение из макета, данные настоящие ---- */
+const SJ = { t: null, dd: null, tm: "all", r: "all", cc: "", fo: null, zv: 24, ck: null, pt: {}, sa: false, cols: 0 };
+const SJ_CHV = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+const SJ_PT = {   // заголовок, что даёт, шаги, промпт для Claude
+  cf: ["Защита от DDoS и ботов", "Фильтрует ботов и всплески трафика.", ["Завести аккаунт Cloudflare", "Добавить домен yadro-ed.ru", "Сменить DNS-серверы у регистратора"], "Помоги подключить Cloudflare к сайту yadro-ed.ru для защиты от DDoS и ботов. Объясни по шагам, что нажимать, без жаргона."],
+  roles: ["Права по ролям", "Каждая роль видит только свои данные.", ["Описать роли: ученик, родитель, учитель, админ", "Проверять роль на сервере в каждом запросе", "Проверить вручную под каждой ролью"], "Проверь код сайта yadro-ed.ru и добавь проверку роли на сервере в каждом запросе, чтобы ученик, родитель, учитель и админ видели только свои данные. Покажи, какие файлы изменил."],
+  "2fa": ["Вход админа по ключу доступа", "Второй шаг входа для администраторов.", ["Включить ключ доступа каждому админу", "Запретить вход админа без ключа", "Выдать резервный способ входа"], "Допиши вход администраторов yadro-ed.ru по ключу доступа (passkey): включить для всех админов, запретить вход без ключа, оставить резервный способ. Объясни шаги."],
+  lock: ["Закрытый вход", "Сервер пускает только владельца, чужие не могут войти и создать аккаунт.", ["Отключить свободную регистрацию", "Входить только по приглашению", "Проверить, что чужой адрес не проходит"], "Сделай вход на yadro-ed.ru закрытым: регистрация только по приглашению, чужие адреса не проходят. Покажи, что изменил и как проверить."],
+  rev: ["Выход со всех устройств", "Завершает все сессии, если пропал телефон.", ["Добавить кнопку в профиль", "Сбрасывать все сессии при нажатии", "Показывать, сколько устройств вышло"], "Добавь на yadro-ed.ru кнопку «Выйти на всех устройствах», которая сбрасывает все сессии пользователя. Покажи изменения."],
+  bk: ["Резервные копии базы", "Автокопии базы по расписанию.", ["Включить ежедневную копию", "Хранить 30 дней", "Раз в месяц проверять восстановление"], "Настрой ежедневные автоматические резервные копии базы yadro-ed.ru с хранением 30 дней и объясни, как проверить восстановление."],
+  ai: ["Вход для ИИ и новостей", "Запросы к ИИ и новостям только для вошедших.", ["Требовать вход в обоих запросах", "Отдавать 401 без входа", "Проверить без входа вручную"], "Закрой на yadro-ed.ru запросы к ИИ-прокси и новостям: пускать только вошедших, без входа отдавать 401. Покажи изменения."],
+  hdr: ["Защитные заголовки", "Браузер не грузит чужие скрипты.", ["Добавить заголовок CSP", "Разрешить только свой домен", "Проверить, что сайт не сломался"], "Добавь на yadro-ed.ru защитные заголовки, включая CSP, разрешив скрипты только со своего домена. Проверь, что сайт работает."],
+  alert: ["Тревога на почту или в Telegram", "Сообщает о подозрительных входах и ошибках.", ["Выбрать канал: почта или Telegram", "Задать, что считать тревогой", "Отправить тестовое сообщение"], "Настрой на yadro-ed.ru оповещения владельцу о подозрительных входах и ошибках (почта или Telegram) и отправь тестовое сообщение."],
+  lbx: ["Секреты в Lockbox", "Пароли и ключи в защищённом хранилище.", ["Перенести ключи из кода в Lockbox", "Подключить чтение секретов при запуске", "Сменить скомпрометированные ключи"], "Помоги перенести пароли и ключи yadro-ed.ru из кода в Yandex Lockbox и подключить чтение секретов при запуске. Объясни шаги."],
+  geo: ["Блокировка стран и IP", "Закрывает доступ из стран, где нет учеников.", ["Выбрать страны, которые оставить", "Включить правило в Cloudflare", "Добавить исключение для своего IP"], "Настрой блокировку доступа к yadro-ed.ru из стран, где нет учеников, оставив Россию и мой IP. Объясни, где это включается."],
+  audit: ["Журнал действий админов", "Кто и что менял, с датой и временем.", ["Записывать каждое изменение настроек", "Хранить автора, дату и время", "Показать журнал в админке"], "Добавь на yadro-ed.ru журнал действий администраторов: кто, что и когда менял. Покажи его в админке."],
+  rl: ["Лимит запросов и блок подбора кода", "Коды нельзя перебирать, после попыток вход блокируется.", [], ""],
+  cors: ["Запросы только с вашего домена", "Сайт принимает запросы только с yadro-ed.ru.", [], ""],
+  https: ["HTTPS", "Весь трафик шифруется.", [], ""]
+};
+const sjFlag = cc => /^[A-Z]{2}$/.test(cc || "") ? `<img src="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/7.2.3/flags/4x3/${cc.toLowerCase()}.svg" alt="" width="28" height="21" loading="lazy" style="display:block;width:28px;height:21px;object-fit:cover;border-radius:5px" onerror="this.replaceWith(document.createTextNode('${cc}'))">` : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>';
+const sjPath = pts => { let d = "M" + pts[0][0].toFixed(2) + "," + pts[0][1].toFixed(2); for(let q = 1; q < pts.length; q++){ const cx = ((pts[q - 1][0] + pts[q][0]) / 2).toFixed(2); d += " C" + cx + "," + pts[q - 1][1].toFixed(2) + " " + cx + "," + pts[q][1].toFixed(2) + " " + pts[q][0].toFixed(2) + "," + pts[q][1].toFixed(2); } return d; };
+function sjSpark(v, i, col){
+  if(!v || v.length < 2) return "";
+  const mx = Math.max(...v) || 1, n = v.length, pts = v.map((x, k) => [k * (100 / (n - 1)), 26 - (x / mx) * 22 - 2]), d = sjPath(pts);
+  const hits = pts.map((p, k) => `<rect class="hit" x="${(p[0] - 50 / (n - 1)).toFixed(2)}" y="0" width="${(100 / (n - 1)).toFixed(2)}" height="30" data-k="${k}"/>`).join("");
+  return `<svg class="zsp" viewBox="0 0 100 30" preserveAspectRatio="none" data-sj-sp="${i}" data-v="${v.join(",")}" data-c="${col}"><path class="ar" d="${d} L100,28 L0,28 Z" fill="${col}"/><path class="ln" d="${d}" stroke="${col}"/>${hits}</svg>`;
+}
+const sjKv = L => `<div class="zkv">${L.map(x => `<div${x[2] ? ` data-sj-go="${x[2]}" tabindex="0"` : ""}><small>${esc(x[0])}</small><b>${esc(String(x[1]))}</b></div>`).join("")}</div>`;
+const sjDm = t => { const d = new Date(t), p = x => String(x).padStart(2, "0"); return p(d.getDate()) + "." + p(d.getMonth() + 1) + ", " + p(d.getHours()) + ":" + p(d.getMinutes()); };
+function sjTiles(D){
+  const days = D ? D.days : null, t0 = days ? days[0] : null, ev = k => (t0 && t0.ev[k]) || 0;
+  const denied = t0 ? secSum(t0, SEC_DENY) : 0, ok = ev("login_ok"), all = t0 ? Math.max(denied + ok, t0.ev.attempt != null ? t0.ev.attempt : denied + ok + ev("code_send")) : 0;
+  const ser = f => days ? days.slice().reverse().map(f) : null, att = d => d.ev.attempt != null ? d.ev.attempt : secSum(d, SEC_DENY) + (d.ev.login_ok || 0) + (d.ev.code_send || 0);
+  const top = SEC_DENY.map(k => [k, ev(k)]).filter(x => x[1]).sort((x, y) => y[1] - x[1]);
+  const lbl = k => (SEC_EVL[k] || k).replace(/:.*$/, "");
+  const al = [];
+  if(t0){ if(ev("brute_block")) al.push(["Подбор кода", ev("brute_block") + " " + plural(ev("brute_block"), ["раз", "раза", "раз"])]); if(ev("unknown_action") >= 20) al.push(["Сканер", ev("unknown_action") + " запросов"]); if(ev("code_limit")) al.push(["Лимит кодов", "сработал"]); if(D.feed && D.feed.some(f => f.many)) al.push(["Перебор почт", "с одного IP"]); }
+  const fd = (D && D.feed) || [], lastOk = fd.find(f => f.ev === "login_ok");
+  const how = { code_verify: "код из почты", ya_login: "Яндекс ID", pk_auth_finish: "ключ доступа" };
+  const nextChk = SEC.at ? Math.max(1, 60 - Math.floor((Date.now() - SEC.at) / 6e4)) : null;
+  const T = [
+    ["state", "Состояние", t0 ? (al.length ? "Тревога" : "Спокойно") : "—", t0 ? (al.length ? "причин: " + al.length : "тревог нет") : "нет данных", al.length || !t0 ? "" : "ok",
+      al.length ? al : [["Последняя", SEC.at ? secAt() : "—", "chk"], ["Ошибок", JS_ERRS.length, "err"], ["Проверка", nextChk ? (nextChk >= 60 ? "через 1 ч" : "через " + nextChk + " мин") : "скоро", "chk"]], ser(att)],
+    ["all", "Попыток зайти", t0 ? all : "—", t0 ? (all ? "из них отказано " + denied : "сегодня тихо") : "", "",
+      [["Отказано", denied + " из " + all]].concat(top.slice(0, 2).map(x => [lbl(x[0]), x[1]])).concat(top.length < 2 ? [["Откуда стучались", t0 && t0.ips ? t0.ips + " IP" : "—"]] : []).slice(0, 3), ser(att)],
+    ["deny", "Отказано", t0 ? denied : "—", t0 ? (top.length ? top.slice(0, 2).map(x => lbl(x[0]).toLowerCase() + " " + x[1]).join(", ") : "отказов нет") : "", denied ? "e" : "",
+      top.slice(0, 2).map(x => [lbl(x[0]), x[1]]).concat([["Заблокировано", denied + " из " + denied]]).slice(0, 3), ser(d => secSum(d, SEC_DENY))],
+    ["ok", "Успешных входов", t0 ? ok : "—", t0 ? (ok ? "вошёл владелец" : "входов не было") : "", "",
+      [["Последний", lastOk ? sjDm(lastOk.t) : "—"], ["Способ", lastOk ? how[lastOk.a] || "код из почты" : "—"], ["Код живёт", "10 мин"]], ser(d => d.ev.login_ok || 0)],
+    ["who", "Людей на сайте", t0 ? t0.act : "—", D ? "всего аккаунтов " + D.users.total : "", "",
+      [["За сутки", t0 ? t0.act : "—"], ["Учеников", D && D.users.roles ? D.users.roles.student || 0 : "—"], ["Всего аккаунтов", D ? D.users.total : "—"]], ser(d => d.act || 0)]
+  ];
+  return `<div class="jg"><div class="jl">${T.map(([id, l, b, em, cls, kv, sv], i) => `<div class="js ${cls} ${SJ.t === id ? "open" : ""}" data-sj-t="${id}" tabindex="0"><small>${l}</small><b>${esc(String(b))}</b><em>${esc(em)}</em>${sjSpark(sv, i, cls === "ok" ? "#4C9A6A" : "#D9643B")}<div class="${cls === "ok" ? "zw" : "zhp"}">${sjKv(kv)}</div></div>`).join("")}</div></div>`;
+}
+function sjRows(D){
+  const feed = D && D.feed ? D.feed : [], t0 = new Date(); t0.setHours(0, 0, 0, 0); const d0 = +t0;
+  const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
+  const inTm = f => SJ.tm === "all" ? true : SJ.tm === "h" ? f.t >= Date.now() - 36e5 : SJ.tm === "d" ? f.t >= d0 : SJ.tm === "y" ? f.t >= d0 - 864e5 && f.t < d0 : f.t >= d0 - 6 * 864e5;
+  const byTm = items.filter(x => inTm(x.f)), byCc = byTm.filter(x => !SJ.cc || (x.f.cc || "-") === SJ.cc);
+  const list = byCc.filter(x => SJ.r === "no" ? x.w.r === "bad" : SJ.r === "ok" ? x.w.r === "ok" : true);
+  const cls = { bad: "d", ok: "o", mid: "n" }, bg = { bad: "Отказано", ok: "Вошли", mid: "Обычное" }, dec = { d: "Заблокировано", o: "Пропущен", n: "Принято" };
+  let last = "", h = SJ.cc ? `<li class="jfx" data-sj-x>Только страна: ${sjFlag(SJ.cc === "-" ? "" : SJ.cc)} ✕ Сбросить</li>` : "";
+  list.forEach(({ f, w, k }) => { const c = cls[w.r], dl = secDayLbl(f.t), cn = SJ.cc === "-" || !f.cc ? "Не определена" : secCountry(f.cc), tm = secHm(f.t).replace(/^\d\d\.\d\d /, "");
+    if(dl !== last){ last = dl; h += `<li class="jgh">${esc(dl)}</li>`; }
+    const cell = (t, v, l, b) => `<button type="button" class="jcell" data-sj-cell="${t}|${esc(v)}"><small>${l}</small><b>${esc(b)}</b></button>`;
+    h += `<li class="j-${c} ${SJ.fo === k ? "open" : ""}" data-sj-j="${esc(k)}"><span class="cc" title="${esc(f.cc || "")}">${sjFlag(f.cc)}</span><div><div class="ip">${esc(f.ip || "IP не определён")}</div><div class="ct">${esc([f.cc ? secCountry(f.cc) : "", f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</div></div><span class="ev">${esc(w.t)}${f.n > 1 ? " ×" + f.n : ""}${w.many ? " · перебор почт" : ""}</span><span class="bg">${bg[w.r]}</span><span class="tm">${tm}</span><div class="jd"><div class="jdi"><div class="jc4">${cell("cc", f.cc || "-", "Страна", cn)}${cell("dec", c, "Решение", dec[c])}${cell("cp", sjDm(f.t), "Время", sjDm(f.t))}${f.who ? cell("cp", f.who, "Кто", f.who) : cell("cp", f.ip || "", "Адрес", f.ip || "—")}</div><div class="jac">${f.ip ? `<button type="button" class="jb" data-sj-cp="${esc(f.ip)}">Скопировать адрес</button>` : ""}</div></div></div></li>`; });
+  if(!list.length) h += `<li class="zempty" style="padding:10px;color:var(--mut)">${D ? (items.length ? "По этим фильтрам ничего нет" : "Записей нет") : "Нет данных"}</li>`;
+  return { h, byTm, byCc, nBad: byCc.filter(x => x.w.r === "bad").length, nOk: byCc.filter(x => x.w.r === "ok").length };
+}
+function sjJournal(D){
+  const R = sjRows(D), TN = { all: "Любое время", h: "Последний час", d: "Сегодня", y: "Вчера", w: "7 дней" }, RN = { all: "Все", no: "Отказанные", ok: "Вошедшие" };
+  const ccs = {}; R.byTm.forEach(x => { const c = x.f.cc || "-"; ccs[c] = (ccs[c] || 0) + 1; });
+  const dd = (id, n, l, v, m) => `<div class="jdd ${SJ.dd === id ? "open" : ""}" id="${n}"><button type="button" class="jfh" data-sj-dd="${id}"><small>${l}</small><b>${esc(v)}</b>${SJ_CHV}</button><div class="jm"${n === "jp2" ? ' id="jmt"' : n === "jp3" ? ' id="jmc"' : ""}>${m}</div></div>`;
+  const tmM = Object.entries(TN).map(([k, v]) => `<button type="button" data-sj-pick="tm|${k}"${SJ.tm === k ? ' class="on"' : ""}>${v}</button>`).join("");
+  const rM = [["all", R.byCc.length], ["no", R.nBad], ["ok", R.nOk]].map(([k, n]) => `<button type="button" data-sj-pick="r|${k}"${SJ.r === k ? ' class="on"' : ""}>${RN[k]}<i>${n}</i></button>`).join("");
+  const cM = `<button type="button" data-sj-pick="cc|"${!SJ.cc ? ' class="on"' : ""}>Все страны</button>` + Object.entries(ccs).sort((a, b) => b[1] - a[1]).map(([c, n]) => `<button type="button" data-sj-pick="cc|${c}"${SJ.cc === c ? ' class="on"' : ""}><span class="fm">${sjFlag(c === "-" ? "" : c)}</span>${esc(c === "-" ? "Не определена" : secCountry(c))}</button>`).join("");
+  return `<section class="ac jr" id="sj-jr"><div class="ac-h"><h3>Журнал подключений</h3><span class="cn2">${D ? (D.geo === false ? "страны отключены" : "почты скрыты") : ""}</span></div>
+<div class="jf" id="jf">${dd("tm", "jp2", "Время", TN[SJ.tm], tmM)}${dd("r", "jp1", "Результат", RN[SJ.r], rM)}${D && D.geo !== false ? dd("cc", "jp3", "Страна", SJ.cc ? (SJ.cc === "-" ? "Не определена" : secCountry(SJ.cc)) : "Все страны", cM) : ""}${D && D.feed && D.feed.length ? '<button type="button" class="jc" data-sec-clr="log">Очистить журнал</button>' : ""}</div>
+<ul class="jx" id="jx">${R.h}</ul></section>`;
+}
+function sjChartData(D){
+  const bad = f => secWhat(f).r === "bad", n = f => f.n || 1, out = [];
+  if(SJ.zv === 24){ const now = new Date(); now.setMinutes(0, 0, 0); const h0 = +now - 23 * 36e5;
+    for(let i = 0; i < 24; i++) out.push({ ok: 0, no: 0, l: String(new Date(h0 + i * 36e5).getHours()).padStart(2, "0") + ":00", t: h0 + i * 36e5 });
+    ((D && D.feed) || []).forEach(f => { const i = Math.floor((f.t - h0) / 36e5); if(i < 0 || i > 23) return; if(f.ev === "login_ok") out[i].ok += n(f); else if(bad(f)) out[i].no += n(f); });
+  } else ((D && D.days) || []).slice().reverse().forEach(d => { const m = /(\d+)-(\d+)-(\d+)/.exec(d.d || ""), mo = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]; out.push({ ok: d.ev.login_ok || 0, no: secSum(d, SEC_DENY), l: m ? (+m[3]) + " " + mo[+m[2] - 1] : "" }); });
+  return out;
+}
+function sjChartHtml(){
+  return `<section class="ac zvc" id="zvc"><div class="ac-h"><h3>Входы на сайт</h3><div class="zvt" id="zvt"><button type="button" ${SJ.zv === 24 ? 'class="on"' : ""} data-sj-zv="24">24 часа</button><button type="button" ${SJ.zv === 7 ? 'class="on"' : ""} data-sj-zv="7">7 дней</button></div></div>
+<div class="zvs"><div><small>Успешных</small><b id="zv1">0</b></div><div><small>Отказано</small><b id="zv2">0</b></div><div><small>Пик</small><b id="zv3">0</b></div><div class="zvl"><span class="a"><i></i>Входы</span><span class="b"><i></i>Отказано</span></div></div>
+<div class="zvw"><div class="zvyl" id="zyl"></div><div class="zvg" id="zvb"></div></div><div class="zvx" id="zx"></div><div class="zvtip" id="zvtip" hidden></div></section>`;
+}
+function sjChartDraw(){
+  const G = document.getElementById("zvb"); if(!G) return;
+  const D = sjChartData(SECSTAT.data), n = D.length, Wd = 800, H = 150, pad = 8;
+  if(n < 2){ G.innerHTML = '<p class="mk-nodata" style="padding:40px 0;text-align:center;color:var(--mut)">Нет данных</p>'; return; }
+  let mx = 1, so = 0, sn = 0, pk = 0; D.forEach(x => { mx = Math.max(mx, x.ok, x.no); so += x.ok; sn += x.no; pk = Math.max(pk, x.ok + x.no); }); mx = Math.max(4, Math.ceil(mx * 1.1 / 4) * 4);
+  const X = i => pad + i * (Wd - 2 * pad) / (n - 1), Y = v => H * (1 - v / mx), po = D.map((x, i) => [X(i), Y(x.ok)]), pn = D.map((x, i) => [X(i), Y(x.no)]);
+  G.innerHTML = `<svg viewBox="0 0 ${Wd} ${H}" preserveAspectRatio="none"><defs><linearGradient id="zga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--ok)" stop-opacity=".28"/><stop offset="1" stop-color="var(--ok)" stop-opacity="0"/></linearGradient></defs><path d="${sjPath(po)} L${X(n - 1)},${H} L${X(0)},${H} Z" fill="url(#zga)"/><path d="${sjPath(po)}" class="la"/><path d="${sjPath(pn)}" class="lb"/></svg><div class="zcx" hidden></div><i class="zdt a" hidden></i><i class="zdt b" hidden></i>`;
+  document.getElementById("zyl").innerHTML = [4, 3, 2, 1, 0].map(k => `<span style="top:${(4 - k) * 25}%">${Math.round(mx * k / 4)}</span>`).join("");
+  document.getElementById("zx").innerHTML = [0, Math.floor(n / 3), Math.floor(n * 2 / 3), n - 1].map(i => `<span>${D[i].l}</span>`).join("");
+  document.getElementById("zv1").textContent = so; document.getElementById("zv2").textContent = sn; document.getElementById("zv3").textContent = pk + (SJ.zv === 24 ? " в час" : " в день");
+  Object.assign(G, { _d: D, _n: n, _mx: mx, _Y: Y, _X: X, _W: Wd, _H: H });
+}
+function sjSa(){
+  const res = SEC.res || [], n = SEC_STEPS.length, okL = res.filter(r => r.st === "ok").map(r => r.l.toLowerCase()), bad = res.filter(r => r.st !== "ok").map(r => r.l.toLowerCase());
+  const txt = res.length ? `Проверено ${res.length} ${plural(res.length, ["пункт", "пункта", "пунктов"])}${okL.length ? ": в порядке " + okL.join(", ") : ""}.${bad.length ? " " + (bad.length === 1 ? "Предупреждение" : "Предупреждения") + ": " + bad.join(", ") + "." : " Замечаний нет."}` : "Проверки ещё не было. Нажмите «Проверить сейчас».";
+  return `<section class="ac sa ${SJ.sa ? "open" : ""}" id="sj-sa" data-sj-sa><div class="sa-i"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="sa-t"><b>Агент безопасности</b><small>${SEC.busy ? esc(SEC.cur) + "… " + SEC.step + " из " + n : "Проверяет сайт сам каждый час"}</small></div><time>${SEC.busy ? "сейчас" : SEC.at ? secAt() : "—"}</time><button type="button" class="sa-b" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button><div class="zdx"><div>${esc(txt)}</div></div></section>`;
+}
+function sjChecks(){
+  const res = SEC.res || [], ok = res.filter(r => r.st === "ok"), bad = res.filter(r => r.st !== "ok"), cur = ok.find(r => r.id === SJ.ck);
+  const nw = bad.filter(r => r.st === "warn").length, nf = bad.filter(r => r.st === "fail").length;
+  return `<section class="ac" id="sj-ck"><div class="ac-h"><h3>Проверки</h3><div class="sm">${res.length ? `<span class="g">${ok.length} в порядке</span>` : ""}${nw ? `<span class="w">${nw} ${plural(nw, ["предупреждение", "предупреждения", "предупреждений"])}</span>` : ""}${nf ? `<span class="w">${nf} опасно</span>` : ""}</div></div>
+<div class="cks" id="zcks">${res.length ? ok.map(r => `<span class="ck ${SJ.ck === r.id ? "on" : ""}" data-sj-ck="${r.id}"><i></i>${esc(r.l)}</span>`).join("") : '<span class="mk-nodata" style="color:var(--mut)">Проверки ещё не было</span>'}</div><div class="zckd" id="zckd" ${cur ? "" : "hidden"}>${cur ? esc(cur.t) : ""}</div>
+${bad.length ? `<ul class="wr">${bad.map(r => `<li><div><b>${esc(r.l)}</b><small>${esc(r.t)}</small></div>${r.fix ? `<button type="button" data-sec-fix="${r.id}">${esc(r.fix)}</button>` : ""}</li>`).join("")}</ul>` : ""}</section>`;
+}
+function sjPlan(){
+  const K = { crit: ["c", "Критично"], imp: ["i", "Важно"], nice: ["d", "Желательно"] }, T = { n: "Не подключено", p: "Частично", y: "Подключено" }, rank = { crit: 0, imp: 1, nice: 2 };
+  const L = SEC_C.map((x, i) => [x, i]).sort((a, b) => (secState(a[0][2]) === "ok") - (secState(b[0][2]) === "ok") || rank[a[0][3]] - rank[b[0][3]] || a[1] - b[1]).map(x => x[0]);
+  const cols = innerWidth <= 600 ? 1 : innerWidth <= 1000 ? 2 : 3, C = Array(cols).fill(""); SJ.cols = cols;
+  L.forEach(([id, l, c, pr], i) => { const P = SJ_PT[id] || [l, "", [], ""], st = secState(c), s = st === "ok" ? "y" : st === "part" ? "p" : "n", ok = s === "y";
+    C[i % cols] += `<div class="pt p${K[pr][0]} st-${s} ${SJ.pt[id] ? "open" : ""}" data-i="${id}"><button type="button" class="pt-h" data-sj-pt="${id}"><span class="pt-k">${K[pr][1]}</span><b>${esc(P[0])}</b><span class="pt-s"><i></i>${T[s]}</span></button><div class="pt-d"><div class="pt-i"><p>${esc(P[1])}</p>${ok ? "" : `<ol>${P[2].map(t => `<li>${esc(t)}</li>`).join("")}</ol><div class="pt-p"><small>Промпт для Claude</small><span>${esc(P[3])}</span></div><button type="button" class="pt-c" data-sj-ptc="${id}">Скопировать промпт</button>`}</div></div></div>`; });
+  const off = L.filter(x => secState(x[2]) !== "ok").length;
+  return `<section class="ac" id="sj-pl"><div class="ac-h"><div><h3>Что подключить для защиты</h3><div class="sub2">Сверху самое важное, что ещё не сделано</div></div><span class="cn2">${off ? `не закрыто: ${off} из ${SEC_C.length}` : "всё закрыто"}</span></div><div class="pg4" id="pg4" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${C.map(h => `<div class="pcol">${h}</div>`).join("")}</div></section>`;
+}
 function renderAdmSec(el){
   SEC.el = el; secFetch(false); tgFetch(false);
-  const D = SECSTAT.data, days = D ? D.days : null, t0 = days ? days[0] : null;
-  const off = SEC_C.filter(x => secState(x[2]) !== "ok").length, rank = { crit: 0, imp: 1, nice: 2 };
-  const plan = SEC_C.map((x, i) => [x, i]).sort((a, b) => (secState(a[0][2]) === "ok") - (secState(b[0][2]) === "ok") || rank[a[0][3]] - rank[b[0][3]] || a[1] - b[1]).map(x => x[0]);
-  const at = SEC.at ? `${String(SEC.at.getHours()).padStart(2, "0")}:${String(SEC.at.getMinutes()).padStart(2, "0")}` : "ещё не было";
-  const row = (id, l, mid, st, stT, body) => `<div class="sec-r ${SEC.open === id ? "open" : ""}"><button type="button" class="sec-rh" data-sec-o="${id}" aria-expanded="${SEC.open === id}"><i class="sec-dot ${st}"></i><b>${l}</b>${mid}<em class="sec-chip ${st}">${stT}</em><svg class="sec-c" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="sec-rb"><div>${body}</div></div></div>`;
+  const D = SECSTAT.data, t0 = D && D.days ? D.days[0] : null, off = SEC_C.filter(x => secState(x[2]) !== "ok").length;
   const alarm = !!(t0 && (t0.ev.brute_block || t0.ev.code_limit || (t0.ev.unknown_action || 0) >= 20));
-  const info = D ? `Данные с сервера за сутки по времени Перми. ${D.lock ? "Вход сейчас закрыт для всех, кроме владельца. " : "Вход открыт. "}Считаются с момента обновления сервера, цифры приблизительные.${D.warn && D.warn.length ? " Не всё удалось прочитать: " + esc(D.warn.join("; ")) : ""}`
-    : SECSTAT.err ? `${esc(SECSTAT.err)}. ${SECSTAT.at ? "Последняя попытка в " + new Date(SECSTAT.at).toLocaleTimeString("ru-RU") + ". " : ""}<button type="button" class="link" data-sec-retry>Повторить</button>` : "Загружаем данные с сервера…";
-  el.innerHTML = admHead("Безопасность", `<span class="sec-st ${alarm || off ? "warn" : "ok"}"><i></i>${alarm ? "Есть тревога" : off ? "Защищено частично" : "Всё под защитой"}</span>`) + `
-    <div class="sj-note"><p class="sec-demo" id="sec-live">${info}</p>${D ? `<button type="button" class="sj-rc" data-sec-clr="cnt" title="Сбросить счётчики" aria-label="Сбросить счётчики"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>` : ""}</div>
-    <div class="sec-tiles st5w" id="sec-tiles">${secTiles(D, t0, days)}</div>
-    <section class="panel sec-jr" id="sec-jr">${secJr()}</section>
-    ${secLogins(D)}
-    <section class="panel sec-ag"><span class="sec-ai"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
-      <div><b>Агент безопасности</b><span>Проверяет сайт сам каждый час</span></div><span class="sec-at" data-tip="Последняя проверка|${SEC.auto ? "Автоматическая" : "Запущена вручную"}">${SEC.at ? at : "—"}</span>
-      <button type="button" class="btn sec-run ${SEC.busy ? "busy" : ""}" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button></section>
-    <div class="sec-scan-w ${SEC.busy || SEC.res ? "open" : ""}" id="sec-scan-w">${secScanHtml()}</div>
-
-    <section class="panel"><div class="panel-head"><h2>Что подключить для защиты</h2><span class="aside">${off ? `не закрыто: ${off} из ${SEC_C.length}` : "всё закрыто"}</span></div>
-      <p class="sec-demo">Совет агента безопасности. Сверху самое важное, что ещё не сделано.</p>
-      <div class="sec-cn">${plan.map(([id, l, c, pr, why, how]) => { const st = secState(c), P = SEC_PR[pr]; return row(id, l, `<em class="sec-chip ${P[1]} sec-pr">${P[0]}</em>`, st === "ok" ? "ok" : st === "part" ? "warn" : "off", st === "ok" ? "подключено" : st === "part" ? "частично" : "не подключено", `<p><span>Зачем</span>${esc(why)}</p><p><span>Как</span>${esc(how)}</p>`); }).join("")}</div></section>`;
+  const info = D ? `Данные за сутки по времени Перми. ${D.lock ? "Вход закрыт, пускаем только владельца." : "Вход открыт."} Цифры приблизительные.${D.warn && D.warn.length ? " Не всё прочитано: " + esc(D.warn.join("; ")) : ""}`
+    : SECSTAT.err ? `${esc(SECSTAT.err)}. <button type="button" class="link" data-sec-retry>Повторить</button>` : "Загружаем данные с сервера…";
+  el.innerHTML = admHead("Безопасность", "") + mkWrap("sec", `<div id="ap-sec">
+<div class="sj-note"><span>${info}</span>${D ? `<button type="button" class="sj-r" data-sec-clr="cnt" title="Сбросить счётчики" aria-label="Сбросить счётчики"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>` : ""}<span class="sj-st">${alarm ? "Есть тревога" : off ? "Защищено частично" : "Всё под защитой"}</span></div>
+${sjTiles(D)}
+${sjJournal(D)}
+${sjChartHtml()}
+${sjSa()}
+${sjChecks()}
+${sjPlan()}
+</div>`);
+  sjChartDraw();
 }
+function sjRedraw(id, html){ const o = document.getElementById(id); if(o){ const t = document.createElement("div"); t.innerHTML = html; o.replaceWith(t.firstElementChild); } }
+function sjTip(){ let t = document.getElementById("zspt"); if(!t){ t = document.createElement("div"); t.id = "zspt"; t.hidden = true; document.body.appendChild(t); const d = document.createElement("i"); d.id = "zspd"; d.hidden = true; document.body.appendChild(d); } return [t, document.getElementById("zspd")]; }
+document.addEventListener("mousemove", e => {
+  const r = e.target.closest && e.target.closest(".mk-sec .zsp .hit");
+  if(r){ const sv = r.closest(".zsp"), v = sv.dataset.v.split(",").map(Number), k = +r.dataset.k, n = v.length, mx = Math.max(...v) || 1, rc = sv.getBoundingClientRect(), x = rc.left + rc.width * (k * (100 / (n - 1)) / 100), y = rc.top + rc.height * ((26 - (v[k] / mx) * 22 - 2) / 30);
+    const [t, d] = sjTip(), days = SECSTAT.data && SECSTAT.data.days ? SECSTAT.data.days.slice().reverse() : [], m = days[k] && /(\d+)-(\d+)-(\d+)/.exec(days[k].d || ""), LB = ["Попыток зайти", "Попыток зайти", "Отказано", "Успешных входов", "Людей на сайте"];
+    t.innerHTML = `<b>${m ? m[3] + "." + m[2] : ""}</b> · ${LB[+sv.dataset.sjSp]}: ${v[k]}`; t.hidden = false; t.style.left = x + "px"; t.style.top = (y - 14) + "px"; d.style.left = x + "px"; d.style.top = y + "px"; d.style.borderColor = sv.dataset.c; d.hidden = false; return; }
+  const t = document.getElementById("zspt"); if(t && !t.hidden && !(e.target.closest && e.target.closest(".mk-sec .zsp"))){ t.hidden = true; document.getElementById("zspd").hidden = true; }
+  const G = e.target.closest && e.target.closest("#zvb"), Tp = document.getElementById("zvtip");
+  if(G && G._d){ const D = G._d, gr = G.getBoundingClientRect(), n = G._n, fx = (e.clientX - gr.left) / gr.width; let i = Math.round((fx * G._W - 8) / ((G._W - 16) / (n - 1))); i = Math.max(0, Math.min(n - 1, i)); const x = D[i], px = G._X(i) / G._W * gr.width;
+    const cx = G.querySelector(".zcx"), da = G.querySelector(".zdt.a"), db = G.querySelector(".zdt.b"); if(!cx) return; cx.hidden = da.hidden = db.hidden = false; cx.style.left = px + "px"; da.style.left = db.style.left = px + "px"; da.style.top = (G._Y(x.ok) / G._H * gr.height) + "px"; db.style.top = (G._Y(x.no) / G._H * gr.height) + "px";
+    const nx = SJ.zv === 24 && D[i + 1] ? " – " + D[i + 1].l : SJ.zv === 24 ? " – " + String((new Date().getHours() + 1) % 24).padStart(2, "0") + ":00" : "";
+    Tp.innerHTML = `<b>${x.l}${nx}</b><span class="a"></span>Успешных: ${x.ok}<br><span class="b"></span>Отказано: ${x.no}`; Tp.hidden = false; const W = document.getElementById("zvc").getBoundingClientRect(); let lx = gr.left - W.left + px - Tp.offsetWidth / 2; lx = Math.max(8, Math.min(lx, W.width - Tp.offsetWidth - 8)); Tp.style.left = lx + "px"; Tp.style.top = (gr.top - W.top - Tp.offsetHeight - 6) + "px"; return; }
+  if(Tp && !Tp.hidden && !(e.target.closest && e.target.closest("#zvb"))){ Tp.hidden = true; document.querySelectorAll("#zvb .zcx,#zvb .zdt").forEach(x => x.hidden = true); }
+});
+addEventListener("resize", () => { if(!SJ.cols || !document.getElementById("pg4")) return; const n = innerWidth <= 600 ? 1 : innerWidth <= 1000 ? 2 : 3; if(n !== SJ.cols) sjRedraw("sj-pl", sjPlan()); });
+const sjCopy = (t, done) => { if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => tgCopyOld(t, done)); else tgCopyOld(t, done); };
+document.addEventListener("click", e => {
+  if(!e.target.closest(".mk-sec")){ if(SJ.dd){ SJ.dd = null; const j = document.getElementById("sj-jr"); if(j) sjRedraw("sj-jr", sjJournal(SECSTAT.data)); } return; }
+  const g = s => e.target.closest(s), D = SECSTAT.data, jr = () => sjRedraw("sj-jr", sjJournal(D));
+  let x;
+  if((x = g("[data-sj-go]"))){ e.stopPropagation(); const k = x.dataset.sjGo; if(k === "err"){ try { ACT.f = "err"; } catch(_) {} ADM.tab = "actlog"; renderAdmin(); } else { SJ.sa = true; sjRedraw("sj-sa", sjSa()); const s = document.getElementById("sj-sa"); if(s) s.scrollIntoView({ behavior: "smooth", block: "center" }); } return; }
+  if((x = g("[data-sj-t]"))){ const id = x.dataset.sjT; SJ.t = SJ.t === id ? null : id; document.querySelectorAll(".mk-sec .jl .js").forEach(t => t.classList.toggle("open", t.dataset.sjT === SJ.t)); return; }
+  if((x = g("[data-sj-dd]"))){ const id = x.dataset.sjDd; SJ.dd = SJ.dd === id ? null : id; jr(); return; }
+  if((x = g("[data-sj-pick]"))){ const [k, v] = x.dataset.sjPick.split("|"); SJ[k] = v; SJ.dd = null; SJ.fo = null; jr(); return; }
+  if(SJ.dd && !g(".jdd")){ SJ.dd = null; jr(); }
+  if(g("[data-sj-x]")){ SJ.cc = ""; jr(); return; }
+  if((x = g("[data-sj-cell]"))){ const [t, v] = x.dataset.sjCell.split("|"); if(t === "cc"){ SJ.cc = v; jr(); return; } if(t === "dec"){ SJ.r = v === "d" ? "no" : v === "o" ? "ok" : "all"; jr(); return; }
+    const b = x.querySelector("b"), o = b.textContent; sjCopy(v, () => { b.textContent = "Скопировано"; setTimeout(() => { if(b.isConnected) b.textContent = o; }, 1200); }); return; }
+  if((x = g("[data-sj-cp]"))){ sjCopy(x.dataset.sjCp, () => { x.textContent = "Скопировано"; x.classList.add("done"); setTimeout(() => { if(x.isConnected){ x.textContent = "Скопировать адрес"; x.classList.remove("done"); } }, 1400); }); return; }
+  if((x = g("[data-sj-j]"))){ const k = x.dataset.sjJ; SJ.fo = SJ.fo === k ? null : k; document.querySelectorAll("#jx li[data-sj-j]").forEach(li => li.classList.toggle("open", li.dataset.sjJ === SJ.fo)); return; }
+  if((x = g("[data-sj-zv]"))){ SJ.zv = +x.dataset.sjZv; document.querySelectorAll("#zvt button").forEach(b => b.classList.toggle("on", b === x)); sjChartDraw(); return; }
+  if((x = g("[data-sj-ck]"))){ SJ.ck = SJ.ck === x.dataset.sjCk ? null : x.dataset.sjCk; sjRedraw("sj-ck", sjChecks()); return; }
+  if((x = g("[data-sj-ptc]"))){ const P = SJ_PT[x.dataset.sjPtc]; if(P) sjCopy(P[3], () => { x.textContent = "Скопировано"; x.classList.add("done"); setTimeout(() => { if(x.isConnected){ x.textContent = "Скопировать промпт"; x.classList.remove("done"); } }, 1600); }); return; }
+  if((x = g("[data-sj-pt]"))){ const id = x.dataset.sjPt; SJ.pt[id] = !SJ.pt[id]; x.parentNode.classList.toggle("open", !!SJ.pt[id]); return; }
+  if((x = g("[data-sj-sa]")) && !g("button")){ SJ.sa = !SJ.sa; x.classList.toggle("open", SJ.sa); return; }
+});
+document.addEventListener("keydown", e => { if((e.key === "Enter" || e.key === " ") && e.target.closest && e.target.closest(".mk-sec [data-sj-t],.mk-sec [data-sj-go]")){ e.preventDefault(); e.target.click(); } });
+
 document.addEventListener("click", e => {
   const o = e.target.closest("[data-sec-o]");
   if(o){ const id = o.dataset.secO, r = o.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-r.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); o.setAttribute("aria-expanded", String(on)); SEC.open = on ? id : null; return; }
@@ -13627,7 +13786,7 @@ document.addEventListener("click", e => {
   }
   const cl = e.target.closest("[data-sec-clr]");
   if(cl){
-    const what = cl.dataset.secClr, redraw = () => { const w = document.getElementById("sec-jr"); if(w) w.innerHTML = secJr(); const t = document.getElementById("sec-tiles"); if(t){ const D = SECSTAT.data; t.innerHTML = secTiles(D, D && D.days ? D.days[0] : null, D ? D.days : null); } };
+    const what = cl.dataset.secClr, redraw = () => { try { if(SEC.el && SEC.el.isConnected && ADM.tab === "security") renderAdmSec(SEC.el); } catch(e) {} };
     SEC_T.clr = null;
     const run = () => { if(typeof window.yadroSecClear === "function") window.yadroSecClear(what).catch(() => {}).then(() => { SECSTAT.at = 0; if(SECSTAT.data){ if(what === "log") SECSTAT.data.feed = []; else SECSTAT.data.days = SECSTAT.data.days.map(d => Object.assign({}, d, { ev: {}, ips: 0, act: 0 })); } redraw(); secFetch(true); tgToast(what === "log" ? "Журнал подключений очищен" : "Счётчики сброшены"); }); };
     if(what === "log") admConfirm("Очистить журнал подключений?", "Все записи о входах и попытках входа будут удалены без возможности вернуть.", "Очистить", run);
@@ -13833,7 +13992,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "633";
+const BUILD = "634";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14553,6 +14712,13 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk{--bg:#161513;--card:#1F1D1B;--
 :is(#admin,#mk-layer) .mk .sw{appearance:none;width:auto;height:auto;border-radius:0;background:none;box-shadow:none}
 :is(#admin,#mk-layer) .mk .need{display:block;margin-bottom:0;gap:normal}
 :is(#admin,#mk-layer) .mk .chev{justify-self:auto}
+#zspt{position:fixed;z-index:200;pointer-events:none;background:var(--ink);color:var(--surface,#fff);border-radius:10px;padding:6px 9px;font-size:12.5px;line-height:1.35;white-space:nowrap;box-shadow:0 8px 20px rgba(35,33,30,.25);transform:translate(-50%,-120%);font-family:var(--f-body)}
+#zspt[hidden],#zspd[hidden]{display:none}
+#zspd{position:fixed;z-index:61;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:var(--surface,#fff);border:2.5px solid #D9643B;box-shadow:0 2px 6px rgba(35,33,30,.25);pointer-events:none}
+:is(#admin,#mk-layer) .mk .jx .cc img{flex:none}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok{background:#1F3327!important}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.e{background:#3A2422}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok b,html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok small{color:#8FD0A6}
 :is(#admin,#mk-layer) .mk .mk-lq{display:flex;gap:8px;align-items:center;margin:0 0 8px}
 :is(#admin,#mk-layer) .mk .mk-lq input{flex:1;min-width:0;height:34px;border:0;outline:0;border-radius:99px;background:var(--pl);padding:0 14px;font:inherit;font-size:13px;color:var(--ink)}
 :is(#admin,#mk-layer) .mk .mk-lq input:focus{box-shadow:inset 0 0 0 1.5px var(--acc)}
@@ -15727,6 +15893,9 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .sj-st::before{background: rgb
 :is(#admin,#mk-layer) .mk #zcu .uT .zt-r td:last-child{border-radius: 0px 16px 16px 0px;}
 :is(#admin,#mk-layer) .mk #zcu .uT .zt-d td{padding: 0px 0px 4px;}
 :is(#admin,#mk-layer) .mk #zcu .uT .zt-d .stu{margin-top: -2px;}
+
+@media (max-width:1000px){:is(#admin,#mk-layer) .mk .jl{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media (max-width:560px){:is(#admin,#mk-layer) .mk .jl .js.ok{grid-column:1/-1!important}}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
