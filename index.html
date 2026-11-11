@@ -13533,26 +13533,66 @@ function secTiles(D, t0, days){
     ["ok", "Успешных входов", t0 ? ok : null, t0 ? (ok ? "вошёл владелец" : "входов не было") : "", "Сколько раз за сутки кто-то вошёл на сайт. Пока вход закрыт, это можете быть только вы. Если число больше, чем вы входили, смените SESSION_SECRET.", s => spark(ser(d => d.ev.login_ok || 0)), ""],
     ["who", "Людей на сайте", t0 ? t0.act : null, D ? `всего аккаунтов: ${D.users.total}` : "", "Сколько разных аккаунтов открывали сайт за сутки, уже будучи внутри. Это не попытки входа, а люди, которые реально пользуются платформой.", s => spark(ser(d => d.act || 0)), ""]
   ];
-  const rc = D ? `<button type="button" class="sec-fb sec-rc ${SEC_T.clr === "cnt" ? "ask" : ""}" data-sec-clr="cnt" data-tip="Обнулить счётчики|Журнал подключений останется">${SEC_T.clr === "cnt" ? "Точно обнулить?" : "Сбросить счётчики"}</button>` : "";
+  const sv = { state: ser(d => d.ev.attempt != null ? d.ev.attempt : secSum(d, SEC_DENY) + (d.ev.login_ok || 0) + (d.ev.code_send || 0)), all: ser(d => d.ev.attempt != null ? d.ev.attempt : secSum(d, SEC_DENY) + (d.ev.login_ok || 0) + (d.ev.code_send || 0)), deny: ser(d => secSum(d, SEC_DENY)), ok: ser(d => d.ev.login_ok || 0), who: ser(d => d.act || 0) };
+  const cur = T.find(x => x[0] === SEC_T.open);
+  const tiles = T.map(([id, l, n, sub, help, body, cls]) => { const op = SEC_T.open === id;
+    return `<button type="button" class="st5-t ${cls} ${op ? "open" : ""}" data-sec-t="${id}" aria-expanded="${op}" title="${op ? "Свернуть" : "Подробнее"}"><small>${l}</small>${n == null ? '<b class="nil">—</b>' : `<b class="${typeof n === "string" ? "txt" : ""}">${n}</b>`}<em>${esc(sub)}</em>${sv[id] ? secSpark(sv[id]) : ""}</button>`; }).join("");
+  const det = cur ? `<div class="st5-d">${cur[0] === "state" ? cur[5]() : `<div class="sec-hp">${cur[4]}</div>` + cur[5]()}</div>` : "";
+  return `<div class="st5">${tiles}</div>${det}`;
   return T.map(([id, l, n, sub, help, body, cls]) => {
     const op = SEC_T.open === id, b = id === "state" ? body() : `<div class="sec-hp">${help}</div>` + body();
     return `<div class="sec-t ${cls} ${op ? "open" : ""}"><button type="button" class="sec-th" data-sec-t="${id}" aria-expanded="${op}" data-tip="${op ? "Свернуть" : "Что это значит|Нажмите, чтобы узнать подробнее"}"><span class="sec-tl">${l}<svg class="sec-c" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${n == null ? '<b class="sec-nil sec-tn">—</b>' : `<b class="sec-tn ${typeof n === "string" ? "txt" : ""}">${n}</b>`}<small>${esc(sub)}</small></button><div class="sec-rb"><div>${b}</div></div></div>`;
   }).join("") + rc;
 }
-function secJr(){
-  const D = SECSTAT.data, feed = D && D.feed ? D.feed : [], F = SEC_T.f;
-  const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
-  const nBad = items.filter(x => x.w.r === "bad").length, nOk = items.filter(x => x.w.r === "ok").length;
-  const list = items.filter(x => F === "bad" ? x.w.r === "bad" : F === "ok" ? x.w.r === "ok" : true);
-  const chip = { bad: ["Отказано", "bad"], ok: ["Вошли", "ok in"], mid: ["Обычное", "off"] };
-  const rows = list.map(({ f, w, k }) => { const op = SEC_T.fo === k, c = chip[w.r];
-    return `<li class="r-${w.r} ${op ? "open" : ""}"><button type="button" class="sec-jh" data-sec-j="${esc(k)}" aria-expanded="${op}">${secFlag(f.cc)}<span class="sec-jw"><b>${esc(f.ip || "IP не определён")}</b><small>${esc([secCountry(f.cc), f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</small></span><span class="sec-ja">${esc(w.t)}${f.n > 1 ? ` <i class="sec-x">×${f.n}</i>` : ""}${w.many ? ' <i class="sec-mn">перебор почт</i>' : ""}</span><em class="sec-chip ${c[1]}">${c[0]}</em><time>${secHm(f.t)}</time></button>
-      <div class="sec-rb"><div><p><span>Что это</span>${esc(w.why)}</p><p><span>Что делать</span>${esc(w.todo)}</p>${f.a ? `<p><span>Запрос</span>${esc(SEC_ACT[f.a] || f.a)}${f.ua === "script" ? ", из программы" : f.ua === "browser" ? ", из браузера" : ""}</p>` : ""}</div></div></li>`; }).join("");
-  const fb = (id, l, n) => `<button type="button" class="sec-fb ${F === id ? "on" : ""}" data-sec-f="${id}">${l}${n != null ? ` <i>${n}</i>` : ""}</button>`;
-  return `<div class="panel-head"><h2>Журнал подключений</h2><span class="aside">${D ? (D.geo === false ? "страны отключены" : "почты скрыты") : ""}</span></div>
-    <div class="sec-fs">${fb("all", "Все", items.length)}${fb("bad", "Отказано", nBad)}${fb("ok", "Входы", nOk)}${D && items.length ? `<button type="button" class="sec-fb sec-clr ${SEC_T.clr === "log" ? "ask" : ""}" data-sec-clr="log" data-tip="Очистить журнал|Удалит только список, счётчики останутся">${SEC_T.clr === "log" ? "Точно очистить?" : "Очистить журнал"}</button>` : ""}</div>
-    ${rows ? `<ul class="sec-jl">${rows}</ul>` : `<p class="empty">${D ? (items.length ? "В этом разделе пусто." : "Подключений пока не было: всё тихо.") : "Нет данных."}</p>`}`;
+const SEC_TM = [["all", "Любое время"], ["h", "Последний час"], ["d", "Сегодня"], ["y", "Вчера"], ["w", "7 дней"]];
+function secDayLbl(t){ const d = new Date(t), t0 = new Date(); t0.setHours(0, 0, 0, 0); const diff = Math.round((t0 - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5); const dm = d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" }); return diff === 0 ? "Сегодня, " + dm : diff === 1 ? "Вчера, " + dm : d.toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" }); }
+function secDd(id, l, v, items){
+  const op = SEC_T.dd === id;
+  return `<div class="sjd ${op ? "open" : ""}"><button type="button" class="sjd-b" data-sec-dd="${id}" aria-expanded="${op}"><small>${l}</small><b>${esc(v)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>${op ? `<div class="sjd-m" role="listbox">${items.map(x => `<button type="button" role="option" class="${x[3] ? "on" : ""}" data-sec-pick="${id}|${esc(x[0])}">${x[4] || ""}<span>${esc(x[1])}</span>${x[2] != null ? `<i>${x[2]}</i>` : ""}</button>`).join("")}</div>` : ""}</div>`;
 }
+function secJr(){
+  const D = SECSTAT.data, feed = D && D.feed ? D.feed : [], F = SEC_T.f, TM = SEC_T.tm || "all", CC = SEC_T.cc || "";
+  const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
+  const t0 = new Date(); t0.setHours(0, 0, 0, 0); const d0 = +t0;
+  const inTm = f => TM === "all" ? true : TM === "h" ? f.t >= Date.now() - 36e5 : TM === "d" ? f.t >= d0 : TM === "y" ? f.t >= d0 - 864e5 && f.t < d0 : f.t >= d0 - 6 * 864e5;
+  const byTm = items.filter(x => inTm(x.f)), byCc = byTm.filter(x => !CC || (x.f.cc || "-") === CC);
+  const nBad = byCc.filter(x => x.w.r === "bad").length, nOk = byCc.filter(x => x.w.r === "ok").length;
+  const list = byCc.filter(x => F === "bad" ? x.w.r === "bad" : F === "ok" ? x.w.r === "ok" : true);
+  const chip = { bad: ["Отказано", "bad"], ok: ["Вошли", "ok in"], mid: ["Обычное", "off"] };
+  let lastDay = "";
+  const rows = list.map(({ f, w, k }) => { const op = SEC_T.fo === k, c = chip[w.r], dl = secDayLbl(f.t), hd = dl !== lastDay ? `<li class="sj-day">${esc(dl)}</li>` : ""; lastDay = dl;
+    return hd + `<li class="r-${w.r} ${op ? "open" : ""}"><button type="button" class="sec-jh" data-sec-j="${esc(k)}" aria-expanded="${op}">${secFlag(f.cc)}<span class="sec-jw"><b>${esc(f.ip || "IP не определён")}</b><small>${esc([secCountry(f.cc), f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</small></span><span class="sec-ja">${esc(w.t)}${f.n > 1 ? ` <i class="sec-x">×${f.n}</i>` : ""}${w.many ? ' <i class="sec-mn">перебор почт</i>' : ""}</span><em class="sec-chip ${c[1]}">${c[0]}</em><time>${secHm(f.t).replace(/^\d\d\.\d\d /, "")}</time></button>
+      <div class="sec-rb"><div><p><span>Что это</span>${esc(w.why)}</p><p><span>Что делать</span>${esc(w.todo)}</p>${f.a ? `<p><span>Запрос</span>${esc(SEC_ACT[f.a] || f.a)}${f.ua === "script" ? ", из программы" : f.ua === "browser" ? ", из браузера" : ""}</p>` : ""}</div></div></li>`; }).join("");
+  const ccs = {}; byTm.forEach(x => { const c = x.f.cc || "-"; ccs[c] = (ccs[c] || 0) + 1; });
+  const ccItems = [["", "Все страны", byTm.length, !CC]].concat(Object.entries(ccs).sort((a, b) => b[1] - a[1]).map(([c, n]) => [c, c === "-" ? "Не определена" : secCountry(c), n, CC === c, c === "-" ? "" : secFlag(c)]));
+  const rN = { all: "Все", bad: "Отказанные", ok: "Вошедшие" };
+  const dd = D ? `<div class="sj-f">${secDd("tm", "Время", (SEC_TM.find(x => x[0] === TM) || SEC_TM[0])[1], SEC_TM.map(x => [x[0], x[1], null, x[0] === TM]))}${secDd("r", "Результат", rN[F] || "Все", [["all", "Все", byCc.length, F === "all"], ["bad", "Отказанные", nBad, F === "bad"], ["ok", "Вошедшие", nOk, F === "ok"]])}${D.geo === false ? "" : secDd("cc", "Страна", CC ? (CC === "-" ? "Не определена" : secCountry(CC)) : "Все страны", ccItems)}${items.length ? `<button type="button" class="sj-clr" data-sec-clr="log">Очистить журнал</button>` : ""}</div>` : "";
+  return `<div class="panel-head"><h2>Журнал подключений</h2><span class="aside">${D ? (D.geo === false ? "страны отключены" : "почты скрыты") : ""}</span></div>
+    ${dd}
+    ${rows ? `<ul class="sec-jl sj-l">${rows}</ul>` : `<p class="empty">${D ? (items.length ? "По этим фильтрам ничего нет." : "Подключений пока не было: всё тихо.") : "Нет данных."}</p>`}`;
+}
+/* входы на сайт: две плавные линии за 7 суток */
+function secLogins(D){
+  if(!D || !D.days) return "";
+  const days = D.days.slice().reverse(), ok = days.map(d => d.ev.login_ok || 0), bad = days.map(d => secSum(d, SEC_DENY));
+  const W = 640, H = 150, L = 28, R = 10, T = 12, B = 24, n = days.length, mx = Math.max(4, ...ok, ...bad), top = Math.ceil(mx / 4) * 4;
+  const x = i => L + i * (W - L - R) / Math.max(1, n - 1), y = v => T + (H - T - B) * (1 - v / top);
+  const path = vals => { const p = vals.map((v, i) => [x(i), y(v)]); let d = `M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`; for(let i = 1; i < p.length; i++){ const m = (p[i - 1][0] + p[i][0]) / 2; d += ` C${m.toFixed(1)} ${p[i - 1][1].toFixed(1)} ${m.toFixed(1)} ${p[i][1].toFixed(1)} ${p[i][0].toFixed(1)} ${p[i][1].toFixed(1)}`; } return d; };
+  const grid = [0, 1, 2, 3, 4].map(k => { const v = top * k / 4, yy = y(v); return `<line class="g" x1="${L}" x2="${W - R}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="yl" x="${L - 6}" y="${(yy + 3.5).toFixed(1)}" text-anchor="end">${v}</text>`; }).join("");
+  const lab = days.map((d, i) => { const m = /(\d+)-(\d+)-(\d+)/.exec(d.d || ""); return `<text class="xl" x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle">${m ? m[3] + "." + m[2] : ""}</text>`; }).join("");
+  const dots = (vals, c) => vals.map((v, i) => `<circle class="${c}" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${i === n - 1 ? 3.5 : 2.5}"><title>${v}</title></circle>`).join("");
+  const sOk = ok.reduce((a, b) => a + b, 0), sBad = bad.reduce((a, b) => a + b, 0), pk = Math.max(...ok.map((v, i) => v + bad[i]));
+  return `<section class="panel slg"><div class="panel-head"><h2>Входы на сайт</h2><span class="aside">7 дней</span></div>
+    <div class="slg-s"><div><small>Успешных</small><b>${sOk}</b></div><div><small>Отказано</small><b>${sBad}</b></div><div><small>Пик</small><b>${pk} в день</b></div><div class="slg-l"><span class="a"><i></i>Входы</span><span class="b"><i></i>Отказано</span></div></div>
+    <svg class="slg-c" viewBox="0 0 ${W} ${H}" role="img" aria-label="Входы за 7 суток: ${ok.join(", ")}; отказано: ${bad.join(", ")}">${grid}<path class="ar" d="${path(ok)} L${x(n - 1).toFixed(1)} ${H - B} L${L} ${H - B}Z"/><path class="la" d="${path(ok)}"/><path class="lb" d="${path(bad)}"/>${dots(ok, "da")}${dots(bad, "db")}${lab}</svg></section>`;
+}
+document.addEventListener("click", e => {
+  const dd = e.target.closest("[data-sec-dd]"), pk = e.target.closest("[data-sec-pick]");
+  const redraw = () => { const w = document.getElementById("sec-jr"); if(w) w.innerHTML = secJr(); };
+  if(dd){ SEC_T.dd = SEC_T.dd === dd.dataset.secDd ? null : dd.dataset.secDd; redraw(); return; }
+  if(pk){ const [k, v] = pk.dataset.secPick.split("|"); if(k === "tm") SEC_T.tm = v; else if(k === "r") SEC_T.f = v; else SEC_T.cc = v; SEC_T.dd = null; SEC_T.fo = null; redraw(); return; }
+  if(SEC_T.dd && !e.target.closest(".sjd")){ SEC_T.dd = null; redraw(); }
+});
 function renderAdmSec(el){
   SEC.el = el; secFetch(false); tgFetch(false);
   const D = SECSTAT.data, days = D ? D.days : null, t0 = days ? days[0] : null;
@@ -13564,11 +13604,10 @@ function renderAdmSec(el){
   const info = D ? `Данные с сервера за сутки по времени Перми. ${D.lock ? "Вход сейчас закрыт для всех, кроме владельца. " : "Вход открыт. "}Считаются с момента обновления сервера, цифры приблизительные.${D.warn && D.warn.length ? " Не всё удалось прочитать: " + esc(D.warn.join("; ")) : ""}`
     : SECSTAT.err ? `${esc(SECSTAT.err)}. ${SECSTAT.at ? "Последняя попытка в " + new Date(SECSTAT.at).toLocaleTimeString("ru-RU") + ". " : ""}<button type="button" class="link" data-sec-retry>Повторить</button>` : "Загружаем данные с сервера…";
   el.innerHTML = admHead("Безопасность", `<span class="sec-st ${alarm || off ? "warn" : "ok"}"><i></i>${alarm ? "Есть тревога" : off ? "Защищено частично" : "Всё под защитой"}</span>`) + `
-    <p class="sec-demo" id="sec-live">${info}</p>
-    <div class="sec-main">
-      <div class="sec-tiles" id="sec-tiles">${secTiles(D, t0, days)}</div>
-      <section class="panel sec-jr" id="sec-jr">${secJr()}</section>
-    </div>
+    <div class="sj-note"><p class="sec-demo" id="sec-live">${info}</p>${D ? `<button type="button" class="sj-rc" data-sec-clr="cnt" title="Сбросить счётчики" aria-label="Сбросить счётчики"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>` : ""}</div>
+    <div class="sec-tiles st5w" id="sec-tiles">${secTiles(D, t0, days)}</div>
+    <section class="panel sec-jr" id="sec-jr">${secJr()}</section>
+    ${secLogins(D)}
     <section class="panel sec-ag"><span class="sec-ai"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
       <div><b>Агент безопасности</b><span>Проверяет сайт сам каждый час</span></div><span class="sec-at" data-tip="Последняя проверка|${SEC.auto ? "Автоматическая" : "Запущена вручную"}">${SEC.at ? at : "—"}</span>
       <button type="button" class="btn sec-run ${SEC.busy ? "busy" : ""}" data-sec-scan ${SEC.busy ? "disabled" : ""}>${SEC.busy ? "Проверяю…" : SEC.res ? "Проверить снова" : "Проверить сейчас"}</button></section>
@@ -13582,7 +13621,7 @@ document.addEventListener("click", e => {
   const o = e.target.closest("[data-sec-o]");
   if(o){ const id = o.dataset.secO, r = o.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-r.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); o.setAttribute("aria-expanded", String(on)); SEC.open = on ? id : null; return; }
   const tl = e.target.closest("[data-sec-t]");
-  if(tl){ const id = tl.dataset.secT, r = tl.parentElement, on = !r.classList.contains("open"); document.querySelectorAll(".sec-t.open").forEach(x => { x.classList.remove("open"); x.firstElementChild.setAttribute("aria-expanded", "false"); }); r.classList.toggle("open", on); tl.setAttribute("aria-expanded", String(on)); SEC_T.open = on ? id : null; return; }
+  if(tl){ const id = tl.dataset.secT; SEC_T.open = SEC_T.open === id ? null : id; const t = document.getElementById("sec-tiles"); if(t){ const D = SECSTAT.data; t.innerHTML = secTiles(D, D && D.days ? D.days[0] : null, D ? D.days : null); } return; }
   const tg = e.target.closest("[data-tg]");
   if(tg){
     const k = tg.dataset.tg; TGS.msg = "";
@@ -13800,7 +13839,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "628";
+const BUILD = "629";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14320,6 +14359,79 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 </style>
 <style id="act-short">.act-all{appearance:none;border:0;background:none;color:var(--pen);font:500 12.5px var(--f-body);cursor:pointer;padding:0 0 0 8px}.act-all:hover{text-decoration:underline}</style>
 <style id="ag-cols">@media(min-width:900px){#adm-ag .reg2 .ag-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:18px}}</style>
+<style id="sec5-css">
+.sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.sj-note .sec-demo{margin:0;flex:1}
+.sj-rc{appearance:none;border:0;background:var(--surface);color:var(--muted);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;cursor:pointer;box-shadow:inset 0 0 0 1px var(--line);transition:color .15s,box-shadow .15s,transform .15s}
+.sj-rc:hover{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}.sj-rc:active{transform:rotate(-40deg) scale(.95)}
+.st5w{display:block!important;margin:0 0 12px}
+.st5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.st5-t{appearance:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0;padding:12px 14px 10px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .18s,transform .12s}
+.st5-t:hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 45%,transparent)}
+.st5-t:active{transform:scale(.98)}
+.st5-t.open{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.st5-t small{font-size:12.5px;color:var(--muted)}
+.st5-t b{font-size:26px;font-weight:500;line-height:1.15;color:var(--ink)}
+.st5-t b.txt{font-size:22px}
+.st5-t b.nil{color:var(--muted)}
+.st5-t em{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st5-t .sec-sp{width:100%;height:28px;margin-top:6px}
+.st5-t .sec-sp polyline{fill:none;stroke:var(--pen);stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.st5-t .sec-sp circle{fill:var(--pen)}
+.st5-t.st-ok{background:color-mix(in srgb,var(--good) 13%,var(--surface))}
+.st5-t.st-ok b{color:var(--good)}
+.st5-t.st-ok .sec-sp polyline{stroke:var(--good)}.st5-t.st-ok .sec-sp circle{fill:var(--good)}
+.st5-t.st-bad,.st5-t.t-red{background:color-mix(in srgb,var(--bad) 10%,var(--surface))}
+.st5-t.st-bad b,.st5-t.t-red b{color:var(--bad)}
+.st5-t.st-bad .sec-sp polyline,.st5-t.t-red .sec-sp polyline{stroke:var(--bad)}.st5-t.st-bad .sec-sp circle,.st5-t.t-red .sec-sp circle{fill:var(--bad)}
+.st5-d{margin-top:8px;padding:12px 14px;border-radius:18px;background:var(--surface);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 45%,transparent);animation:ag3pp .16s ease-out}
+.st5-d .sec-ch{margin-top:8px;max-width:460px}
+.st5-d .sec-chs{width:100%;height:auto}
+.sj-l .sec-chip{background:transparent!important;box-shadow:inset 0 0 0 1.5px currentColor}
+.sj-l .sec-chip.bad{color:var(--bad)}.sj-l .sec-chip.ok{color:var(--good)}.sj-l .sec-chip.off{color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+#admin .sec-jr{margin:0 0 12px}
+.sj-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+.sjd{position:relative}
+.sjd-b{appearance:none;border:0;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 14px;border-radius:99px;background:color-mix(in srgb,var(--ink) 5%,transparent);color:var(--ink);transition:box-shadow .15s,background-color .15s}
+.sjd-b small{font-size:12px;color:var(--muted)}
+.sjd-b b{font-size:13px;font-weight:500}
+.sjd-b svg{width:14px;height:14px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.sjd-b:hover,.sjd.open .sjd-b{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.sjd.open .sjd-b svg{transform:rotate(180deg);stroke:var(--pen)}
+.sjd-m{position:absolute;z-index:30;top:calc(100% + 6px);left:0;min-width:200px;max-height:300px;overflow:auto;padding:6px;border-radius:16px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 14px 34px -10px rgba(0,0,0,.3);display:grid;gap:2px;animation:ag3pp .14s ease-out}
+.sjd-m button{appearance:none;border:0;background:none;font:inherit;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border-radius:10px;font-size:13px;white-space:nowrap}
+.sjd-m button span{flex:1}
+.sjd-m button i{font-style:normal;font-size:12px;color:var(--muted)}
+.sjd-m button:hover{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.sjd-m button.on{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.sjd-m .sec-fl{transform:scale(.85)}
+.sj-clr{appearance:none;border:0;font:inherit;cursor:pointer;margin-left:auto;height:34px;padding:0 14px;border-radius:99px;font-size:13px;color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1px var(--line);transition:color .15s,box-shadow .15s}
+.sj-clr:hover{color:var(--bad);box-shadow:inset 0 0 0 1.5px var(--bad)}
+.sj-l .sj-day{list-style:none;padding:12px 6px 4px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none!important}
+.sj-l .sj-day:first-child{padding-top:2px}
+.sj-l .sj-day::before{display:none!important}
+.sj-l li.r-bad,.sj-l li.r-ok{background:transparent}
+.sj-l li.r-bad::before,.sj-l li.r-ok::before{display:none!important}
+.sj-l li.r-bad .sec-ja{color:var(--ink);font-weight:400}
+.sj-l li:not(.sj-day):hover,.sj-l li.open{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.slg{margin:0 0 12px}
+.slg-s{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:0 0 6px}
+.slg-s small{font-size:12px;color:var(--muted);margin-right:6px}
+.slg-s b{font-size:17px;font-weight:500}
+.slg-l{margin-left:auto;display:flex;gap:12px;font-size:12px;color:var(--muted)}
+.slg-l span{display:inline-flex;align-items:center;gap:6px}
+.slg-l i{width:14px;height:3px;border-radius:2px;background:var(--good)}
+.slg-l .b i{background:var(--bad)}
+.slg-c{display:block;width:100%;height:auto;max-height:240px;overflow:visible}
+.slg-c .g{stroke:var(--line);stroke-width:1;stroke-dasharray:2 4;vector-effect:non-scaling-stroke}
+.slg-c .yl,.slg-c .xl{font-size:10px;fill:var(--muted)}
+.slg-c .ar{fill:var(--good);opacity:.1}
+.slg-c .la,.slg-c .lb{fill:none;stroke-width:2;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.slg-c .la{stroke:var(--good)}.slg-c .lb{stroke:var(--bad)}
+.slg-c .da{fill:var(--good)}.slg-c .db{fill:var(--bad)}
+@media(max-width:900px){.st5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.st5{grid-template-columns:repeat(2,minmax(0,1fr))}.st5-t:first-child{grid-column:1/-1}.sj-clr{margin-left:0}.slg-l{margin-left:0}.slg-c .yl,.slg-c .xl{font-size:16px}}
+</style>
 <style id="uz-css">
 #admin .uz{padding:16px 16px 14px}
 .uz-h{margin:0 0 10px;font-size:15px;font-weight:500}
