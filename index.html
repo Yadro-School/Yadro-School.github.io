@@ -10449,8 +10449,28 @@ const LEG = [
 function rolesLegend(){
   return `<section class="panel adm-leg"><div class="panel-head"><h2>Что значат обозначения</h2></div>${LEG.map(([h, rows]) => `<h3 class="lg-h">${h}</h3><div class="lg-rows">${rows.map(([c, t, d]) => `<div class="lg-r"><span class="px ${c}">${t}</span><span class="lg-d">${d}</span></div>`).join("")}</div>`).join("")}<p class="muted lg-n">Чужие чаты и группы не видит никто, даже администратор платформы: внутри группы права зависят от роли в ней.</p></section>`;
 }
-function rolesBody(){ return `<div class="pm-bar"><span>${ADM.edit ? "Режим правки: меняйте права и нажмите «Завершить правку»" : "Права закрыты от случайных нажатий"}</span>${pmEditBtn()}</div>` + (ADM.rv === "v1" ? rolesV1() : rolesV2(ADM.rv === "v3" ? "pm-v3" : "pm-v2")) + rolesLegend() + `<div class="pm-resetall"><button class="btn" data-adm-reset>Сбросить все роли к стандартным</button></div>`; }
 /* режим правки таблицы прав: без него случайно ничего не нажать */
+/* ---- Роли и права: разметка из макета (сборка 637) ---- */
+const ZC_LV = { n: "o", v: "v", e: "e", f: "m" }, ZSC_NEXT = { own: "cls", cls: "par", par: "all", all: "own" };
+function rolesBody(){
+  const ed = !!ADM.edit, n = ROLES.length + 1, x = id => ed ? `<button type="button" class="px-x" data-cust-delrole="${id}" title="Удалить роль" aria-label="Удалить роль">×</button>` : "";
+  const head = `<tr><th>Раздел</th>${ROLES.map(r => `<th>${esc(r.name)}${r.custom ? x(r.id) : ""}</th>`).join("")}</tr>`;
+  const res = RES.map(k => `<tr><td>${esc(k[1])}</td>${ROLES.map(r => { const l = ADM.perm[r.id].res[k[0]]; return `<td><button type="button" class="zc zc-${ZC_LV[l]}" data-px="${r.id}|${k[0]}" title="${esc(r.name)}: ${LVC[l]}">${LVC[l]}</button></td>`; }).join("")}</tr>`).join("");
+  const acts = ACTS.map(a => `<tr><td>${esc(a[1])}${a[2] && ed ? ` <button type="button" class="px-x" data-cust-delact="${a[0]}" title="Удалить право" aria-label="Удалить право">×</button>` : ""}</td>${ROLES.map(r => { const on = !!ADM.perm[r.id].acts[a[0]]; return `<td><button type="button" class="zc zc-${on ? "y" : "o"}" data-pa="${r.id}|${a[0]}">${on ? "Можно" : "Нельзя"}</button></td>`; }).join("")}</tr>`).join("");
+  const sc = `<tr><td>Охват данных</td>${ROLES.map(r => `<td><button type="button" class="zc zc-y" data-zsc="${r.id}" title="${esc(SCOPES[ADM.perm[r.id].sc] || "")}">${SCOPE_SH[ADM.perm[r.id].sc] || "—"}</button></td>`).join("")}</tr>`;
+  const lg = (c, t, p) => `<div class="zlg"><span class="zc zc-${c}">${t}</span><p>${p}</p></div>`;
+  return mkWrap("rol", `<div id="ap-rol" class="zpn"><section class="ac zro"><span>${ed ? "Режим правки: нажимайте на ячейки, потом «Готово»" : "Права закрыты от случайных нажатий"}</span>${ed ? `<button type="button" class="zb" data-cust-role>+ Роль</button><button type="button" class="zb" data-cust-act>+ Право</button><button type="button" class="zb" data-adm-reset>Сбросить всё</button>` : ""}<button type="button" class="zb ${ed ? "pr" : ""}" data-pm-edit>${ed ? "Готово" : "Править"}</button></section>
+<section class="ac"><div class="ac-h"><div><h3>Кто что видит и может</h3><div class="sub2">${ed ? "Нажмите на ячейку, чтобы изменить." : "Нажмите «Править», чтобы изменять ячейки."}</div></div></div><div class="ztw"><table class="zt ${ed ? "edit" : ""}"><thead>${head}</thead><tbody>${res}<tr class="zsp"><td colspan="${n}">Что можно делать</td></tr>${acts}<tr class="zsp"><td colspan="${n}">Чьи данные</td></tr>${sc}</tbody></table></div></section>
+<section class="ac"><div class="ac-h"><h3>Что значат обозначения</h3></div><div class="zlg-h">УРОВЕНЬ ДОСТУПА К РАЗДЕЛУ</div>${lg("o", "Нет", "Раздела у роли нет: вкладка скрыта, данные недоступны.")}${lg("v", "Смотрит", "Открывает раздел и читает данные, но ничего не может изменить.")}${lg("e", "Правит", "Добавляет и меняет данные внутри раздела: оценки, задания, сообщения. Настройки раздела не трогает.")}${lg("m", "Управляет", "Полный контроль над разделом: настройки, доступы, удаление.")}
+<div class="zlg-h">ОХВАТ ДАННЫХ: ЧЬИ ДАННЫЕ ВИДИТ РОЛЬ</div>${lg("y", "Своё", "Только свои данные. Ученик видит свои оценки, родитель оценки своих детей.")}${lg("y", "Классы", "Данные своих классов: тех, где человек ведёт уроки или учится.")}${lg("y", "Паралл.", "Все классы своей параллели, например все восьмые.")}${lg("y", "Школа", "Данные всей школы.")}
+<div class="zlg-h">ДЕЙСТВИЯ</div>${lg("y", "Можно", "Действие разрешено роли.")}${lg("o", "Нельзя", "Действие запрещено роли.")}</section></div>`);
+}
+function renderAdmRoles(el){
+  el.toggleAttribute("data-pm-edit", !!ADM.edit);
+  el.innerHTML = admHead("Роли и права", "") + `<div id="rv-body">${rolesBody()}</div>`;
+}
+document.addEventListener("click", e => { const x = e.target.closest(".mk-rol [data-zsc]"); if(!x || !ADM.edit) return; const p = ADM.perm[x.dataset.zsc]; p.sc = ZSC_NEXT[p.sc] || "own"; admSave(); if(VA.role) vaApply(); admRerender(); });
+
 function pmEditBtn(){ return `<button type="button" class="btn pm-edit ${ADM.edit ? "on" : ""}" data-pm-edit>${ADM.edit ? "Завершить правку" : "Править"}</button>`; }
 function pmEdit(){
   const el = document.getElementById("admin");
@@ -10464,12 +10484,6 @@ function pmEdit(){
     else if(e.target.closest("[data-pm-undo]")){ tgModalClose(); try { ADM.perm = JSON.parse(ADM._snap); } catch(_) {} ADM.edit = false; admSave(); renderAdmRoles(el); tgToast("Правки отменены"); }
     else if(e.target.closest("[data-cf-no]")) tgModalClose();
   });
-}
-function renderAdmRoles(el){
-  const ix = RV_NAMES.findIndex(x => x[0] === ADM.rv);
-  el.toggleAttribute("data-pm-edit", !!ADM.edit);
-  el.innerHTML = admHead("Роли и права", `<div class="adm-hb"><button class="plus" data-cust-role><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить роль</button><button class="plus" data-cust-act><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить право</button></div>`) + `
-    <div id="rv-body" class="adm-body">${rolesBody()}</div>`;
 }
 function admConfirm(title, text, ok, fn, html){
   const o = tgModal(title, html ? `<div class="adm-cf">${text}</div>` : `<p class="adm-cf">${esc(text)}</p>`, `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn bad" data-cf-ok>${esc(ok)}</button>`);
@@ -13990,7 +14004,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "636";
+const BUILD = "637";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -15960,6 +15974,10 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 @media (max-width:1000px){:is(#admin,#mk-layer) .mk .jl{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media (max-width:560px){:is(#admin,#mk-layer) .mk .jl .js.ok{grid-column:1/-1!important}}
 @media (max-width:600px){:is(#admin,#mk-layer) .mk .mg-t{flex-wrap:wrap}:is(#admin,#mk-layer) .mk .mg-t>.mg-l{flex:1 1 100%;min-width:0;width:100%}}
+#admin:not([data-pm-edit]) .mk-rol .zc{pointer-events:none}
+:is(#admin,#mk-layer) .mk .zro{gap:8px}
+:is(#admin,#mk-layer) .mk .zro>span{flex:1 1 auto}
+:is(#admin,#mk-layer) .mk .zt .px-x{margin-left:4px;color:var(--mut);font-size:15px}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
