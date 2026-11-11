@@ -10564,63 +10564,49 @@ const MR = { f: "new", open: null };
     { id: "rs2", at: h(27), user: "Ксения В.", chat: "Домашка 8 «А»", cid: "hw", cat: "mat", text: "да бл* опять эта домашка", n: 2, mode: "removed", st: "new" },
     { id: "rs3", at: h(75), user: "Марк Т.", chat: "8 «А» — общий", cid: "class", cat: "pol", text: "а вы за кого на выборах?", n: 3, mode: "blocked", st: "done" });
   localStorage.setItem("bai-mod-seed", "1"); modSave(); } } catch(e) {} })();
-function renderAdmReports(el){
-  const rs = MOD.reports, cnt = { new: rs.filter(r => r.st === "new").length, done: rs.filter(r => r.st !== "new").length, all: rs.length };
-  const list = rs.filter(r => MR.f === "all" || (MR.f === "new" ? r.st === "new" : r.st !== "new"));
-  const who = {}; rs.forEach(r => { const w = who[r.user] || (who[r.user] = { n: 0, last: r.at, cats: new Set() }); w.n++; w.cats.add(r.cat); if(r.at > w.last) w.last = r.at; });
-  const top = Object.entries(who).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
-  const CI = { mat: "M5 7h14M5 12h10M5 17h7", fam: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.600A4 4 0 0 1 19 10c0 5.600-7 10-7 10z", ins: "M12 3 2.800 19a1.200 1.200 0 0 0 1 1.800h18.400a1.200 1.200 0 0 0 1-1.800L12 3zM12 10v4M12 17h.01", pol: "M4 21V4M4 4h12l-2 4 2 4H4", rel: "M12 3v18M7 8h10" };
-  const card = r => { const c = MOD_CATS[r.cat] || { name: r.cat }, open = MR.open === r.id; return `<li class="mr-i ${r.st === "new" ? "new" : "done"} ${open ? "open" : ""}">
-      <button type="button" class="mr-h" data-mr-open="${esc(r.id)}" aria-expanded="${open}"><span class="mr-av">${esc(initials(r.user))}</span><span class="mr-m"><b>${esc(r.user)}</b><small>${esc(r.chat)} · ${fmtWhen(r.at)}</small></span><span class="mr-cat"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${CI[r.cat] || CI.ins}"/></svg>${esc(c.name)}</span>${r.st === "new" ? `<span class="mr-st new">новый</span>` : `<span class="mr-st">рассмотрен</span>`}<span class="mr-chev" aria-hidden="true"></span></button>
-      <div class="mr-b"><div class="mr-bi">
-        <p class="mr-q">«${esc(r.text)}»</p>
-        <p class="mr-d">${r.n >= 3 ? r.n + "-е" : "Повторное"} нарушение ученика. ${r.mode === "removed" ? "Сообщение успело уйти в чат — модератор его удалил." : "Сообщение не было отправлено — модератор остановил его при наборе."}</p>
-        <div class="mr-act">${r.st === "new" ? `<button type="button" class="btn primary" data-mod-done="${esc(r.id)}">Рассмотрено</button>` : `<button type="button" class="btn" data-mr-undo="${esc(r.id)}">Вернуть в новые</button>`}${r.cid ? `<button type="button" class="btn" data-mr-chat="${esc(r.cid)}">Открыть чат</button>` : ""}<button type="button" class="btn" data-mr-write="${esc(r.user)}">Написать ученику</button></div>
-      </div></div></li>`; };
-  el.innerHTML = admHead("Рапорты", `<button type="button" class="btn" data-mod-rules>Правила чатов</button>`) + `
-    <div class="adm-body mr-wrap">
-      <div class="mr-stats"><div><b>${MOD.checked}</b><span>сообщений проверено</span></div><div><b>${MOD.blocked}</b><span>не отправлено</span></div><div><b>${MOD.removed}</b><span>удалено</span></div><div class="${cnt.new ? "hot" : ""}"><b>${cnt.new}</b><span>новых рапортов</span></div></div>
-      <div class="mr-grid">
-        <section class="mr-main">
-          <div class="adm-filter">${[["new", "Новые"], ["done", "Рассмотренные"], ["all", "Все"]].map(([id, n]) => `<button class="chip" data-mr-f="${id}" aria-pressed="${MR.f === id}">${n} <span class="cnt">${cnt[id]}</span></button>`).join("")}</div>
-          ${list.length ? `<ul class="mr-list">${list.map(card).join("")}</ul>` : `<div class="mr-empty"><b>${MR.f === "new" ? "Новых рапортов нет" : "Пусто"}</b><span>Рапорт приходит сюда, когда ученик второй раз пишет в чате то, что запрещено правилами: мат, оскорбления, политику, религию. Первое нарушение — только предупреждение ученику.</span></div>`}
-        </section>
-        <aside class="mr-side">
-          <h4>Чаще всего нарушают</h4>
-          ${top.length ? `<ul class="mr-top">${top.map(([n, w]) => `<li><span class="mr-av sm">${esc(initials(n))}</span><span class="mr-m"><b>${esc(n)}</b><small>${[...w.cats].map(c => (MOD_CATS[c] || { name: c }).name).join(", ")}</small></span><em>${w.n}</em></li>`).join("")}</ul>` : `<p class="muted mr-none">Нарушений не было</p>`}
-          <button type="button" class="mr-reset" data-mod-reset>Сбросить предупреждения</button>
-          <p class="mr-how"><b>Как это работает.</b> Агент-модератор проверяет сообщения во всех чатах. Первое нарушение — предупреждение ученику, со второго — рапорт сюда. Получать рапорты может роль с правом «Рассматривать рапорты модерации чатов» (Роли и права).</p>
-        </aside>
-      </div>
-    </div>`;
-}
 document.addEventListener("click", e => {
   const g = q => e.target.closest(q); let x;
   if((x = g("[data-mr-f]"))){ MR.f = x.dataset.mrF; MR.open = null; admRerender(); return; }
-  if((x = g("[data-mr-open]"))){ const id = x.dataset.mrOpen, li = x.closest(".mr-i"); MR.open = MR.open === id ? null : id; document.querySelectorAll(".mr-i.open").forEach(o => { if(o !== li){ o.classList.remove("open"); o.querySelector(".mr-h").setAttribute("aria-expanded", "false"); } }); li.classList.toggle("open", MR.open === id); x.setAttribute("aria-expanded", MR.open === id); return; }
+  if((x = g("[data-mr-open]"))){ const id = x.dataset.mrOpen; MR.open = MR.open === id ? null : id; document.querySelectorAll("#ap-rap .zrp").forEach(li => { const on = li.firstElementChild.dataset.mrOpen === MR.open; li.classList.toggle("open", on); li.firstElementChild.setAttribute("aria-expanded", on); }); return; }
   if((x = g("[data-mr-undo]"))){ const r = MOD.reports.find(v => v.id === x.dataset.mrUndo); if(r){ r.st = "new"; modSave(); admRerender(); } return; }
   if((x = g("[data-mr-chat]"))){ try { tgReset(); } catch(err) {} CHAT.open = x.dataset.mrChat; CHAT.view = "chat"; location.hash = "chats"; showTab("chats", true); try { renderChats(); } catch(err) {} return; }
   if((x = g("[data-mr-write]"))){ tgToast("Личные сообщения ученику — скоро"); return; }
 });
+/* ---- Правила и Рапорты: разметка из макета (сборка 638) ---- */
+const ZD_CV = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+function renderAdmReports(el){
+  const rs = MOD.reports, cnt = { new: rs.filter(r => r.st === "new").length, done: rs.filter(r => r.st !== "new").length, all: rs.length };
+  const list = rs.filter(r => MR.f === "all" || (MR.f === "new" ? r.st === "new" : r.st !== "new"));
+  const who = {}; rs.forEach(r => { const w = who[r.user] || (who[r.user] = { n: 0, cats: new Set() }); w.n++; w.cats.add(r.cat); });
+  const top = Object.entries(who).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
+  const card = r => { const c = MOD_CATS[r.cat] || { name: r.cat }, open = MR.open === r.id, nw = r.st === "new";
+    return `<li class="zrp ${open ? "open" : ""}" data-st="${nw ? "new" : "done"}"><div class="zrp-r" data-mr-open="${esc(r.id)}" role="button" tabindex="0" aria-expanded="${open}"><span class="zav">${esc((r.user || "?").charAt(0))}</span><div><b>${esc(r.user)}</b><small>${esc(r.chat)} · ${fmtWhen(r.at)}</small></div><span class="zq zq-w">${esc(c.name)}</span><span class="zst2 ${nw ? "" : "ok"}">${nw ? "новый" : "рассмотрен"}</span>${ZD_CV}</div><div class="zac-d"><div><div class="zrpd"><div class="zrpd-g"><div><small>Когда</small><b>${fmtWhen(r.at)}</b></div><div><small>Отправил</small><b>${esc(r.user)}</b></div><div><small>Чат</small><b>${esc(r.chat)}</b></div><div><small>Нарушений</small><b>${r.n || 1}</b></div></div><div class="zrpd-m">«${esc(r.text)}»</div><div class="zrpd-w"><i>!</i><span>${r.n >= 3 ? r.n + "-е" : "Повторное"} нарушение. ${r.mode === "removed" ? "Сообщение успело уйти в чат, модератор его удалил." : "Сообщение не отправлено: модератор остановил его при наборе."}</span></div><div class="zbs">${nw ? `<button type="button" class="zb pr" data-mod-done="${esc(r.id)}">Рассмотрено</button>` : `<button type="button" class="zb" data-mr-undo="${esc(r.id)}">Вернуть в новые</button>`}${r.cid ? `<button type="button" class="zb" data-mr-chat="${esc(r.cid)}">Открыть чат</button>` : ""}</div></div></div></div></li>`; };
+  const fl = [["new", "Новые"], ["done", "Рассмотренные"], ["all", "Все"]].map(([id, n]) => `<button type="button" class="${MR.f === id ? "on" : ""}" data-mr-f="${id}">${n}<i>${cnt[id]}</i></button>`).join("");
+  el.innerHTML = admHead("Рапорты", "") + mkWrap("rap", `<div id="ap-rap" class="zpn"><div class="zh"><span>Рапорты</span><div><button type="button" class="zb" data-mod-rules>Правила чатов</button></div></div>
+<div class="zst4"><div><b>${MOD.checked}</b><small>сообщений проверено</small></div><div><b>${MOD.blocked}</b><small>не отправлено</small></div><div><b>${MOD.removed}</b><small>удалено</small></div><div class="${cnt.new ? "hl" : ""} zgo" role="button" tabindex="0" title="Показать новые рапорты" data-mr-f="new"><b>${cnt.new}</b><small>новых рапортов</small></div></div>
+<div class="zg3"><section class="ac"><div class="zfl">${fl}</div>${list.length ? `<ul class="zrpl">${list.map(card).join("")}</ul>` : `<p class="zp" style="padding:14px 4px"><b style="display:block;color:var(--ink);font-weight:500">${MR.f === "new" ? "Новых рапортов нет" : "Пусто"}</b>Рапорт приходит сюда, когда ученик второй раз пишет в чате то, что запрещено правилами. Первое нарушение: только предупреждение ученику.</p>`}</section>
+<div class="zcol"><section class="ac"><div class="zsub">Чаще всего нарушают</div>${top.length ? `<ul class="zl">${top.map(([n, w]) => `<li class="zli2"><div><b>${esc(n)}</b><small>${[...w.cats].map(c => (MOD_CATS[c] || { name: c }).name).join(", ")}</small></div><span class="zq zq-w">${w.n}</span></li>`).join("")}</ul>` : `<p class="zp">Нарушений не было</p>`}<a class="zlk" role="button" tabindex="0" data-mod-reset>Сбросить предупреждения</a><div class="zhow ${MR.how ? "open" : ""}"><button type="button" class="zhow-h" data-mr-how><span>Как это работает</span>${ZD_CV}</button><div class="zhow-b"><div><p>Агент-модератор проверяет сообщения во всех чатах. Первое нарушение: предупреждение ученику, со второго рапорт сюда. Получать рапорты может роль с правом «Рассматривать рапорты модерации чатов» (Роли и права).</p></div></div></div></section></div></div></div>`);
+}
 function renderAdmDocs(el){
-  const cnt = c => DOCS.list.filter(d => c === "all" || d.cat === c).length;
-  const list = DOCS.list.filter(d => DOCS.cat === "all" || d.cat === DOCS.cat);
-  const ICO = { "Лицей": "M4 20V9l8-5 8 5v11M9 20v-6h6v6", "Оценивание": "M12 3l2.6 5.4 5.9.8-4.3 4.2 1 5.900L12 16.500 6.800 19.300l1-5.900L3.500 9.200l5.900-.8z", "Учебный процесс": "M5 4h14v16H5zM9 9h6M9 13h6M9 17h3", "Другое": "M7 4h10l3 3v13H4V4zM8 11h8M8 15h5" };
-  el.innerHTML = admHead("Правила", `<button class="plus" data-doc-new><span aria-hidden="true"><svg viewBox="0 0 22 22" width="22" height="22"><g class="plus-g"><path d="M6.2 11h9.6M11 6.2v9.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></g></svg></span> Добавить документ</button>`) + `
-    <div class="adm-body"><section class="panel dc-p">
-      <div class="adm-filter">${[["all", "Все"], ...DOC_CATS.map(c => [c, c])].map(([id, n]) => `<button class="chip" data-doc-cat="${esc(id)}" aria-pressed="${DOCS.cat === id}">${esc(n)} <span class="cnt">${cnt(id)}</span></button>`).join("")}</div>
-      <label class="adm-q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.500-3.500"/></svg><input id="dc-q" type="search" placeholder="Найти в правилах" autocomplete="off" value="${esc(DOCS.q)}"></label>
-      <div class="dc-list">${list.length ? list.map(d => { const open = DOCS.open === d.id, pv = (d.body.split("\n").find(l => /^-\s/.test(l)) || "").replace(/^-\s*/, ""); return `<article class="dc ${open ? "open" : ""}" data-doc="${esc(d.id)}" data-hay="${esc((d.title + " " + d.body).toLowerCase())}">
-        <button type="button" class="dc-h" data-doc-t="${esc(d.id)}" aria-expanded="${open}"><span class="dc-i"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICO[d.cat] || ICO["Другое"]}"/></svg></span><span class="dc-m"><b>${esc(d.title)}</b><small>${esc(d.cat)} · обновлено ${docDate(d.upd)}</small></span><span class="dc-pv">${esc(pv)}</span><span class="chev" aria-hidden="true"></span></button>
-        <div class="dc-b"><div class="dc-bi"><div class="dc-txt">${mdLite(d.body)}</div><div class="dc-a"><button type="button" class="btn" data-doc-edit="${esc(d.id)}">Изменить</button><button type="button" class="btn" data-doc-copy="${esc(d.id)}">Копировать текст</button><button type="button" class="btn" data-doc-del="${esc(d.id)}">Удалить</button></div></div></div>
-      </article>`; }).join("") : `<p class="muted">В этой категории документов пока нет.</p>`}</div>
-    </section></div>`;
+  const cnt = c => DOCS.list.filter(d => c === "all" || d.cat === c).length, list = DOCS.list.filter(d => DOCS.cat === "all" || d.cat === DOCS.cat);
+  el.innerHTML = admHead("Правила", "") + mkWrap("rul", `<div id="ap-rul" class="zpn"><div class="zh"><span>Правила</span><div><button type="button" class="zb pr" data-doc-new>+ Добавить документ</button></div></div>
+<section class="ac"><div class="zfl">${[["all", "Все"], ...DOC_CATS.map(c => [c, c])].map(([id, n]) => `<button type="button" class="${DOCS.cat === id ? "on" : ""}" data-doc-cat="${esc(id)}">${esc(n)}<i>${cnt(id)}</i></button>`).join("")}</div>
+<input class="zinp zs2" id="dc-q" type="text" placeholder="Найти в правилах" autocomplete="off" value="${esc(DOCS.q)}">
+<ul class="zdl">${list.length ? list.map(d => { const open = DOCS.open === d.id, pv = (d.body.split("\n").find(l => /^-\s/.test(l)) || "").replace(/^-\s*/, "");
+  return `<li class="zdoc ${open ? "open" : ""}" data-hay="${esc((d.title + " " + d.body).toLowerCase())}"><div class="zdoc-r" data-zd-t="${esc(d.id)}" role="button" tabindex="0" aria-expanded="${open}"><div><b>${esc(d.title)}</b><small>${esc(d.cat)} · обновлено ${docDate(d.upd)}</small></div><span class="zsn">${esc(pv)}</span>${ZD_CV}</div><div class="zac-d"><div><div class="zd-txt">${mdLite(d.body)}</div><div class="zbs"><button type="button" class="zb" data-doc-edit="${esc(d.id)}">Изменить</button><button type="button" class="zb" data-doc-copy="${esc(d.id)}">Копировать текст</button><button type="button" class="zb" data-doc-del="${esc(d.id)}">Удалить</button></div></div></div></li>`; }).join("") : `<li class="zp" style="padding:12px 4px">В этой категории документов пока нет.</li>`}</ul></section></div>`);
   docsFilter();
 }
 function docsFilter(){
   const q = (DOCS.q || "").trim().toLowerCase();
-  document.querySelectorAll("#admin .dc").forEach(c => { c.hidden = !!q && !c.dataset.hay.includes(q); });
+  document.querySelectorAll("#admin .zdoc").forEach(c => { c.hidden = !!q && !c.dataset.hay.includes(q); });
 }
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if((x = g(".mk-rul [data-zd-t]"))){ const id = x.dataset.zdT; DOCS.open = DOCS.open === id ? null : id; document.querySelectorAll("#ap-rul .zdoc").forEach(li => { const on = li.firstElementChild.dataset.zdT === DOCS.open; li.classList.toggle("open", on); li.firstElementChild.setAttribute("aria-expanded", on); }); return; }
+  if(g(".mk-rap [data-mr-how]")){ MR.how = !MR.how; g(".zhow").classList.toggle("open", MR.how); return; }
+});
+document.addEventListener("keydown", e => { if((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches(".mk-rul [data-zd-t],.mk-rap [data-mr-open],.mk-rap .zgo,.mk-rap .zlk")){ e.preventDefault(); e.target.click(); } });
+
 function docForm(id){
   const d = id ? DOCS.list.find(x => x.id === id) : null, st = { cat: d ? d.cat : DOC_CATS[0] };
   const o = tgModal(d ? "Изменить документ" : "Новый документ", `<label class="cf-l">Название</label><input class="tgm-in" id="dc-title" maxlength="80" value="${esc(d ? d.title : "")}" placeholder="Например, Правила библиотеки" autocomplete="off">
@@ -14004,7 +13990,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "637";
+const BUILD = "638";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -15978,6 +15964,11 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 :is(#admin,#mk-layer) .mk .zro{gap:8px}
 :is(#admin,#mk-layer) .mk .zro>span{flex:1 1 auto}
 :is(#admin,#mk-layer) .mk .zt .px-x{margin-left:4px;color:var(--mut);font-size:15px}
+:is(#admin,#mk-layer) .mk .zd-txt{font-size:14px;line-height:1.5;color:var(--ink);margin-bottom:10px}
+:is(#admin,#mk-layer) .mk .zd-txt ul{padding-left:18px;margin:6px 0}
+:is(#admin,#mk-layer) .mk .zd-txt p{margin:6px 0}
+:is(#admin,#mk-layer) .mk .zlk{cursor:pointer}
+:is(#admin,#mk-layer) .mk .zbs{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
