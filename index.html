@@ -9579,7 +9579,7 @@ function admAnimate(){
   admPill();
   const d = ADM.anim; ADM.anim = ""; if(!d) return;
   const el = document.getElementById("admin"); if(!el) return;
-  const blocks = []; [...el.children].forEach(n => { if(n.matches(".adm-nav, .view-head")) return; if(n.matches(".adm-body")) blocks.push(...n.children); else blocks.push(n); });
+  const blocks = []; [...el.children].forEach(n => { if(n.matches(".adm-nav, .adm-sub, .view-head")) return; if(n.matches(".adm-body")) blocks.push(...n.children); else blocks.push(n); });
   hvStagger(blocks.flatMap(n => n.id === "rv-body" ? [...n.children] : [n]));
 }
 function _renderAdmin(){
@@ -9880,9 +9880,16 @@ document.addEventListener("click", e => {
   if(g("[data-sch-save]")){ schSave(); return; }
 });
 function admSave(){ try { localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-perm", JSON.stringify(ADM.perm)); } catch(e) {} }
+/* меню админки: группы и подвкладки, как в макете (сборка 627) */
+const ADM_GR = [["panel", "Панель", [["panel", "Панель"]]], ["plan", "План", [["plan", "План"]]], ["users", "Пользователи", [["users", "Пользователи"], ["roles", "Роли и права"]]], ["security", "Безопасность", [["security", "Безопасность"], ["actlog", "Журнал действий"]]], ["sched", "Расписание", [["sched", "Расписание"]]], ["docs", "Правила", [["docs", "Правила"], ["reports", "Рапорты"]]], ["agents", "Агенты", [["agents", "Агенты"], ["conn", "Коннекторы"]]]];
+const ADM_ORDER = ADM_GR.flatMap(g => g[2].map(x => x[0]));
+const admGrpOf = t => ADM_GR.find(g => g[2].some(x => x[0] === t)) || ADM_GR[0];
 function admNav(){
-  const t = (id, n) => `<button class="adm-tab" data-adm-tab="${id}" aria-pressed="${ADM.tab === id}">${n}</button>`;
-  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("panel", "Панель")}${t("plan", "План")}${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("sched", "Расписание")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
+  const cur = admGrpOf(ADM.tab); ADM.last = ADM.last || {}; ADM.last[cur[0]] = ADM.tab;
+  const cnt = modOpenN(), badge = n => n ? ` <span class="adm-cnt">${n}</span>` : "";
+  const grp = g => `<button class="adm-tab" data-adm-tab="${g === cur ? ADM.tab : (ADM.last[g[0]] || g[2][0][0])}" aria-pressed="${g === cur}">${g[1]}${g[0] === "docs" ? badge(cnt) : ""}</button>`;
+  const sub = cur[2].length > 1 ? `<div class="adm-sub" role="group" aria-label="${cur[1]}: подразделы">${cur[2].map(x => `<button type="button" class="adm-sb" data-adm-tab="${x[0]}" aria-pressed="${x[0] === ADM.tab}">${x[1]}${x[0] === "reports" ? badge(cnt) : ""}</button>`).join("")}</div>` : "";
+  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${ADM_GR.map(grp).join("")}</div>${sub}`;
 }
 /* ---- режим «смотреть как» ---- */
 const VA = { role: null, uid: null, from: "admin" };
@@ -10607,7 +10614,7 @@ document.addEventListener("click", e => {
   let x;
   if((x = g("[data-adm-tab]"))){
     const nt = x.dataset.admTab; if(nt === ADM.tab) return;
-    const o = ["panel", "plan", "conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
+    const o = ADM_ORDER, dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
     ADM.tab = nt; ADM.form = null; ADM.confirmDel = null; ADM.grp.clear(); DOCS.open = null; ADM.anim = dir; admRerender(); if(nt === "agents" && !SYS.at) sysRun();
     return;
   }
@@ -11479,7 +11486,7 @@ function applySetting(key, val){
 }
 
 function tabBlocks(node, depth){   // блоки раздела, которые выплывают по очереди
-  const kids = [...node.children].filter(k => !k.hidden && !k.matches(".view-head, script, style, .hwv, .adm-nav") && k.offsetHeight > 0);
+  const kids = [...node.children].filter(k => !k.hidden && !k.matches(".view-head, script, style, .hwv, .adm-nav, .adm-sub") && k.offsetHeight > 0);
   if(kids.length <= 2 && depth < 2) return kids.flatMap(k => k.children.length >= 2 ? tabBlocks(k, depth + 1) : [k]);
   return kids;
 }
@@ -13748,7 +13755,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "626";
+const BUILD = "627";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14268,6 +14275,16 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 </style>
 <style id="act-short">.act-all{appearance:none;border:0;background:none;color:var(--pen);font:500 12.5px var(--f-body);cursor:pointer;padding:0 0 0 8px}.act-all:hover{text-decoration:underline}</style>
 <style id="ag-cols">@media(min-width:900px){#adm-ag .reg2 .ag-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:18px}}</style>
+<style id="adm-sub-css">
+#admin .adm-nav .adm-tab .adm-cnt{margin-left:2px}
+.adm-sub{display:flex;flex-wrap:wrap;gap:4px;margin:-4px 0 12px;padding:0 2px}
+.adm-sb{appearance:none;border:0;background:transparent;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:99px;font-size:13px;color:var(--muted);transition:background-color .18s,color .18s,box-shadow .18s,transform .1s}
+.adm-sb:hover{background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.adm-sb:active{transform:scale(.96)}
+.adm-sb[aria-pressed="true"]{color:var(--pen);background:var(--pick);box-shadow:inset 0 0 0 1.5px var(--pen);font-weight:500}
+.adm-sb:focus-visible{outline:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--pen) 55%,transparent)}
+@media(max-width:600px){.adm-sub{margin:-6px 0 10px}.adm-sb{height:28px;padding:0 11px;font-size:12.5px}}
+</style>
 <style id="ag3-css">
 .ag3{display:grid;gap:8px}
 .ag3-lg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;font-size:12px;color:var(--muted);margin:0 2px 10px}
