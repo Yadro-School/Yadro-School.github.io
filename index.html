@@ -9112,7 +9112,7 @@ function logAdd(lvl, src, msg){
   try { agrNote(lvl, src, msg); } catch(e) {}
   if(LOG.list.length > 120) LOG.list = LOG.list.slice(-120);
   try { localStorage.setItem(LOG_KEY, JSON.stringify(LOG.list)); } catch(e) {}
-  const el = document.getElementById("ag-log"); if(el){ el.innerHTML = logRows(); logFilter(); }
+  const el = document.getElementById("ag-log"); if(el){ el.innerHTML = el.classList.contains("zevl") ? mkLogRows() : logRows(); logFilter(); }
 }
 function logFilter(){ const q = document.getElementById("ag-log-q"), ul = document.getElementById("ag-log"); if(!q || !ul) return; const t = q.value.trim().toLowerCase().replace(/ё/g, "е"); let n = 0; ul.querySelectorAll("li.lg").forEach(li => { const ok = !t || li.textContent.toLowerCase().replace(/ё/g, "е").includes(t); li.hidden = !ok; if(ok) n++; }); let no = ul.querySelector(".lg-none"); if(!n && t){ if(!no){ no = document.createElement("li"); no.className = "lg-none"; no.textContent = "Ничего не найдено"; ul.appendChild(no); } } else if(no) no.remove(); }
 document.addEventListener("input", e => { if(e.target.id === "ag-log-q") logFilter(); });
@@ -9122,6 +9122,10 @@ function bumpRun(id){
   try { localStorage.setItem(AGST_KEY, JSON.stringify(SYS.runs)); } catch(e) {}
 }
 const LVL = { ok: "ок", warn: "вним", fail: "сбой", info: "инфо" };
+function mkLogRows(){
+  if(!LOG.list.length) return `<li class="zev lg"><time>--:--:--</time><b>система</b><span>Журнал пуст.</span></li>`;
+  return LOG.list.slice(-120).reverse().map(x => { const d = new Date(x.t), hh = isNaN(d) ? "--:--:--" : d.toLocaleTimeString("ru-RU", { hour12: false }); return `<li class="zev lg ${x.lvl}"><time>${hh}</time><b>${esc(x.src)}</b><span>${esc(x.msg)}</span></li>`; }).join("");
+}
 function logRows(){
   if(!LOG.list.length) return `<li class="lg info"><span class="lg-t">--:--:--</span><span class="lg-s">система</span><span class="lg-m">Журнал пуст.</span></li>`;
   return LOG.list.slice(-120).reverse().map(x => {
@@ -9306,18 +9310,39 @@ function ag3Mech(all){
     <div class="mx3-k"><div><b>${I.length}</b><small>${plural(I.length, ["проблема", "проблемы", "проблем"])} за сутки</small></div><div class="ok"><b>${fx}</b><small>исправлено</small></div><div class="${need ? "w" : ""}"><b>${need}</b><small>${need === 1 ? "ждёт" : "ждут"} тебя</small></div></div>
     ${I.length ? `<ul class="mx3-l">${I.slice(0, 6).map(li).join("")}</ul>${I.length > 6 ? `<p class="mx3-e">Ещё ${I.length - 6} — в журнале событий.</p>` : ""}` : `<p class="mx3-e">${AGR.loaded ? "За сутки сбоев не было." : "Загружаю историю запусков…"}</p>`}</section>`;
 }
+const MXS = { mode: (() => { try { return localStorage.getItem("bai-mech-mode") || "auto"; } catch(e) { return "auto"; } })(), tg: (() => { try { return localStorage.getItem("bai-mech-tg") !== "0"; } catch(e) { return true; } })() };
+function mkMech(all){
+  const I = ag3Inc(all), fx = I.filter(x => x.fixed).length, need = I.filter(x => !x.fixed && x.st === "fail").length;
+  const fixT = []; all.forEach(a => { const R = AGR.runs[a.id] || []; R.forEach((r, i) => { if(r.st !== "fail" || r.t < Date.now() - 864e5) return; const nx = R.slice(i + 1).find(q => q.st === "ok"); if(nx) fixT.push(nx.t - r.t); }); });
+  const avg = fixT.length ? Math.round(fixT.reduce((a, b) => a + b, 0) / fixT.length / 6e4) : null;
+  const li = x => { const open = AG3.mx === x.key, tag = x.fixed ? ["ok", "Исправлено"] : x.st === "fail" ? ["w", "Нужен ты"] : ["w", "Замечание"];
+    return `<li class="mx-i${!x.fixed && x.st === "fail" ? " need" : ""}${open ? " open" : ""}"><button type="button" class="mx-r" data-mx3="${esc(x.key)}" aria-expanded="${open}"><i class="zd ${x.st === "fail" ? "r" : "y"}"></i><span><b>${esc(x.a.name)}${x.n > 1 ? " · ×" + x.n : ""}</b><small>${ag3hm(x.t)} · ${esc(x.note)}</small></span><em class="${tag[0]}">${tag[1]}</em><svg class="mx-ch" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>${open ? `<div class="mx-d"><p class="mx-why">${x.fixed ? "Следующий запуск прошёл без ошибок. Делать ничего не нужно." : "Сам пока не чинит: агенты ещё не на сервере. Ниже готовый промпт — скопируй и отправь Claude."}</p>${x.fixed ? "" : `<pre class="mx-pr">${esc(ag3Prompt(x))}</pre>`}<div class="mx-b">${x.fixed ? "" : `<button type="button" class="pr" data-mx3-cp="${esc(x.key)}">Скопировать промпт</button>`}<button type="button" data-mx3-ag="${esc(x.a.id)}">Открыть агента</button></div></div>` : ""}</li>`; };
+  return `<section class="mx" id="mx3"><div class="mx-h"><span class="mx-av"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/><path d="M5 5l3 3M4 9l1-1M9 4 8 5"/></svg><i></i></span><div class="mx-t"><b>Механик</b><small>Следит за ${all.length} ${plural(all.length, ["агентом", "агентами", "агентами"])}${MXS.mode === "auto" ? " · чинить сам начнёт на сервере" : ""}</small></div>
+    <div class="mx-sg" role="group"><button type="button" class="${MXS.mode === "auto" ? "on" : ""}" data-mxm="auto" title="Когда агенты переедут на сервер, Механик будет чинить сам">Чинит сам</button><button type="button" class="${MXS.mode === "ask" ? "on" : ""}" data-mxm="ask" title="Механик только сообщает и готовит промпт">Спрашивает меня</button></div><button type="button" class="mx-tg${MXS.tg ? " on" : ""}" data-mxtg title="Сообщения Механика в Telegram-бот — задача плана"><svg viewBox="0 0 24 24"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg>Пишет в Telegram</button></div>
+    <div class="mx-k"><div><b>${I.length}</b><small>${plural(I.length, ["сбой", "сбоя", "сбоев"])} за сутки</small></div><div class="ok"><b>${fx}</b><small>исправлено</small></div><div class="w"><b>${need}</b><small>ждёт тебя</small></div><div><b>${avg != null ? avg + " мин" : "—"}</b><small>среднее время починки</small></div></div>
+    ${I.length ? `<ul class="mx-l">${I.slice(0, 6).map(li).join("")}</ul>` : `<p class="mk-nodata">${AGR.loaded ? "За сутки сбоев не было." : "Загружаю историю запусков…"}</p>`}</section>`;
+}
+document.addEventListener("click", e => {
+  let x;
+  if((x = e.target.closest("[data-mxm]"))){ MXS.mode = x.dataset.mxm; try { localStorage.setItem("bai-mech-mode", MXS.mode); } catch(_) {} renderAgents(); return; }
+  if(e.target.closest("[data-mxtg]")){ MXS.tg = !MXS.tg; try { localStorage.setItem("bai-mech-tg", MXS.tg ? "1" : "0"); } catch(_) {} renderAgents(); return; }
+  if((x = e.target.closest("[data-ag2-log]"))){ AGV.lg = AGV.lg === x.dataset.ag2Log ? "" : x.dataset.ag2Log; renderAgents(); return; }
+  if(e.target.closest("[data-ag2-x]")){ AGV.log = !AGV.log; renderAgents(); return; }
+});
+document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest(".ag2-r[data-ag-open]"); if(r && e.target === r && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); r.click(); } });
 function ag3PopHide(){ const p = document.getElementById("ag3-pop"); if(p) p.hidden = true; if(AG3.sel){ AG3.sel.classList.remove("sel"); AG3.sel = null; } }
 function ag3PopShow(i){
   if(AG3.sel === i) return ag3PopHide(); ag3PopHide();
   const [gid, k] = i.dataset.ag3S.split("|"), x = (AG3.slots[gid] || [])[+k]; if(!x) return;
-  let p = document.getElementById("ag3-pop"); if(!p){ p = document.createElement("div"); p.id = "ag3-pop"; p.className = "ag3-pop"; document.body.appendChild(p); }
+  let p = document.getElementById("ag3-pop"); if(!p){ p = document.createElement("div"); p.id = "ag3-pop"; p.className = "ag2-pop"; p.hidden = true; mkLayer("agt", "").appendChild(p); }
   AG3.sel = i; i.classList.add("sel"); document.querySelectorAll(".g-tip.on").forEach(t => t.classList.remove("on"));
   const avg = x.ms.length ? Math.round(x.ms.reduce((a, b) => a + b, 0) / x.ms.length) : null;
   const txt = x.st === "o" ? "В эти полчаса агенты группы не запускались." : x.notes.length ? x.notes.slice(0, 2).map(esc).join("<br>") + (x.notes.length > 2 ? `<br>и ещё ${x.notes.length - 2}` : "") : `${x.n} ${plural(x.n, ["запуск", "запуска", "запусков"])} без замечаний.`;
-  p.innerHTML = `<div class="pp-h"><i class="${x.st}"></i><b>${AG3_T[x.st]}</b><small>${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}</small></div><p class="pp-t">${txt}</p>${x.st === "o" ? "" : `<div class="pp-k"><div><small>Запусков</small><b>${x.n}</b></div><div><small>Ответ</small><b>${avg != null ? avg + " мс" : "—"}</b></div></div>`}<div class="pp-b">${x.st === "fail" || x.st === "warn" ? `<button type="button" class="pr" data-ag3-pp="mech" title="Что с этим сбоем">Механик</button>` : ""}<button type="button" data-ag3-pp="open|${gid}" title="Показать агентов группы">Агенты</button><button type="button" data-ag3-pp="log" title="Открыть журнал событий">Журнал</button></div>`;
+  const pc = { ok: "var(--ok)", warn: "#EBA83A", fail: "#D9483B", o: "var(--pl2)" };
+  p.innerHTML = `<div class="pp-h"><i style="background:${pc[x.st]}"></i><b>${AG3_T[x.st]}</b><small>${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}</small></div><p class="pp-t">${txt}</p>${x.st === "o" ? "" : `<div class="pp-k"><div><small>Запусков</small><b>${x.n}</b></div><div><small>Ответ</small><b>${avg != null ? avg + " мс" : "—"}</b></div></div>`}<div class="pp-b">${x.st === "fail" || x.st === "warn" ? `<button type="button" class="pr" data-ag3-pp="mech" title="Что с этим сбоем">Механик</button><button type="button" data-ag3-pp="log" title="Открыть журнал событий">Журнал</button>` : ""}<button type="button" data-ag3-pp="open|${gid}" title="Показать агентов группы">Агенты</button></div>`;
   p.hidden = false; p.dataset.t = Date.now();
   const r = i.getBoundingClientRect(), pw = p.offsetWidth, ph = p.offsetHeight, cx = r.left + r.width / 2, L = Math.max(8, Math.min(innerWidth - pw - 8, cx - pw / 2)), up = r.top - ph - 12 > 8;
-  p.className = "ag3-pop " + (up ? "up" : "dn"); p.style.left = L + "px"; p.style.top = (up ? r.top - ph - 12 : r.bottom + 12) + "px"; p.style.setProperty("--ax", (cx - L) + "px");
+  p.className = "ag2-pop " + (up ? "up" : "dn"); p.style.left = L + "px"; p.style.top = (up ? r.top - ph - 12 : r.bottom + 12) + "px"; p.style.setProperty("--ax", (cx - L) + "px");
 }
 const ag3Copy = (b, t) => {
   const done = () => { if(!b || !b.isConnected) return tgToast("Промпт скопирован"); const o = b.dataset.o || (b.dataset.o = b.textContent); b.textContent = "Скопировано"; b.classList.add("done"); setTimeout(() => { if(b.isConnected){ b.textContent = o; b.classList.remove("done"); } }, 1400); };
@@ -9327,9 +9352,9 @@ document.addEventListener("click", e => {
   let x;
   if((x = e.target.closest("[data-ag3-pp]"))){ const [k, gid] = x.dataset.ag3Pp.split("|"); ag3PopHide();
     if(k === "open"){ AG3.open[gid] = true; renderAgents(); const g = document.querySelector(`[data-ag3-g="${gid}"]`); if(g) g.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
-    else { const t = document.getElementById(k === "mech" ? "mx3" : "ag-log"); if(t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    else { if(k === "log" && !AGV.log){ AGV.log = true; renderAgents(); } const t = document.getElementById(k === "mech" ? "mx3" : "ag-log-w"); if(t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }
     return; }
-  if((x = e.target.closest("[data-ag3-s]"))){ ag3PopShow(x); return; }
+  if((x = e.target.closest("[data-ag3-s]")) || ((x = e.target.closest(".ag2-wb")) && (x = [...x.querySelectorAll("[data-ag3-s]")].find(i => { const r = i.getBoundingClientRect(); return e.clientX >= r.left - 3 && e.clientX <= r.right + 3; })))){ ag3PopShow(x); return; }
   if(!e.target.closest("#ag3-pop")) ag3PopHide();
   if((x = e.target.closest("[data-ag3-gt]"))){ const sec = x.parentNode, gid = sec.dataset.ag3G, was = sec.classList.contains("open"); AG3.open[gid] = !was; if(was && AG.run && [...sec.querySelectorAll("[data-ag-open]")].some(b => b.dataset.agOpen === AG.run)) AG.run = null; AGV.anim = !was; renderAgents(); return; }
   if((x = e.target.closest("[data-mx3-cp]"))){ const inc = ag3Inc([...BUILTIN(), ...AG.list]).find(q => q.key === x.dataset.mx3Cp); if(inc) ag3Copy(x, ag3Prompt(inc)); return; }
@@ -9355,96 +9380,59 @@ function renderAgents(){
   const tile = c => `<div class="sys-t ${c.st}"><span class="sys-l">${esc(c.l)}</span><span class="sys-v">${esc(c.v)}</span><span class="sys-n">${esc(c.n)}</span></div>`;
   const fnode = (id, label, cls) => `<span class="fl-n ${cls || ""}" data-fl="${id}">${esc(label)}</span>`;
 
+  const dotC = st => st === "ok" ? "g" : st === "fail" ? "r" : st === "idea" ? "n" : "w";
+  const spark = a => { const R = (AGR.runs[a.id] || []).filter(r => r.ms != null).slice(-14), W = 84, H = 26;
+    if(R.length < 2) return `<svg class="ag2-s off" viewBox="0 0 ${W} ${H}"><path d="M0 ${H - 4}H${W}"/></svg>`;
+    const mx = Math.max(...R.map(r => r.ms)), mn = Math.min(...R.map(r => r.ms)), sp = Math.max(1, mx - mn), pts = R.map((r, k) => [k * W / (R.length - 1), H - 5 - (r.ms - mn) / sp * (H - 10)]);
+    let d = "M" + pts[0][0].toFixed(1) + " " + pts[0][1].toFixed(1); for(let k = 1; k < pts.length; k++){ const m = (pts[k - 1][0] + pts[k][0]) / 2; d += ` C${m.toFixed(1)} ${pts[k - 1][1].toFixed(1)} ${m.toFixed(1)} ${pts[k][1].toFixed(1)} ${pts[k][0].toFixed(1)} ${pts[k][1].toFixed(1)}`; }
+    return `<svg class="ag2-s" viewBox="0 0 ${W} ${H}"><title>Отклик последних запусков</title><path class="ar" d="${d} V${H} H0Z"/><path class="ln" d="${d}"/></svg>`; };
+  const icR = '<svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg>', icL = '<svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h9"/></svg>', icS = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>';
   const row = a => {
     const st = agStatus(a), tpl = a.builtin ? (a.tpl ? TEMPLATES.find(x => x.id === a.tpl) : null) : tplOf(a);
-    const open = AG.run === a.id;
-    const stat = SYS.runs[a.id];
+    const open = AG.run === a.id, R = AGR.runs[a.id] || [], last = R[R.length - 1];
     const mode = a.builtin ? a.run : (tpl && tpl.runHere && a.enabled !== false ? "ai" : "none");
-    const io = `${(a.sources || a.from || []).join(" · ")} → ${(a.targets || a.to || []).join(" · ")}`;
     const lastTxt = typeof a.last === "function" ? a.last() : a.last;
-    const meta = a.builtin
-      ? (stat ? `Запусков ${stat.n}, последний ${fmtWhen(stat.at)}` : "")
-      : [(a.createdBy && a.createdBy === AG.me ? "Создали вы" : "Создан на платформе") + (a.createdAt ? ", " + fmtWhen(a.createdAt) : ""), a.lastRunAt ? "последний запуск " + fmtWhen(a.lastRunAt) : ""].filter(Boolean).join(" · ");
-    return `<li class="ag-i ${open ? "open" : ""}">
-      <button class="ag-row" data-ag-open="${a.id}" aria-expanded="${open}" aria-controls="agd-${a.id}">
-        <span class="ag-dot ${st.st}" aria-hidden="true"></span>
-        <span class="ag-main"><b>${esc(a.name)}</b><span class="ag-d">${esc(agShort(a.desc || a.role || "", a.builtin ? a.id : ""))}</span></span>
-        ${agMini(a)}
-        <span class="st st-${st.st}${st.t === "Работает" ? " st-plain" : ""}">${esc(st.t)}</span>
-        <span class="chev" aria-hidden="true"></span>
-      </button>
-      <div class="ag-det" id="agd-${a.id}"><div class="ag-det-in">
-        ${(() => { const need = a.needs || (tpl && tpl.needs); const t = need && need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).length ? "Нужно: " + need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).map(x => String(x).split(" ").slice(0, 4).join(" ")).join(" · ") : (lastTxt || ""); return t && a.id !== "qa" ? `<p class="ag-one">${esc(t)}</p>` : ""; })()}
-        <div class="ag-acts">
-          ${a.builtin
-            ? (a.id === "mod" ? modActs() : a.id === "qa" ? qaActs() : mode === "local" ? `<button class="btn primary" data-ag-local="${a.id}">${a.id === "backup" ? "Собрать копию" : "Проверить"}</button>`
-              : mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}`
-              : mode === "open" ? `<button class="btn primary" ${a.action.attr}>${esc(a.action.label)}</button>` : `<span class="imp-status">${a.id === "updater" ? "Проверка идёт автоматически." : a.id === "notify" ? "Сам по таймерам; в боте /plan и /zavtra." : a.id === "news" ? "Сам каждое утро; в боте /news." : "Запуск появится, когда будет сервер."}</span>`)
-            : `${mode === "ai" ? `<button class="btn primary" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button class="btn" data-ag-stop>Остановить</button>` : ""}` : ""}
-               <button class="btn" data-ag-edit="${a.id}">Настроить</button>
-               <button class="btn" data-ag-toggle="${a.id}">${a.enabled === false ? "Включить" : "Выключить"}</button>
-               ${AG.confirmDel === a.id ? `<button class="btn danger" data-ag-del="${a.id}">Точно удалить</button><button class="btn" data-ag-delno>Нет</button>` : `<button class="btn" data-ag-delask="${a.id}">Удалить</button>`}`}
-          ${AG.err && open ? `<span class="imp-status err">${esc(AG.err)}</span>` : ""}
-        </div>
-        ${a.id === "mod" && open ? modPanel() : ""}
-        ${a.id === "qa" && open ? qaPanel() : ""}
-        ${a.id !== "qa" && open ? agRunPanel(a) : ""}
-        ${mode === "ai" && open ? `<div class="imp-grid ag-in">
-            <label class="imp-drop" for="ag-file"><input type="file" id="ag-file" accept=".pdf,.xlsx,.xlsm,.xls,.ods,.csv,.txt,.png,.jpg,.jpeg,.webp" data-ag-file>
-              <b>${AG.file ? esc(AG.file.name) : "Файл (необязательно)"}</b><span>PDF, Excel, CSV, текст, фото</span></label>
-            <div class="imp-fields"><label for="ag-text">Текст или уточнение</label><textarea id="ag-text" class="imp-text" rows="3" data-ag-text>${esc(AG.text)}</textarea></div>
-          </div>` : ""}
-        ${open && (AG.out || AG.busy) ? `<pre class="ag-out" id="ag-out">${esc(AG.out || "Думаю…")}</pre>` : ""}
-      </div></div>
-    </li>`;
+    const need = a.needs || (tpl && tpl.needs), needT = need && need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).length ? "Нужно: " + need.filter(x => SAMPLE || !/обращаться к Claude/.test(x)).map(x => String(x).split(" ").slice(0, 4).join(" ")).join(" · ") : "";
+    const desc = agShort(a.desc || a.role || "", a.builtin ? a.id : "");
+    const runBtn = a.builtin
+      ? (a.id === "mod" ? modActs() : a.id === "qa" ? qaActs() : mode === "local" ? `<button type="button" data-ag-local="${a.id}">${icR}${a.id === "backup" ? "Собрать копию" : "Проверить"}</button>`
+        : mode === "ai" ? `<button type="button" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${icR}${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button type="button" data-ag-stop>Остановить</button>` : ""}`
+        : mode === "open" ? `<button type="button" ${a.action.attr}>${icR}${esc(a.action.label)}</button>` : "")
+      : `${mode === "ai" ? `<button type="button" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${icR}${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button type="button" data-ag-stop>Остановить</button>` : ""}` : ""}<button type="button" data-ag-edit="${a.id}">${icS}Настроить</button><button type="button" data-ag-toggle="${a.id}">${a.enabled === false ? "Включить" : "Выключить"}</button>${AG.confirmDel === a.id ? `<button type="button" data-ag-del="${a.id}">Точно удалить</button><button type="button" data-ag-delno>Нет</button>` : `<button type="button" data-ag-delask="${a.id}">Удалить</button>`}`;
+    const how = a.id === "updater" ? "Проверка идёт автоматически." : a.id === "notify" ? "Сам по таймерам; в боте /plan и /zavtra." : a.id === "news" ? "Сам каждое утро; в боте /news." : (mode === "none" && a.builtin ? "Запуск появится, когда будет сервер." : "");
+    const okR = R.filter(r => r.st === "ok").length;
+    return `<div class="ag2-c${open ? " open" : ""}" data-k="${st.st === "ok" ? "g" : "w"}"><div class="ag2-r" data-ag-open="${a.id}" role="button" tabindex="0" aria-expanded="${open}"><i class="zd ${dotC(st.st)}"></i><div><b>${esc(a.name)}</b><small>${esc(desc)}</small></div>${spark(a)}<span class="ag2-p ${st.st === "ok" ? "ok" : "w"}">${esc(st.t)}</span><span class="ag2-rb" aria-hidden="true">${icR}</span></div>
+      ${open ? `<div class="ag2-d"><p class="ag2-m">${esc(desc)}${desc && !/[.!?]$/.test(desc) ? "." : ""} ${esc(needT || lastTxt || how || (st.st === "ok" ? "Работает." : ""))}</p>
+        <div class="ag2-k"><div><small>Где работает</small><b>${esc(String(a.who || (a.builtin ? "На странице" : "Создан на платформе")).split(/[,;]/)[0])}</b></div><div><small>Последний запуск</small><b>${last ? esc(fmtWhen(new Date(last.t).toISOString())) : "не запускался"}</b></div><div><small>Отклик</small><b>${last && last.ms != null ? last.ms + " мс" : "—"}</b></div></div>
+        <div class="ag2-b">${runBtn}<button type="button" data-ag2-log="${a.id}" aria-expanded="${AGV.lg === a.id}">${icL}Журнал${R.length ? " · " + okR + "/" + R.length : ""}</button></div>
+        ${AG.err ? `<p class="ag2-m mk-err">${esc(AG.err)}</p>` : ""}
+        ${AGV.lg === a.id ? (R.length ? `<ul class="ag2-l">${R.slice(-8).reverse().map(r => `<li><span>${esc(fmtWhen(new Date(r.t).toISOString()))}</span><span>${esc(r.note || AGR_T[r.st])}${r.ms != null ? " · " + r.ms + " мс" : ""}</span><span class="${r.st}">${esc(AGR_T[r.st])}</span></li>`).join("")}</ul>` : `<p class="ag2-m">${AGR.loaded ? "Запусков ещё не было." : "Загружаю историю запусков…"}</p>`) : ""}
+        ${a.id === "mod" ? modPanel() : ""}${a.id === "qa" ? qaPanel() : ""}
+        ${mode === "ai" ? `<div class="imp-grid ag-in"><label class="imp-drop" for="ag-file"><input type="file" id="ag-file" accept=".pdf,.xlsx,.xlsm,.xls,.ods,.csv,.txt,.png,.jpg,.jpeg,.webp" data-ag-file><b>${AG.file ? esc(AG.file.name) : "Файл (необязательно)"}</b><span>PDF, Excel, CSV, текст, фото</span></label><div class="imp-fields"><label for="ag-text">Текст или уточнение</label><textarea id="ag-text" class="imp-text" rows="3" data-ag-text>${esc(AG.text)}</textarea></div></div>` : ""}
+        ${AG.out || AG.busy ? `<pre class="ag-out" id="ag-out">${esc(AG.out || "Думаю…")}</pre>` : ""}
+      </div>` : ""}</div>`;
   };
   const SEV = { fail: 0, warn: 1, wait: 2, idea: 3, ok: 4 };
   const sev = a => { const k = agStatus(a).st; return SEV[k] != null ? SEV[k] : 4; };
   const sorted = all.slice().sort((x, y) => sev(x) - sev(y) || x.name.localeCompare(y.name, "ru"));
-  const nBad = sorted.filter(a => sev(a) <= 1).length, nWait = sorted.filter(a => sev(a) === 2 || sev(a) === 3).length, nOk = sorted.filter(a => sev(a) === 4).length;
-  const flts = [["all", "Все", sorted.length], ["bad", "Внимание", nBad], ["wait", "Ждут", nWait], ["ok", "Работают", nOk]].filter(f => f[0] === "all" || f[2]);
-  if(!flts.some(f => f[0] === AGV.flt)) AGV.flt = "all";
-  const shown = sorted.filter(a => AGV.flt === "all" || (AGV.flt === "bad" ? sev(a) <= 1 : AGV.flt === "wait" ? sev(a) === 2 || sev(a) === 3 : sev(a) === 4));
-  const mine = all.filter(a => !a.builtin);
-  el.innerHTML = `
+  const nWait = sorted.filter(a => sev(a) < 4).length, nOk = sorted.filter(a => sev(a) === 4).length;
+  if(!["all", "wait", "ok"].includes(AGV.flt)) AGV.flt = "all";
+  const shown = sorted.filter(a => AGV.flt === "all" || (AGV.flt === "wait" ? sev(a) < 4 : sev(a) === 4));
+  const sysT = c => `<div class="sy-t" title="${esc(c.n)}"><i class="zd ${c.st === "ok" ? "g" : c.st === "fail" ? "r" : "w"}"></i><span>${esc(c.l.replace("Ядро платформы", "Ядро").replace("Источник данных", "Источник"))}</span><b>${esc(c.v)}</b></div>`;
+  const grp = AG3_GR.map(([gid, name, sub]) => {
+    const L = shown.filter(a => ag3Grp(a) === gid); if(!L.length) return "";
+    const allG = all.filter(a => ag3Grp(a) === gid), ok = allG.filter(a => agStatus(a).st === "ok").length, open = !!AG3.open[gid] || L.some(a => a.id === AG.run);
+    const S = AG3.slots[gid] = ag3Slots(allG), cm = { ok: "", warn: "y", fail: "r", o: "o" }, C = 2 * Math.PI * 11, f = allG.length ? ok / allG.length : 0;
+    return `<section class="ag2-gr${open ? " open" : ""}" data-ag3-g="${gid}"><button type="button" class="ag2-gh" data-ag3-gt aria-expanded="${open}"><svg class="ag2-ring" viewBox="0 0 28 28"><circle class="t" cx="14" cy="14" r="11"/><circle class="p" cx="14" cy="14" r="11" stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}"/></svg><span class="ag2-gn"><b>${name}</b><small>${sub}</small></span><span class="ag2-w"><span class="ag2-wb">${S.map((x, k) => `<i class="${cm[x.st]}" data-ag3-s="${gid}|${k}" data-tip="${AG3_T[x.st]}|${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}"></i>`).join("")}</span><span class="ag2-wt"><span style="left:0">${ag3hm(S[0].t)}</span><span style="left:25%">${ag3hm(S[12].t)}</span><span style="left:50%">${ag3hm(S[24].t)}</span><span style="left:75%">${ag3hm(S[36].t)}</span><span style="left:100%">сейчас</span></span></span><span class="ag2-p ${ok === allG.length ? "ok" : "w"}">${ok} из ${allG.length}</span><svg class="ag2-chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-g"${open ? "" : " hidden"}>${L.map(row).join("")}</div></section>`;
+  }).join("");
+  el.innerHTML = mkWrap("agt", `
     ${AG.wizard ? `<div class="wiz-wrap ${AG.wizIn ? "wiz-in" : ""}"><div class="wiz-inner">${wizardHtml()}</div></div>` : ""}
-    <div class="sysrow">
-    <section class="panel sy2">
-      <div class="sy2-h"><b>Система</b><span class="sys-head ${head[0]}"><i class="pulse"></i>${head[1]}</span><span class="sy2-b"><button class="btn" data-sys-run>Проверить</button><button class="btn" data-ag-local="backup">Копия данных</button></span></div>
-      <div class="sy5">${sc.map(c => `<div class="sy5-t ${c.st}"><span class="sy5-l"><i></i>${esc(c.l.replace("Ядро платформы", "Ядро").replace("Источник данных", "Источник"))}</span><b class="sy5-v">${esc(c.v)}</b><small class="sy5-n">${esc(c.n)}</small></div>`).join("")}</div>
-    </section>
-<section class="panel logp">
-      <div class="logq"><span class="logq-t">Журнал событий<em>${LOG.list.length}</em></span><input type="text" id="ag-log-q" class="logq-in" placeholder="Поиск по журналу" autocomplete="off" aria-label="Поиск по журналу событий"><button class="btn" data-log-clear>Очистить</button></div>
-      <ol class="logl" id="ag-log">${logRows()}</ol>
-    </section>
-    </div>
-    ${ag3Mech(all)}
-    <section class="panel reg2">
-      <div class="rg-h"><b>Агенты</b><span class="rg-f" role="group">${flts.map(([k, l, n]) => `<button type="button" class="${AGV.flt === k ? "on" : ""}" data-agfl="${k}">${l}<em>${n}</em></button>`).join("")}</span></div>
-      <div class="ag3-lg"><span><i class="ok"></i>работал</span><span><i class="warn"></i>замечание</span><span><i class="fail"></i>сбой</span><span><i class="o"></i>не запускался</span><em>сутки, шаг 30 минут</em></div>
-      <div class="ag3">${ag3Groups(shown, row)}</div>
-      ${!AG.loaded ? `<p class="muted reg-note">Загружаю созданных агентов…</p>` : AG.store !== "db" ? `<p class="muted reg-note">Созданные агенты хранятся только в этом браузере.</p>` : ""}
-    </section>
-    <section class="agx ${AGV.flow ? "o-flow" : ""} ${AGV.log ? "o-log" : ""}">
-      <div class="agx-row">
-        <button type="button" class="fl-pill p-flow" data-ag-flow aria-expanded="${AGV.flow}">Схема данных<svg class="qs-c" viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 4.500 3 3 3-3"/></svg></button>
-              </div>
-      <div class="fl-x fx-flow"><div class="fl-xi"><div class="flow2" id="flow2">
-        <svg class="fl-svg" id="fl-svg" aria-hidden="true"></svg>
-        <div class="fl-col"><span class="fl-h">Источники</span>
-          ${fnode("s-file","Файлы и сканы")}${fnode("s-epos","ЭПОС","wait")}${fnode("s-hand","Ввод вручную")}${fnode("s-chat","Чат класса")}</div>
-        <div class="fl-col"><span class="fl-h">Агенты сбора</span>
-          ${fnode("a-sched","Расписание","ok")}${fnode("a-epos","Коннектор ЭПОС","wait")}${fnode("a-grades","Оценки","ok")}${fnode("a-hw","Домашка","ok")}</div>
-        <div class="fl-col fl-mid"><span class="fl-h">Ядро</span>
-          ${fnode("core","Данные платформы","core")}
-          <span class="fl-side">Контролёр системы · Сторож данных · Архивариус</span></div>
-        <div class="fl-col"><span class="fl-h">Разделы</span>
-          ${fnode("o-sched","Расписание")}${fnode("o-grades","Оценки")}${fnode("o-hw","Домашка")}${fnode("o-chat","Чаты и бот")}</div>
-      </div></div></div></div>
-    </section>`;
+    <section class="ag2-sys"><div class="sy-h"><b>Система</b><span class="zwn">${head[0] === "ok" ? "● всё в норме" : "● " + head[1]}</span><div class="sy-b"><button type="button" data-sys-run>Проверить</button><button type="button" data-ag-local="backup">Копия данных</button></div></div><div class="sy-g">${sc.map(sysT).join("")}</div></section>
+    ${mkMech(all)}
+    <div class="ag2" id="ag2"><div class="ag2-top">${[["all", "Все", sorted.length], ["wait", "Ждут", nWait], ["ok", "Работают", nOk]].map(f => `<button type="button" class="ag2-f${AGV.flt === f[0] ? " on" : ""}" data-agfl="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="ag2-lg"><i style="background:var(--ok)"></i>работал<i style="background:#EBA83A"></i>замечание<i style="background:#D9483B"></i>сбой<i style="background:var(--pl2)"></i>простой<em>сутки, шаг 30 мин</em></span></div>${grp || `<p class="mk-nodata">Таких агентов нет</p>`}</div>
+    ${!AG.loaded ? `<p class="mk-nodata">Загружаю созданных агентов…</p>` : AG.store !== "db" ? `<p class="mk-nodata">Созданные агенты хранятся только в этом браузере.</p>` : ""}
+    <div class="ag2-x"><button type="button" class="ag2-xh${AGV.log ? " open" : ""}" data-ag2-x aria-expanded="${!!AGV.log}"><b>Журнал событий</b><i class="zmut">${LOG.list.length}</i><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-xb" id="ag-log-w"${AGV.log ? "" : " hidden"}><div class="mk-lq"><input type="text" id="ag-log-q" placeholder="Поиск по журналу" autocomplete="off" aria-label="Поиск по журналу событий"><button type="button" class="zb" data-log-clear>Очистить</button></div><ul class="zevl" id="ag-log">${mkLogRows()}</ul></div></div>`);
   AGV.anim = false;
-  watchFlow();
-  setTimeout(() => { try { drawFlow(); } catch(_) {} }, 60);
 }
 /* ================= Администратор: коннекторы ================= */
 // Ключи и токены на странице НЕ хранятся: её данные видят все, у кого есть доступ.
@@ -13845,7 +13833,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "632";
+const BUILD = "633";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14559,6 +14547,20 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 :is(#admin,#mk-layer) .mk{--bg:#F6F4EF;--card:#FFFFFF;--ink:#23211E;--mut:#8A857C;--line:#ECE8DF;--pl:#F1EEE7;--pl2:#E6E1D6;--acc:#D9643B;--acc2:#FBE9E1;--kr:#E07A1F;--ok:#4C9A6A;color:var(--ink);font-size:14px;line-height:1.4}
 html[data-theme="dark"] :is(#admin,#mk-layer) .mk{--bg:#161513;--card:#1F1D1B;--ink:#EDEBE6;--mut:#9A958B;--line:#2C2A27;--pl:#272522;--pl2:#34312D;--acc:#E0764F;--acc2:#3A2A22;--kr:#F0913A;--ok:#6CBB8A}
 :is(#admin,#mk-layer) .mk button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:is(#admin,#mk-layer) .mk .g{position:static;display:revert;min-width:0;height:auto;padding:0;border-radius:0;font:inherit;color:inherit;background:none;box-shadow:none;font-variation-settings:normal;place-items:normal}
+:is(#admin,#mk-layer) .mk .zd{min-width:0;padding:0;box-shadow:none;font-size:0;line-height:0}
+:is(#admin,#mk-layer) .mk .st{text-transform:none;letter-spacing:normal;font-size:inherit;font-weight:inherit;padding:0;border-radius:0;white-space:normal}
+:is(#admin,#mk-layer) .mk .sw{appearance:none;width:auto;height:auto;border-radius:0;background:none;box-shadow:none}
+:is(#admin,#mk-layer) .mk .need{display:block;margin-bottom:0;gap:normal}
+:is(#admin,#mk-layer) .mk .chev{justify-self:auto}
+:is(#admin,#mk-layer) .mk .mk-lq{display:flex;gap:8px;align-items:center;margin:0 0 8px}
+:is(#admin,#mk-layer) .mk .mk-lq input{flex:1;min-width:0;height:34px;border:0;outline:0;border-radius:99px;background:var(--pl);padding:0 14px;font:inherit;font-size:13px;color:var(--ink)}
+:is(#admin,#mk-layer) .mk .mk-lq input:focus{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk .mk-err{color:#D9483B}
+:is(#admin,#mk-layer) .mk .ag2-l span.ok{color:var(--ok)}:is(#admin,#mk-layer) .mk .ag2-l span.warn{color:#C98A1A}:is(#admin,#mk-layer) .mk .ag2-l span.fail{color:#D9483B}
+:is(#admin,#mk-layer) .mk .ag2-d .imp-grid{margin-top:10px}
+:is(#admin,#mk-layer) .mk .ag2-d .ag-out{margin-top:10px}
+:is(#admin,#mk-layer) .mk .wiz-wrap{margin-bottom:12px}
 :is(#admin,#mk-layer) .mk .mk-nodata{margin:6px 0 0;font-size:12.5px;color:var(--mut);line-height:1.45}
 :is(#admin,#mk-layer) .mk .mg-w .mk-nodata{margin:0;padding:10px 0}
 :is(#admin,#mk-layer) .mk *{box-sizing: border-box;}
