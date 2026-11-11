@@ -9423,7 +9423,7 @@ function renderAgents(){
     const L = shown.filter(a => ag3Grp(a) === gid); if(!L.length) return "";
     const allG = all.filter(a => ag3Grp(a) === gid), ok = allG.filter(a => agStatus(a).st === "ok").length, open = !!AG3.open[gid] || L.some(a => a.id === AG.run);
     const S = AG3.slots[gid] = ag3Slots(allG), cm = { ok: "", warn: "y", fail: "r", o: "o" }, C = 2 * Math.PI * 11, f = allG.length ? ok / allG.length : 0;
-    return `<section class="ag2-gr${open ? " open" : ""}" data-ag3-g="${gid}"><button type="button" class="ag2-gh" data-ag3-gt aria-expanded="${open}"><svg class="ag2-ring" viewBox="0 0 28 28"><circle class="t" cx="14" cy="14" r="11"/><circle class="p" cx="14" cy="14" r="11" stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}"/></svg><span class="ag2-gn"><b>${name}</b><small>${sub}</small></span><span class="ag2-w"><span class="ag2-wb">${S.map((x, k) => `<i class="${cm[x.st]}" data-ag3-s="${gid}|${k}" data-tip="${AG3_T[x.st]}|${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}"></i>`).join("")}</span><span class="ag2-wt"><span style="left:0">${ag3hm(S[0].t)}</span><span style="left:25%">${ag3hm(S[12].t)}</span><span style="left:50%">${ag3hm(S[24].t)}</span><span style="left:75%">${ag3hm(S[36].t)}</span><span style="left:100%">сейчас</span></span></span><span class="ag2-p ${ok === allG.length ? "ok" : "w"}">${ok} из ${allG.length}</span><svg class="ag2-chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-g"${open ? "" : " hidden"}>${L.map(row).join("")}</div></section>`;
+    return `<section class="ag2-gr${open ? " open" : ""}" data-ag3-g="${gid}"><button type="button" class="ag2-gh" data-ag3-gt aria-expanded="${open}"><svg class="ag2-ring" viewBox="0 0 28 28"><circle class="t" cx="14" cy="14" r="11"/><circle class="p" cx="14" cy="14" r="11" stroke-dasharray="${(C * f).toFixed(1)} ${C.toFixed(1)}"/></svg><span class="ag2-gn"><b>${name}</b><small>${sub}</small></span><span class="ag2-w"><span class="ag2-wb">${S.map((x, k) => `<i class="${cm[x.st]}" data-ag3-s="${gid}|${k}" data-tip="${AG3_T[x.st]}|${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}"></i>`).join("")}</span><span class="ag2-wt"><span style="left:0">${ag3hm(S[0].t)}</span><span style="left:25%">${ag3hm(S[12].t)}</span><span style="left:50%">${ag3hm(S[24].t)}</span><span style="left:75%">${ag3hm(S[36].t)}</span><span style="left:100%">сейчас</span></span></span>${(() => { const nf = S.filter(x => x.st === "fail").length, nw = S.filter(x => x.st === "warn").length, bad = nf || nw || ok !== allG.length; return `<span class="ag2-p ${bad ? "w" : "ok"}" title="${nf ? "Сбоев за сутки: " + nf : nw ? "Замечаний за сутки: " + nw : "Сбоев за сутки нет"}">${ok} из ${allG.length}${nf ? " · сбой" : nw ? " · замечание" : ""}</span>`; })()}<svg class="ag2-chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-g"${open ? "" : " hidden"}>${L.map(row).join("")}</div></section>`;
   }).join("");
   el.innerHTML = mkWrap("agt", `
     ${AG.wizard ? `<div class="wiz-wrap ${AG.wizIn ? "wiz-in" : ""}"><div class="wiz-inner">${wizardHtml()}</div></div>` : ""}
@@ -13609,6 +13609,7 @@ function sjTiles(D){
   ];
   return `<div class="jg"><div class="jl">${T.map(([id, l, b, em, cls, kv, sv], i) => `<div class="js ${cls} ${SJ.t === id ? "open" : ""}" data-sj-t="${id}" tabindex="0"><small>${l}</small><b>${esc(String(b))}</b><em>${esc(em)}</em>${sjSpark(sv, i, cls === "ok" ? "#4C9A6A" : "#D9643B")}<div class="${cls === "ok" ? "zw" : "zhp"}">${sjKv(kv)}</div></div>`).join("")}</div></div>`;
 }
+const sjReq = f => [SEC_ACT[f.a] || f.a || "", f.ua === "script" ? "программа" : f.ua ? "из браузера" : ""].filter(Boolean).join(", ");
 function sjRows(D){
   const feed = D && D.feed ? D.feed : [], t0 = new Date(); t0.setHours(0, 0, 0, 0); const d0 = +t0;
   const items = feed.map((f, i) => ({ f, w: secWhat(f), k: f.t + ":" + i }));
@@ -13620,7 +13621,7 @@ function sjRows(D){
   list.forEach(({ f, w, k }) => { const c = cls[w.r], dl = secDayLbl(f.t), cn = SJ.cc === "-" || !f.cc ? "Не определена" : secCountry(f.cc), tm = secHm(f.t).replace(/^\d\d\.\d\d /, "");
     if(dl !== last){ last = dl; h += `<li class="jgh">${esc(dl)}</li>`; }
     const cell = (t, v, l, b) => `<button type="button" class="jcell" data-sj-cell="${t}|${esc(v)}"><small>${l}</small><b>${esc(b)}</b></button>`;
-    h += `<li class="j-${c} ${SJ.fo === k ? "open" : ""}" data-sj-j="${esc(k)}"><span class="cc" title="${esc(f.cc || "")}">${sjFlag(f.cc)}</span><div><div class="ip">${esc(f.ip || "IP не определён")}</div><div class="ct">${esc([f.cc ? secCountry(f.cc) : "", f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</div></div><span class="ev">${esc(w.t)}${f.n > 1 ? " ×" + f.n : ""}${w.many ? " · перебор почт" : ""}</span><span class="bg">${bg[w.r]}</span><span class="tm">${tm}</span><div class="jd"><div class="jdi"><div class="jc4">${cell("cc", f.cc || "-", "Страна", cn)}${cell("dec", c, "Решение", dec[c])}${cell("cp", sjDm(f.t), "Время", sjDm(f.t))}${f.who ? cell("cp", f.who, "Кто", f.who) : cell("cp", f.ip || "", "Адрес", f.ip || "—")}</div><div class="jac">${f.ip ? `<button type="button" class="jb" data-sj-cp="${esc(f.ip)}">Скопировать адрес</button>` : ""}</div></div></div></li>`; });
+    h += `<li class="j-${c} ${SJ.fo === k ? "open" : ""}" data-sj-j="${esc(k)}"><span class="cc" title="${esc(f.cc || "")}">${sjFlag(f.cc)}</span><div><div class="ip">${esc(f.ip || "IP не определён")}</div><div class="ct">${esc([f.cc ? secCountry(f.cc) : "", f.who].filter(Boolean).join(" · ") || "страна неизвестна")}</div></div><span class="ev">${esc(w.t)}${f.n > 1 ? " ×" + f.n : ""}${w.many ? " · перебор почт" : ""}<small>${esc(sjReq(f))}</small></span><span class="bg">${bg[w.r]}</span><span class="tm">${tm}</span><div class="jd"><div class="jdi"><div class="jwh"><div><small>Что это</small><p>${esc(w.why)}</p></div><div><small>Что делать</small><p>${esc(w.todo)}</p></div></div><div class="jc4">${cell("cc", f.cc || "-", "Страна", cn)}${cell("dec", c, "Решение", dec[c])}${cell("cp", sjDm(f.t), "Время", sjDm(f.t))}${f.who ? cell("cp", f.who, "Кто", f.who) : cell("cp", f.ip || "", "Адрес", f.ip || "—")}</div><div class="jac">${f.ip ? `<button type="button" class="jb" data-sj-cp="${esc(f.ip)}">Скопировать адрес</button>` : ""}</div></div></div></li>`; });
   if(!list.length) h += `<li class="zempty" style="padding:10px;color:var(--mut)">${D ? (items.length ? "По этим фильтрам ничего нет" : "Записей нет") : "Нет данных"}</li>`;
   return { h, byTm, byCc, nBad: byCc.filter(x => x.w.r === "bad").length, nOk: byCc.filter(x => x.w.r === "ok").length };
 }
@@ -13959,7 +13960,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "641";
+const BUILD = "642";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -15960,6 +15961,23 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 :is(#admin,#mk-layer) .mk-pln .pn-i.open .pn-r>svg:last-child{transform:rotate(180deg)}
 :is(#admin,#mk-layer) .mk #zcu .zt-st{display:inline-block;line-height:1.25}
 @media (max-width:600px){:is(#admin,#mk-layer) .mk #zcu .zt-st{border-radius:12px;font-size:11.5px;padding:3px 9px}}
+/* 642: читаемость на широких экранах */
+@media (min-width:900px){
+:is(#admin,#mk-layer) .mk .jx li{grid-template-columns:34px minmax(140px,200px) minmax(0,1fr) 96px 62px!important}
+:is(#admin,#mk-layer) .mk .zdoc-r{grid-template-columns:minmax(220px,300px) minmax(0,1fr) 18px}
+:is(#admin,#mk-layer) .mk .zdoc-r .zsn{text-align:left}
+:is(#admin,#mk-layer) .mk #zcu .uT td:first-child{width:42%}
+}
+:is(#admin,#mk-layer) .mk #zcu .zt-st{display:inline-flex;align-items:center;min-height:24px;line-height:1.2;padding:2px 10px;box-sizing:border-box;vertical-align:middle}
+:is(#admin,#mk-layer) .mk .ag2-p{white-space:nowrap}
+:is(#admin,#mk-layer) .mk .jx .ev small{display:block;color:var(--mut);font-size:12px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:is(#admin,#mk-layer) .mk .jx .jwh{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin:4px 0 10px}
+:is(#admin,#mk-layer) .mk .jx .jwh small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin-bottom:3px}
+:is(#admin,#mk-layer) .mk .jx .jwh p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+@media (max-width:600px){:is(#admin,#mk-layer) .mk .jx .jwh{grid-template-columns:1fr}}
+:is(#admin,#mk-layer) .mk .jx .jdi > .jwh{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px 24px;flex:1 1 100%;background:none!important;padding:2px 2px 4px!important;align-items:start}
+:is(#admin,#mk-layer) .mk .jx .jdi > .jwh > div{display:block;background:none;padding:0}
+@media (max-width:600px){:is(#admin,#mk-layer) .mk .jx .jdi > .jwh{grid-template-columns:1fr}}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
