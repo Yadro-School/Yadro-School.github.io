@@ -13992,7 +13992,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "634";
+const BUILD = "635";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14081,34 +14081,87 @@ function actLog(kind, text, meta){
   const st = showTab; showTab = function(t, push){ const r = st.apply(this, arguments); try { if(state.tab !== actLog._lt){ actLog._lt = state.tab; const nm = (document.querySelector(`.tab[data-tab="${state.tab}"] .tl`) || {}).textContent || state.tab; actLog("nav", "Открыт раздел «" + nm + "»"); } } catch(e) {} return r; };
   window.addEventListener("error", e => { if(!e.target || e.target === window) actLog("err", "Ошибка скрипта: " + String(e.message || "").slice(0, 120)); });
 })();
-const ACT_PER = [["1", "Час"], ["day", "Сегодня"], ["7", "7 дней"], ["30", "30 дней"], ["all", "Всё время"]];
+/* ---- Журнал действий: разметка из макета, записи настоящие (этого устройства) ---- */
+const AL_IC = { all: "M5 5h5v5H5zM14 5h5v5h-5zM5 14h5v5H5zM14 14h5v5h-5z", nav: "M5 12h14M13 6l6 6-6 6", grade: "M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.7l-5.4 2.8 1.2-6-4.5-4.2 6.1-.7z", hw: "M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6", chat: "M5 5h14a1 1 0 011 1v9a1 1 0 01-1 1h-8l-4 4v-4H5a1 1 0 01-1-1V6a1 1 0 011-1z", adm: "M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z", login: "M10 4H5v16h5M14 8l4 4-4 4M18 12H9", err: "M12 4l9 16H3zM12 10v4M12 17v.5", other: "M5 12h2M11 12h2M17 12h2",
+  clock: "M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2", cal: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4", cal7: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h8", cal30: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h8M8 17h8", arch: "M3 5h18v4H3zM5 9v10h14V9M10 13h4", xls: "M4 5h16v14H4zM4 10h16M4 15h16M10 5v14", pdf: "M6 3h9l4 4v14H6zM14 3v5h5", csv: "M5 7h14M5 12h14M5 17h9" };
+const alIc = k => `<i class="zic"><svg viewBox="0 0 24 24"><path d="${AL_IC[k] || "M5 12h14"}"/></svg></i>`;
+const AL_CK = '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>', AL_CV = '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+const AL_PER = [["§", "Сейчас"], ["10m", "10 минут", "clock"], ["1", "Час", "clock"], ["§", "Сутки"], ["day", "Сегодня", "cal"], ["24", "День", "cal"], ["§", "Дольше"], ["7", "7 дней", "cal7"], ["30", "30 дней", "cal30"], ["all", "Всё время", "arch"]];
+const AL_Q = { err: "e", grade: "g", hw: "w", adm: "w" };
+const alRole = w => /^Ученик/.test(w) ? "u" : /^Родитель/.test(w) ? "p" : /^(Учитель|Преподаватель)/.test(w) ? "t" : /^(Администратор|Директор|Завуч)/.test(w) ? "l" : "x";
+const alUa = (() => { const u = navigator.userAgent || "", b = /YaBrowser/.test(u) ? "Яндекс Браузер" : /Edg\//.test(u) ? "Edge" : /Firefox\//.test(u) ? "Firefox" : /Chrome\//.test(u) ? "Chrome" : /Safari\//.test(u) ? "Safari" : "Браузер", o = /iPhone|iPad/.test(u) ? "iPhone" : /Android/.test(u) ? "Android" : /Windows/.test(u) ? "Windows" : /Mac OS/.test(u) ? "macOS" : /Linux/.test(u) ? "Linux" : ""; return [b, o].filter(Boolean).join(" · "); })();
+function alFrom(){ const now = Date.now(); return ACT.per === "10m" ? now - 6e5 : ACT.per === "1" ? now - 36e5 : ACT.per === "day" ? new Date().setHours(0, 0, 0, 0) : ACT.per === "24" ? now - 864e5 : ACT.per === "all" ? 0 : now - (+ACT.per || 7) * 864e5; }
 function actFiltered(){
-  const now = Date.now(), q = ACT.q.trim().toLowerCase().replace(/ё/g, "е");
-  const from = ACT.per === "1" ? now - 36e5 : ACT.per === "day" ? new Date().setHours(0, 0, 0, 0) : ACT.per === "all" ? 0 : now - (+ACT.per) * 864e5;
-  return ACT.list.filter(a => a.t >= from && (ACT.f === "all" || a.k === ACT.f) && (ACT.who === "all" || a.w === ACT.who) && (!q || (a.x + " " + a.w).toLowerCase().replace(/ё/g, "е").includes(q))).sort((a, b) => b.t - a.t);
+  const from = alFrom(), q = ACT.q.trim().toLowerCase().replace(/ё/g, "е");
+  return ACT.list.map((a, i) => Object.assign({ i }, a)).filter(a => a.t >= from && (ACT.f === "all" || a.k === ACT.f) && (ACT.who === "all" || a.w === ACT.who) && (!q || (a.x + " " + a.w).toLowerCase().replace(/ё/g, "е").includes(q))).sort((a, b) => b.t - a.t);
 }
+const alHm = t => new Date(t).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+function alRel(t){ const d = Date.now() - t, td = new Date(); td.setHours(0, 0, 0, 0); if(t < +td) return new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }); return d < 6e4 ? "только что" : d < 36e5 ? Math.floor(d / 6e4) + " мин назад" : Math.floor(d / 36e5) + " ч назад"; }
+function alMenuPer(){
+  const em = k => k === "10m" ? "с " + alHm(Date.now() - 6e5) : k === "1" ? "с " + alHm(Date.now() - 36e5) : k === "day" ? "с 00:00" : k === "24" ? "24 часа" : "";
+  return `<div class="zmh">Период</div>` + AL_PER.map(x => x[0] === "§" ? `<div class="zmsub">${x[1]}</div>` : `<button type="button" data-al-per="${x[0]}"${ACT.per === x[0] ? ' class="on"' : ""}>${alIc(x[2])}<span>${x[1]}</span><em>${em(x[0])}</em>${AL_CK}</button>`).join("");
+}
+function alMenuType(){
+  const from = alFrom(), L = ACT.list.filter(a => a.t >= from), n = k => k === "all" ? L.length : L.filter(a => a.k === k).length;
+  return `<div class="zmh">Тип действия</div>` + ACT_TYPES.map(([k, t], i) => (i === 1 ? '<div class="zmsep"></div>' : "") + `<button type="button" data-al-f="${k}"${ACT.f === k ? ' class="on"' : ""}>${alIc(k)}<span>${k === "all" ? "Все действия" : t}</span><em>${n(k)}</em>${AL_CK}</button>`).join("");
+}
+function alMenuWho(){
+  const W = [...new Set(ACT.list.map(a => a.w))].sort(), q = (ACT.pq || "").toLowerCase(), r = ACT.pr || "a";
+  const f = W.filter(w => (r === "a" || alRole(w) === r) && (!q || w.toLowerCase().includes(q)));
+  const RS = [["a", "Все"], ["u", "Ученики"], ["p", "Родители"], ["t", "Учителя"], ["l", "Админы"]];
+  const nm = w => { const p = w.split(" · "); return p.length > 1 ? [p.slice(1).join(" · "), p[0]] : [w, ({ l: "Администрирование", x: "Без входа" })[alRole(w)] || ""]; };
+  const list = (!q && r === "a" ? `<button type="button" data-al-who="all"${ACT.who === "all" ? ' class="on"' : ""}><div><b>Все участники</b><small>без фильтра по людям</small></div>${AL_CK}</button>` : "") + f.map(w => { const [b, s] = nm(w); return `<button type="button" data-al-who="${esc(w)}"${ACT.who === w ? ' class="on"' : ""}><div><b>${esc(b)}</b><small>${esc(s)}</small></div>${AL_CK}</button>`; }).join("");
+  return `<div class="zps"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><input type="text" id="al-pq" placeholder="Имя или фамилия" autocomplete="off" value="${esc(ACT.pq || "")}"></div><div class="zrole" data-k="role">${RS.map(([k, t]) => `<button type="button" data-al-pr="${k}"${r === k ? ' class="on"' : ""}>${t}</button>`).join("")}</div><div class="zpc">Найдено: ${f.length}</div><div class="zpl">${list || '<div class="zpe">Никого не найдено</div>'}</div>`;
+}
+function alDd(id, t, l, v, menu, cls){ const op = ACT.dd === id; return `<div class="zdd ${op ? "open" : ""}" data-t="${t}"><button type="button" class="zsel" data-al-dd="${id}"><small>${l}</small><span>${esc(v)}</span>${AL_CV}</button><div class="zmenu ${cls}" ${op ? "" : "hidden"}>${op ? menu() : ""}</div></div>`; }
 function actBody(){
-  const LA = actFiltered(), L = ACT.all ? LA : LA.slice(0, 30), pad = n => String(n).padStart(2, "0"), tm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()); };
-  const kn = Object.fromEntries(ACT_TYPES), groups = [];
-  L.slice(0, 400).forEach(a => { const d = new Date(a.t), key = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); let g = groups[groups.length - 1]; if(!g || g.key !== key){ g = { key, d, items: [] }; groups.push(g); } g.items.push(a); });
-  return `<p class="act-n">Записей: <b>${LA.length}</b>${L.length > 400 ? " · показаны последние 400" : ""}${LA.length > 30 ? ` <button type="button" class="act-all" data-act-all>${ACT.all ? "Свернуть до 30" : "Все · " + LA.length}</button>` : ""}</p>` + (groups.length ? groups.map(g => `<section class="panel act-g"><h3>${g.d.getDate()} ${MG[g.d.getMonth()]} ${g.d.getFullYear()}</h3><ul class="act-l">${g.items.map(a => `<li><time>${tm(a.t)}</time><span class="act-k k-${a.k}">${esc(kn[a.k] || "Другое")}</span><span class="act-x">${esc(a.x)}</span><em>${esc(a.w)}</em></li>`).join("")}</ul></section>`).join("") : `<section class="panel"><p class="empty">По выбранным фильтрам ничего нет.</p></section>`);
-}
-function actDd(id, l, v, items){
-  const op = ACT.dd === id;
-  return `<div class="sjd ${op ? "open" : ""}"><button type="button" class="sjd-b" data-act-dd="${id}" aria-expanded="${op}"><small>${l}</small><b>${esc(v)}</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>${op ? `<div class="sjd-m" role="listbox">${items.map(x => `<button type="button" role="option" class="${x[2] ? "on" : ""}" ${x[3]}="${esc(x[0])}"><span>${esc(x[1])}</span></button>`).join("")}</div>` : ""}</div>`;
+  const LA = actFiltered(), L = (ACT.all ? LA : LA.slice(0, 30)).slice(0, 400), kn = Object.fromEntries(ACT_TYPES), groups = [];
+  L.forEach(a => { const d = new Date(a.t), key = d.toDateString(); let g = groups[groups.length - 1]; if(!g || g.key !== key){ g = { key, d, items: [] }; groups.push(g); } g.items.push(a); });
+  const tm = t => new Date(t).toLocaleTimeString("ru-RU");
+  const row = a => { const sec = (/«(.+?)»/.exec(a.x) || [])[1] || "", k = a.t + ":" + a.i, op = ACT.fo === k;
+    const F = [["Кто", a.w], ["Когда", new Date(a.t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }) + ", " + tm(a.t)], ["Откуда", alUa + " · это устройство"], ["Тип", kn[a.k] || "Другое"], [a.k === "nav" ? "Раздел" : "Подробности", a.k === "nav" ? sec || "—" : a.m || "—"], ["Результат", a.k === "err" ? "Ошибка" : "Успешно"], ["ID записи", "#" + (a.i + 1)]];
+    const B = (a.k === "nav" && sec ? `<button type="button" class="zb" data-al-go="${esc(sec)}">Открыть раздел</button>` : "") + `<button type="button" class="zb" data-al-who="${esc(a.w)}">Все действия человека</button><button type="button" class="zb" data-al-cp="${esc(k)}">Копировать</button>`;
+    return `<li class="zlg2 ${op ? "open" : ""}" data-al-row="${esc(k)}"><time>${tm(a.t)}</time><span class="zq zq-${AL_Q[a.k] || "n"}">${esc(({ grade: "Оценки", adm: "Админка" })[a.k] || kn[a.k] || "Другое")}</span><span><b>${esc(a.x)}</b><small>${esc(alUa)}</small></span><em><b>${esc(a.w.split(" · ").pop())}</b><small>${alRel(a.t)}</small></em><div class="zdet"><div><div class="zdet-i">${F.map(r => `<div><small>${r[0]}</small><b>${esc(r[1])}</b></div>`).join("")}</div><div class="zdet-b">${B}</div></div></div></li>`; };
+  const dt = d => `${d.getDate()} ${MG[d.getMonth()]} ${d.getFullYear()}`;
+  return `<div class="zcnt">Записей: ${LA.length}${LA.length > 30 ? ` <b data-al-all tabindex="0" role="button">${ACT.all ? "Последние 30" : "Все · " + LA.length}</b>` : ""}</div><section class="ac">${groups.length ? `<div class="zsub">${dt(groups[0].d)}</div><div class="zlscroll">${groups.map((g, i) => (i ? `<div class="zsub zdate">${dt(g.d)}</div>` : "") + `<ul class="${i ? "zll2" : "zll"}">${g.items.map(row).join("")}</ul>`).join("")}</div>` : `<ul class="zll"><li class="zempty" style="padding:12px 10px;color:var(--mut)">Записей нет</li></ul>`}</section>`;
 }
 function renderAdmActLog(el){
   ACT.open = true;
-  const who = [...new Set(ACT.list.map(a => a.w))].sort();
-  el.innerHTML = admHead("Журнал действий", `<div class="adm-hb"><button type="button" class="btn" data-act-csv>Скачать CSV</button><button type="button" class="btn" data-act-clr>Очистить</button></div>`) + `
-    <div class="adm-body">
-    <section class="panel act-f act-f2"><div class="sj-f"><input type="text" class="act-q2" id="act-q" placeholder="Поиск" autocomplete="off" value="${esc(ACT.q)}">
-      ${actDd("per", "Период", (ACT_PER.find(x => x[0] === ACT.per) || ACT_PER[2])[1], ACT_PER.map(([k, t]) => [k, t, ACT.per === k, "data-act-per"]))}
-      ${actDd("f", "Действия", ACT.f === "all" ? "Все действия" : (ACT_TYPES.find(x => x[0] === ACT.f) || ["", "Все"])[1], ACT_TYPES.map(([k, t]) => [k, k === "all" ? "Все действия" : t, ACT.f === k, "data-act-f"]))}
-      ${who.length > 1 ? actDd("who", "Участники", ACT.who === "all" ? "Все участники" : ACT.who, [["all", "Все участники", ACT.who === "all", "data-act-who"]].concat(who.slice(0, 30).map(w => [w, w, ACT.who === w, "data-act-who"]))) : ""}</div>
-      <p class="muted act-hint">Журнал ведётся на этом устройстве. Общий журнал всех участников появится вместе с серверной частью.</p></section>
-    <div id="act-body">${actBody()}</div></div>`;
+  const pv = (AL_PER.find(x => x[0] === ACT.per) || [0, "7 дней"])[1], fv = ACT.f === "all" ? "Все действия" : (ACT_TYPES.find(x => x[0] === ACT.f) || [0, "Все действия"])[1], wv = ACT.who === "all" ? "Все участники" : ACT.who.split(" · ").pop();
+  const dl = ACT.dd === "dl";
+  el.innerHTML = admHead("Журнал действий", "") + mkWrap("log", `<div id="ap-log" class="zpn zlogp"><div class="zh"><span>Журнал действий</span><div><div class="zdd zdl2 ${dl ? "open" : ""}" data-t="Скачать"><button type="button" class="zb zsel2" data-al-dd="dl">Скачать журнал${AL_CV}</button><div class="zmenu zmr" ${dl ? "" : "hidden"}><button type="button" data-al-dl="xls">${alIc("xls")}<div><b>Excel (.xls)</b><small>для таблиц и отчётов</small></div></button><button type="button" data-al-dl="pdf">${alIc("pdf")}<div><b>PDF</b><small>для печати</small></div></button><button type="button" data-al-dl="csv">${alIc("csv")}<div><b>Текст (.csv)</b><small>для других программ</small></div></button></div></div><button type="button" class="zb" data-act-clr>Очистить</button></div></div>
+<section class="ac zlf"><div class="zdds"><input type="text" class="zinp zs3" id="act-q" placeholder="Поиск" autocomplete="off" value="${esc(ACT.q)}">${alDd("per", "Период", "Период", pv, alMenuPer, "zrich")}${alDd("f", "Действия", "Действия", fv, alMenuType, "zrich")}${alDd("who", "Участники", "Участники", wv, alMenuWho, "zpmenu")}</div></section>
+<div id="act-body">${actBody()}</div></div>`);
 }
+function alRedraw(keepQ){ const el = document.getElementById("admin"), a = document.activeElement, id = a && a.id, pos = a && a.selectionStart; renderAdmActLog(el); if(keepQ && id){ const n = document.getElementById(id); if(n){ n.focus(); try { n.setSelectionRange(pos, pos); } catch(e) {} } } }
+function alRows(){ return actFiltered().map(a => [new Date(a.t).toLocaleString("ru-RU"), Object.fromEntries(ACT_TYPES)[a.k] || a.k, a.x, a.w]); }
+function alSave(name, blob){ const l = document.createElement("a"); l.href = URL.createObjectURL(blob); l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(l.href), 4000); }
+function alDownload(k){
+  const H = ["Время", "Тип", "Действие", "Кто"], R = alRows(), day = new Date().toISOString().slice(0, 10);
+  if(k === "csv"){ const q = v => '"' + String(v).replace(/"/g, '""') + '"'; alSave(`journal-${day}.csv`, new Blob(["﻿" + [H, ...R].map(r => r.map(q).join(";")).join("\n")], { type: "text/csv;charset=utf-8" })); return; }
+  const tbl = `<table border="1" cellspacing="0" cellpadding="4"><tr>${H.map(h => `<th>${esc(h)}</th>`).join("")}</tr>${R.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table>`;
+  if(k === "xls"){ alSave(`journal-${day}.xls`, new Blob([`<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body>${tbl}</body></html>`], { type: "application/vnd.ms-excel" })); return; }
+  const w = window.open("", "_blank"); if(!w){ tgToast("Разрешите всплывающие окна, чтобы напечатать"); return; }
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>Журнал действий</title><style>body{font:12px system-ui;margin:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;text-align:left;padding:4px 6px}th{background:#f3f1ec}</style><h3>Журнал действий · ${esc(new Date().toLocaleString("ru-RU"))}</h3>${tbl}`); w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if(!g(".mk-log")) { if(ACT.dd && ADM.tab === "actlog" && document.getElementById("ap-log")){ ACT.dd = null; alRedraw(); } return; }
+  if((x = g("[data-al-dd]"))){ ACT.dd = ACT.dd === x.dataset.alDd ? null : x.dataset.alDd; alRedraw(); if(ACT.dd === "who"){ const i = document.getElementById("al-pq"); if(i) i.focus(); } return; }
+  if((x = g("[data-al-per]"))){ ACT.per = x.dataset.alPer; ACT.dd = null; alRedraw(); return; }
+  if((x = g("[data-al-f]"))){ ACT.f = x.dataset.alF; ACT.dd = null; alRedraw(); return; }
+  if((x = g("[data-al-pr]"))){ ACT.pr = x.dataset.alPr; alRedraw(); return; }
+  if((x = g("[data-al-who]"))){ ACT.who = x.dataset.alWho; ACT.dd = null; ACT.fo = null; alRedraw(); return; }
+  if((x = g("[data-al-dl]"))){ ACT.dd = null; alRedraw(); alDownload(x.dataset.alDl); return; }
+  if((x = g("[data-al-go]"))){ const nm = x.dataset.alGo, t = [...document.querySelectorAll(".tab[data-tab]")].find(b => ((b.querySelector(".tl") || {}).textContent || "").trim() === nm); if(t) showTab(t.dataset.tab, true); else tgToast("Раздел «" + nm + "» не найден"); return; }
+  if((x = g("[data-al-cp]"))){ const a = ACT.list.find((r, i) => r.t + ":" + i === x.dataset.alCp); if(a) sjCopy(`${new Date(a.t).toLocaleString("ru-RU")} · ${a.w} · ${a.x}`, () => { x.textContent = "Скопировано"; setTimeout(() => { if(x.isConnected) x.textContent = "Копировать"; }, 1200); }); return; }
+  if(g("[data-al-all]")){ ACT.all = !ACT.all; const b = document.getElementById("act-body"); if(b) b.innerHTML = actBody(); return; }
+  if((x = g("[data-al-row]")) && !g(".zdet")){ const k = x.dataset.alRow; ACT.fo = ACT.fo === k ? null : k; document.querySelectorAll("#ap-log li[data-al-row]").forEach(li => li.classList.toggle("open", li.dataset.alRow === ACT.fo)); return; }
+  if(ACT.dd && !g(".zdd")){ ACT.dd = null; alRedraw(); }
+});
+document.addEventListener("input", e => { if(e.target.id === "al-pq"){ ACT.pq = e.target.value; const m = e.target.closest(".zmenu"); if(m){ const p = e.target.selectionStart; m.innerHTML = alMenuWho(); const i = document.getElementById("al-pq"); i.focus(); try { i.setSelectionRange(p, p); } catch(_) {} } } });
+document.addEventListener("keydown", e => { if(e.key === "Escape" && ACT.dd && document.getElementById("ap-log")){ ACT.dd = null; alRedraw(); } if((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-al-all]")){ e.preventDefault(); e.target.click(); } });
+
 document.addEventListener("click", e => { if(e.target.closest("[data-act-all]")){ ACT.all = !ACT.all; const b = document.getElementById("act-body"); if(b) b.innerHTML = actBody(); } });
 document.addEventListener("input", e => { if(e.target.id === "act-q"){ ACT.q = e.target.value; const b = document.getElementById("act-body"); if(b) b.innerHTML = actBody(); } });
 document.addEventListener("click", e => {
@@ -14716,6 +14769,9 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk{--bg:#161513;--card:#1F1D1B;--
 #zspt[hidden],#zspd[hidden]{display:none}
 #zspd{position:fixed;z-index:61;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:var(--surface,#fff);border:2.5px solid #D9643B;box-shadow:0 2px 6px rgba(35,33,30,.25);pointer-events:none}
 :is(#admin,#mk-layer) .mk .jx .cc img{flex:none}
+:is(#admin,#mk-layer) .mk input.zinp{border:0;outline:0;font:inherit;color:var(--ink);min-width:0}
+:is(#admin,#mk-layer) .mk input.zinp::placeholder{color:var(--mut)}
+:is(#admin,#mk-layer) .mk .zcnt b[data-al-all]{cursor:pointer}
 html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok{background:#1F3327!important}
 html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.e{background:#3A2422}
 html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok b,html[data-theme="dark"] :is(#admin,#mk-layer) .mk .jl .js.ok small{color:#8FD0A6}
@@ -15896,6 +15952,12 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .sj-st::before{background: rgb
 
 @media (max-width:1000px){:is(#admin,#mk-layer) .mk .jl{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
 @media (max-width:560px){:is(#admin,#mk-layer) .mk .jl .js.ok{grid-column:1/-1!important}}
+
+:is(#admin,#mk-layer) .mk .zq.zq-g{background:#E4F2E9;color:var(--ok)}
+:is(#admin,#mk-layer) .mk .zq.zq-w{background:var(--acc2);color:var(--kr)}
+:is(#admin,#mk-layer) .mk .zq.zq-e{background:#FBEAEA;color:#C23B3B}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-g{background:#22332A}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
