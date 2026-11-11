@@ -9249,8 +9249,93 @@ function watchFlow(){
   if(window.ResizeObserver){ FLOW_RO = new ResizeObserver(() => drawFlow()); FLOW_RO.observe(box); }
 }
 addEventListener("resize", () => drawFlow());
+
+/* ---------- агенты: группы, лента работы за сутки, Механик (сборка 624) ---------- */
+const AG3 = { open: {}, mx: null, slots: {}, sel: null };
+const AG3_GR = [["att", "Требуют внимания", "Ждут сервера или доступа"], ["data", "Данные и расписание", "Берут данные, считают оценки"], ["help", "Помощь ученикам", "Чат, напоминания, новости"], ["plat", "Платформа и безопасность", "Проверки, копии, обновления"], ["mine", "Свои агенты", "Созданы на платформе"]];
+const AG3_T = { ok: "Работал", warn: "Замечание", fail: "Сбой", o: "Запусков не было" };
+const ag3Grp = a => { const st = agStatus(a).st; if(st !== "ok") return "att"; if(!a.builtin) return "mine"; if(a.id === "news" || a.cat === "Связь") return "help"; return a.cat === "Сбор данных" || a.cat === "Аналитика" ? "data" : "plat"; };
+const ag3hm = t => { const d = new Date(t); return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); };
+function ag3Slots(list){
+  const H = 1800000, end = Math.ceil(Date.now() / H) * H, start = end - 48 * H, S = [];
+  for(let k = 0; k < 48; k++) S.push({ t: start + k * H, st: "o", n: 0, ms: [], notes: [] });
+  list.forEach(a => (AGR.runs[a.id] || []).forEach(r => {
+    if(r.t < start || r.t >= end) return; const x = S[Math.floor((r.t - start) / H)]; if(!x) return;
+    x.n++; if(r.ms != null) x.ms.push(r.ms);
+    if(r.st === "fail") x.st = "fail"; else if(r.st === "warn" && x.st !== "fail") x.st = "warn"; else if(r.st === "ok" && x.st === "o") x.st = "ok";
+    if(r.st === "fail" || r.st === "warn") x.notes.push(a.name + ": " + (r.note || AGR_T[r.st]));
+  }));
+  return S;
+}
+function ag3Strip(gid, list){
+  const S = AG3.slots[gid] = ag3Slots(list);
+  return `<span class="ag3-w"><span class="ag3-wb">${S.map((x, k) => `<i class="${x.st}" data-ag3-s="${gid}|${k}" data-tip="${AG3_T[x.st]}|${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}"></i>`).join("")}</span><span class="ag3-wt"><span style="left:0">${ag3hm(S[0].t)}</span><span style="left:25%">${ag3hm(S[12].t)}</span><span style="left:50%">${ag3hm(S[24].t)}</span><span style="left:75%">${ag3hm(S[36].t)}</span><span style="left:100%">сейчас</span></span></span>`;
+}
+function ag3Ring(ok, n){ const c = 2 * Math.PI * 11, f = n ? ok / n : 0; return `<svg class="ag3-rg ${ok === n ? "ok" : ""}" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><circle cx="14" cy="14" r="11"/><circle class="v" cx="14" cy="14" r="11" stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 14 14)"/></svg>`; }
+function ag3Groups(shown, row){
+  if(!shown.length) return `<ul class="ag-list"><li class="rg-none">Таких агентов нет</li></ul>`;
+  return AG3_GR.map(([gid, name, sub]) => {
+    const L = shown.filter(a => ag3Grp(a) === gid); if(!L.length) return "";
+    const ok = L.filter(a => agStatus(a).st === "ok").length, open = !!AG3.open[gid] || L.some(a => a.id === AG.run);
+    return `<section class="ag3-g ${open ? "open" : ""}" data-ag3-g="${gid}"><div class="ag3-gh" data-ag3-gt role="button" tabindex="0" aria-expanded="${open}">${ag3Ring(ok, L.length)}<span class="ag3-gn"><b>${name}</b><small>${sub}</small></span>${ag3Strip(gid, L)}<span class="ag3-p ${ok === L.length ? "ok" : "w"}">${ok} из ${L.length}</span><svg class="ag3-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></div>${open ? `<ul class="ag-list ${AGV.anim ? "ag-anim" : ""}">${L.map(row).join("")}</ul>` : ""}</section>`;
+  }).join("");
+}
+/* Механик: сбои за сутки из настоящей истории запусков. «Исправлено» — следующий запуск того же агента прошёл. */
+function ag3Inc(all){
+  const from = Date.now() - 86400000, out = [];
+  all.forEach(a => { const R = AGR.runs[a.id] || []; R.forEach((r, i) => {
+    if(r.t < from || (r.st !== "fail" && r.st !== "warn")) return;
+    const fixed = R.slice(i + 1).some(x => x.st === "ok"), note = r.note || AGR_T[r.st], prev = out.find(x => x.a.id === a.id && x.note === note);
+    if(prev){ if(r.t > prev.t){ prev.t = r.t; prev.fixed = fixed; } prev.n++; return; }
+    out.push({ key: a.id + "|" + note, a, st: r.st, t: r.t, note, fixed, n: 1 });
+  }); });
+  return out.sort((x, y) => (x.fixed - y.fixed) || (y.t - x.t));
+}
+const ag3Prompt = x => `${x.a.name}, ${ag3hm(x.t)}: ${x.note}. ${x.n > 1 ? `За сутки так было ${x.n} раз. ` : ""}Найди причину, исправь и запусти агента ещё раз. Если нужен сервер или доступ — напиши коротко, что именно нужно от меня.`;
+function ag3Mech(all){
+  const I = ag3Inc(all), fx = I.filter(x => x.fixed).length, need = I.filter(x => !x.fixed && x.st === "fail").length;
+  const li = x => { const open = AG3.mx === x.key, tag = x.fixed ? ["ok", "Исправлено"] : x.st === "fail" ? ["w", "Нужен ты"] : ["m", "Замечание"];
+    return `<li class="mx3-i ${!x.fixed && x.st === "fail" ? "need" : ""} ${open ? "open" : ""}"><button type="button" class="mx3-r" data-mx3="${esc(x.key)}" aria-expanded="${open}"><i class="${x.st}"></i><span><b>${esc(x.a.name)}</b><small>${ag3hm(x.t)} · ${esc(x.note)}</small></span><em class="${tag[0]}">${tag[1]}</em><svg class="ag3-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>${open ? `<div class="mx3-d">${x.fixed ? `<p>Следующий запуск прошёл без ошибок. Делать ничего не нужно.</p>` : `<p>Сам пока не чинит. Готовый промпт ниже: скопируй и отправь Claude.</p><pre>${esc(ag3Prompt(x))}</pre>`}<div class="mx3-b">${x.fixed ? "" : `<button type="button" class="pr" data-mx3-cp="${esc(x.key)}" title="Скопировать текст для Claude">Скопировать промпт</button>`}<button type="button" data-mx3-ag="${esc(x.a.id)}" title="Показать агента в списке">Открыть агента</button></div></div>` : ""}</li>`; };
+  return `<section class="panel mx3" id="mx3"><div class="mx3-h"><span class="mx3-av" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/></svg></span><div class="mx3-t"><b>Механик</b><small>Следит за ${all.length} ${plural(all.length, ["агентом", "агентами", "агентами"])}. Чинить сам начнёт, когда агенты переедут на сервер</small></div><span class="mx3-m">наблюдает</span></div>
+    <div class="mx3-k"><div><b>${I.length}</b><small>${plural(I.length, ["проблема", "проблемы", "проблем"])} за сутки</small></div><div class="ok"><b>${fx}</b><small>исправлено</small></div><div class="${need ? "w" : ""}"><b>${need}</b><small>${need === 1 ? "ждёт" : "ждут"} тебя</small></div></div>
+    ${I.length ? `<ul class="mx3-l">${I.slice(0, 6).map(li).join("")}</ul>${I.length > 6 ? `<p class="mx3-e">Ещё ${I.length - 6} — в журнале событий.</p>` : ""}` : `<p class="mx3-e">${AGR.loaded ? "За сутки сбоев не было." : "Загружаю историю запусков…"}</p>`}</section>`;
+}
+function ag3PopHide(){ const p = document.getElementById("ag3-pop"); if(p) p.hidden = true; if(AG3.sel){ AG3.sel.classList.remove("sel"); AG3.sel = null; } }
+function ag3PopShow(i){
+  if(AG3.sel === i) return ag3PopHide(); ag3PopHide();
+  const [gid, k] = i.dataset.ag3S.split("|"), x = (AG3.slots[gid] || [])[+k]; if(!x) return;
+  let p = document.getElementById("ag3-pop"); if(!p){ p = document.createElement("div"); p.id = "ag3-pop"; p.className = "ag3-pop"; document.body.appendChild(p); }
+  AG3.sel = i; i.classList.add("sel"); document.querySelectorAll(".g-tip.on").forEach(t => t.classList.remove("on"));
+  const avg = x.ms.length ? Math.round(x.ms.reduce((a, b) => a + b, 0) / x.ms.length) : null;
+  const txt = x.st === "o" ? "В эти полчаса агенты группы не запускались." : x.notes.length ? x.notes.slice(0, 2).map(esc).join("<br>") + (x.notes.length > 2 ? `<br>и ещё ${x.notes.length - 2}` : "") : `${x.n} ${plural(x.n, ["запуск", "запуска", "запусков"])} без замечаний.`;
+  p.innerHTML = `<div class="pp-h"><i class="${x.st}"></i><b>${AG3_T[x.st]}</b><small>${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}</small></div><p class="pp-t">${txt}</p>${x.st === "o" ? "" : `<div class="pp-k"><div><small>Запусков</small><b>${x.n}</b></div><div><small>Ответ</small><b>${avg != null ? avg + " мс" : "—"}</b></div></div>`}<div class="pp-b">${x.st === "fail" || x.st === "warn" ? `<button type="button" class="pr" data-ag3-pp="mech" title="Что с этим сбоем">Механик</button>` : ""}<button type="button" data-ag3-pp="open|${gid}" title="Показать агентов группы">Агенты</button><button type="button" data-ag3-pp="log" title="Открыть журнал событий">Журнал</button></div>`;
+  p.hidden = false; p.dataset.t = Date.now();
+  const r = i.getBoundingClientRect(), pw = p.offsetWidth, ph = p.offsetHeight, cx = r.left + r.width / 2, L = Math.max(8, Math.min(innerWidth - pw - 8, cx - pw / 2)), up = r.top - ph - 12 > 8;
+  p.className = "ag3-pop " + (up ? "up" : "dn"); p.style.left = L + "px"; p.style.top = (up ? r.top - ph - 12 : r.bottom + 12) + "px"; p.style.setProperty("--ax", (cx - L) + "px");
+}
+const ag3Copy = (b, t) => {
+  const done = () => { if(!b || !b.isConnected) return tgToast("Промпт скопирован"); const o = b.dataset.o || (b.dataset.o = b.textContent); b.textContent = "Скопировано"; b.classList.add("done"); setTimeout(() => { if(b.isConnected){ b.textContent = o; b.classList.remove("done"); } }, 1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => tgCopyOld(t, done)); else tgCopyOld(t, done);
+};
+document.addEventListener("click", e => {
+  let x;
+  if((x = e.target.closest("[data-ag3-pp]"))){ const [k, gid] = x.dataset.ag3Pp.split("|"); ag3PopHide();
+    if(k === "open"){ AG3.open[gid] = true; renderAgents(); const g = document.querySelector(`[data-ag3-g="${gid}"]`); if(g) g.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    else { const t = document.getElementById(k === "mech" ? "mx3" : "ag-log"); if(t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    return; }
+  if((x = e.target.closest("[data-ag3-s]"))){ ag3PopShow(x); return; }
+  if(!e.target.closest("#ag3-pop")) ag3PopHide();
+  if((x = e.target.closest("[data-ag3-gt]"))){ const sec = x.parentNode, gid = sec.dataset.ag3G, was = sec.classList.contains("open"); AG3.open[gid] = !was; if(was && AG.run && [...sec.querySelectorAll("[data-ag-open]")].some(b => b.dataset.agOpen === AG.run)) AG.run = null; AGV.anim = !was; renderAgents(); return; }
+  if((x = e.target.closest("[data-mx3-cp]"))){ const inc = ag3Inc([...BUILTIN(), ...AG.list]).find(q => q.key === x.dataset.mx3Cp); if(inc) ag3Copy(x, ag3Prompt(inc)); return; }
+  if((x = e.target.closest("[data-mx3-ag]"))){ const id = x.dataset.mx3Ag; AG.run = id; AG.out = ""; AG.err = ""; AGV.flt = "all"; renderAgents(); const r = [...document.querySelectorAll("#adm-ag [data-ag-open]")].find(b => b.dataset.agOpen === id); if(r) r.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if((x = e.target.closest("[data-mx3]"))){ AG3.mx = AG3.mx === x.dataset.mx3 ? null : x.dataset.mx3; renderAgents(); return; }
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") ag3PopHide(); const h = e.target.closest && e.target.closest("[data-ag3-gt]"); if(h && e.target === h && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); h.click(); } });
+window.addEventListener("scroll", () => { const p = document.getElementById("ag3-pop"); if(p && !p.hidden && Date.now() - (+p.dataset.t || 0) > 250) ag3PopHide(); }, true);
+window.addEventListener("resize", ag3PopHide);
 function renderAgents(){
   const el = document.getElementById("adm-ag"); if(!el) return;
+  try { ag3PopHide(); } catch(e) {}
   agrLoad();
   const built = BUILTIN();
   const all = [...built, ...AG.list.map(a => ({ ...a }))];
@@ -9327,9 +9412,11 @@ function renderAgents(){
       <ol class="logl" id="ag-log">${logRows()}</ol>
     </section>
     </div>
+    ${ag3Mech(all)}
     <section class="panel reg2">
       <div class="rg-h"><b>Агенты</b><span class="rg-f" role="group">${flts.map(([k, l, n]) => `<button type="button" class="${AGV.flt === k ? "on" : ""}" data-agfl="${k}">${l}<em>${n}</em></button>`).join("")}</span></div>
-      <ul class="ag-list ${AGV.anim ? "ag-anim" : ""}">${shown.map(row).join("") || `<li class="rg-none">Таких агентов нет</li>`}</ul>
+      <div class="ag3-lg"><span><i class="ok"></i>работал</span><span><i class="warn"></i>замечание</span><span><i class="fail"></i>сбой</span><span><i class="o"></i>не запускался</span><em>сутки, шаг 30 минут</em></div>
+      <div class="ag3">${ag3Groups(shown, row)}</div>
       ${!AG.loaded ? `<p class="muted reg-note">Загружаю созданных агентов…</p>` : AG.store !== "db" ? `<p class="muted reg-note">Созданные агенты хранятся только в этом браузере.</p>` : ""}
     </section>
     <section class="agx ${AGV.flow ? "o-flow" : ""} ${AGV.log ? "o-log" : ""}">
@@ -9795,7 +9882,7 @@ document.addEventListener("click", e => {
 function admSave(){ try { localStorage.setItem("bai-adm-users", JSON.stringify(ADM.users)); localStorage.setItem("bai-adm-perm", JSON.stringify(ADM.perm)); } catch(e) {} }
 function admNav(){
   const t = (id, n) => `<button class="adm-tab" data-adm-tab="${id}" aria-pressed="${ADM.tab === id}">${n}</button>`;
-  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("panel", "Панель")}${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("sched", "Расписание")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
+  return `<div class="adm-nav" role="group" aria-label="Разделы администратора"><span class="adm-pill" aria-hidden="true" style="${ADM.pill ? `transform:translate(${ADM.pill[0]}px,${ADM.pill[3]}px);width:${ADM.pill[1]}px;height:${ADM.pill[2]}px` : "opacity:0"}"></span>${t("panel", "Панель")}${t("plan", "План")}${t("conn", "Коннекторы")}${t("users", "Пользователи")}${t("sched", "Расписание")}${t("roles", "Роли и права")}${t("agents", "Агенты")}${t("security", "Безопасность")}${t("docs", "Правила")}${t("reports", `Рапорты${modOpenN() ? ` <span class="adm-cnt">${modOpenN()}</span>` : ""}`)}${t("actlog", "Журнал действий")}</div>`;
 }
 /* ---- режим «смотреть как» ---- */
 const VA = { role: null, uid: null, from: "admin" };
@@ -9919,6 +10006,7 @@ const initials = n => (String(n).trim().charAt(0) || "?").toUpperCase();
 const fioShort = n => { const t = String(n).trim().split(/\s+/).filter(Boolean); if(t.length < 2) return t[0] || ""; const pat = /(ович|евич|ьич|овна|евна|ична|инична)$/i; return (pat.test(t[1]) && t.length === 2 ? t[0] + " " + t[1].charAt(0) + "." : t[0] + " " + t[1].charAt(0) + "."); };
 function admSection(el){
   if(ADM.tab === "panel") return renderAdmPanel(el);
+  if(ADM.tab === "plan") return renderAdmPlan(el);
   if(ADM.tab === "users") return renderAdmUsers(el);
   if(ADM.tab === "sched") return renderAdmSched(el);
   if(ADM.tab === "docs") return renderAdmDocs(el);
@@ -10519,7 +10607,7 @@ document.addEventListener("click", e => {
   let x;
   if((x = g("[data-adm-tab]"))){
     const nt = x.dataset.admTab; if(nt === ADM.tab) return;
-    const o = ["panel", "conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
+    const o = ["panel", "plan", "conn", "users", "roles", "agents", "security", "docs", "reports", "actlog"], dir = o.indexOf(nt) >= o.indexOf(ADM.tab) ? "r" : "l";
     ADM.tab = nt; ADM.form = null; ADM.confirmDel = null; ADM.grp.clear(); DOCS.open = null; ADM.anim = dir; admRerender(); if(nt === "agents" && !SYS.at) sysRun();
     return;
   }
@@ -13660,7 +13748,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "623";
+const BUILD = "624";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -13793,6 +13881,52 @@ function admBackup(){
   l.href = URL.createObjectURL(bl); l.download = "yadro-backup-" + isoDate(new Date()) + ".json"; document.body.appendChild(l); l.click(); l.remove();
   actLog("adm", "Скачана копия данных платформы");
 }
+
+/* ================= Администратор: план работ (сборка 624) ================= */
+const PLN = { fl: "all", open: null, on: (() => { try { return JSON.parse(localStorage.getItem("bai-plan-v1") || "{}"); } catch(e) { return {}; } })() };
+const PLN_GR = [["Важные ошибки", "Закрыть до пятницы"], ["Работа без Claude", "Чтобы агенты работали сами"], ["Стоит добавить", "Без этого самим агентам будет трудно"]];
+const PLN_END = new Date(2026, 10, 13);
+const PLN_D = [
+  ["e1", 0, "Вход показывает чужую почту", "При запросе кода сайт раскрывает адрес человека", "Ср", "", "Сайт будет отвечать одинаково, есть такая почта или нет.", "В функции yadro-api метод code_send раскрывает, какая почта привязана к аккаунту. Сделай одинаковый ответ для любого адреса, проверь вход по коду и ключу, прогони ворота."],
+  ["e2", 0, "Домашка не открывается без роли", "Если роль не задана, лента домашки падает", "Ср", "", "Лента будет открываться и у человека без роли: пустой список вместо ошибки.", "Лента домашки (hw_feed) падает, когда у пользователя роль пустая. Добавь защиту и тест на пустую роль, проверь на ПК и телефоне."],
+  ["e3", 0, "Картинки на экране входа не грузятся", "Значки способов входа отдают ошибку 404", "Ср", "", "Значки вернутся на экран входа, все картинки будут проверяться.", "На экране входа значки AUTH_ICONS отдают 404. Найди верные пути, почини и добавь проверку картинок в ворота."],
+  ["e4", 0, "Регистрация по ссылке: проверить заново", "После правок входа путь никто не проходил целиком", "Ср", "", "Весь путь: ссылка, заявка, одобрение, код, вход. В конце отчёт.", "Пройди регистрацию по ссылке от начала до конца в ролях «ученик» и «родитель» на ПК и телефоне. Составь список найденных ошибок и исправь их."],
+  ["e5", 0, "Список разрешённых на сервере", "Вход сейчас закрыт только на сайте, сервер пускает", "Чт", "Нужно от тебя: загрузить готовый ZIP в функцию yadro-api, 2 минуты.", "Сервер будет пускать только тех, кто в списке.", "Добавь в yadro-api белый список входа: сервер отклоняет всех, кого нет в списке приглашённых. Собери ZIP и короткую инструкцию по загрузке."],
+  ["c1", 1, "Таймеры на сервере", "Агенты запускаются сами, даже когда сайт закрыт", "Ср", "Нужно от тебя: загрузить ZIP и включить таймеры по инструкции, 5 минут.", "Функция-планировщик и расписание запусков для каждого агента.", "Сделай в Яндекс Облаке функцию-планировщик, которая по таймеру запускает агентов Ядра. Собери ZIP и пошаговую инструкцию для владельца."],
+  ["c2", 1, "Агенты без ИИ — на сервер", "Расписание, замены, напоминалка, копии, проверки", "Ср", "", "Эти агенты станут обычным кодом на сервере: ИИ им не нужен.", "Перенеси агентов расписания, замен, напоминалку, архивариуса, контролёра и сторожа данных в серверный код без ИИ. Каждый пишет результат в журнал событий."],
+  ["c3", 1, "Агенты с ИИ — на YandexGPT и GigaChat", "Оценки со скриншотов, домашка с фото, новости", "Чт", "", "Эти агенты перейдут на модели, которые уже работают в чатах. Качество сравним.", "Переведи агента оценок, агента домашки и агента новостей на ИИ-прокси Ядра (YandexGPT, GigaChat). Сравни распознавание на 20 примерах и пришли отчёт."],
+  ["c4", 1, "Механик работает по правилам", "Повторить, взять запасной источник, написать мне", "Чт", "", "Механик будет чинить сбои без ИИ: по списку правил для каждого вида сбоя.", "Собери Механика как серверный код: при сбое ждёт 5 минут и повторяет до 2 раз, берёт запасной источник, ставит пометку «не обновлено», иначе пишет владельцу готовую инструкцию."],
+  ["c5", 1, "Сбои и инструкции — в Telegram", "Бот пишет, что сломалось и что с этим делать", "Чт", "", "В боте появятся сообщения Механика: сбой, что он сделал, готовая инструкция.", "Подключи Механика к Telegram-боту Ядра: сообщение о сбое с заголовком, что сделано и готовым промптом. Блок «Агенты» добавь в сводку 07:00."],
+  ["c6", 1, "Сторож для Механика", "Если Механик молчит час, бот сообщает сам", "Чт", "", "Маленькая проверка, чтобы поломку самого Механика кто-то заметил.", "Добавь проверку пульса Механика: если отметки нет дольше часа, Telegram-бот пишет владельцу."],
+  ["c7", 1, "Пробный день без Claude", "Отключаем и смотрим, что упало", "Пт", "", "Сутки агенты работают сами. Вечером отчёт: что упало и почему.", "Проведи пробные сутки без Claude: агенты работают только с сервера. Собери отчёт по каждому агенту: запуски, сбои, что починил Механик, что осталось."],
+  ["a1", 2, "Свой журнал ошибок сервера", "Логи Яндекс Облака недоступны, ошибки не видно", "Ср", "", "Сервер будет записывать свои ошибки в базу, а сайт покажет их в «Журнале событий».", "Логи Яндекс Облака недоступны. Сделай запись ошибок yadro-api в таблицу базы и покажи их в админке, в «Журнале событий»."],
+  ["a2", 2, "Проверка, что копия восстанавливается", "Чтобы копия точно пригодилась, когда понадобится", "Чт", "", "Раз в неделю копия разворачивается в пробную базу и сверяется с рабочей.", "Добавь еженедельную проверку копии данных: восстановление в пробную базу, сверка числа записей, отчёт в Telegram."],
+  ["a3", 2, "Кнопка «Стоп» для всех агентов", "Остановить всё одним нажатием, если что-то пошло не так", "Чт", "", "Одна кнопка в админке и команда в Telegram ставят всех агентов на паузу.", "Добавь аварийную остановку агентов: кнопка в админке и команда /stop в Telegram-боте. Повторное нажатие возвращает работу."]
+].map(x => ({ id: x[0], g: x[1], t: x[2], s: x[3], d: x[4], nd: x[5], w: x[6], p: x[7] }));
+const plnSave = () => { try { localStorage.setItem("bai-plan-v1", JSON.stringify(PLN.on)); } catch(e) {} };
+function renderAdmPlan(el){
+  const D = PLN_D, n = D.length, on = D.filter(x => PLN.on[x.id]).length, me = D.filter(x => x.nd).length;
+  const left = Math.max(0, Math.ceil((PLN_END - new Date().setHours(0, 0, 0, 0)) / 86400000));
+  const vis = x => PLN.fl === "all" || (PLN.fl === "me" ? !!x.nd : x.g === +PLN.fl);
+  const chv = `<svg class="ag3-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`;
+  const row = x => { const o = PLN.open === x.id, w = !!PLN.on[x.id];
+    return `<li class="pn-i ${w ? "pl" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i></i><span><b>${x.t}</b><small>${x.s}</small></span><em class="dy">${x.d}</em><em class="who ${x.nd ? "w" : "ok"}">${x.nd ? "Нужен ты" : "Сам"}</em><button type="button" class="pn-go" data-pn-go="${x.id}" title="${w ? "Снять отметку" : "Отметить и скопировать промпт"}">${w ? "В работе" : "В работу"}</button>${chv}</div>${o ? `<div class="pn-d"><p>${x.w}</p>${x.nd ? `<p class="pn-nd">${x.nd}</p>` : ""}<pre>${esc(x.p)}</pre><div class="mx3-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div>` : ""}</li>`; };
+  el.innerHTML = admHead("План") + `<div class="adm-body pn" id="pn">
+    <div class="pn-k"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${on}</b><small>в работе</small></div><div class="w"><b>${me}</b><small>ждут тебя, по 2–5 минут</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы, 13 ноября</small></div></div>
+    <div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» ставит отметку и копирует промпт для Claude</span></div>
+    ${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => PLN.on[x.id]).length;
+      return `<section class="panel pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} в работе</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
+  </div>`;
+}
+document.addEventListener("click", e => {
+  if(!e.target.closest("#pn")) return; const el = document.getElementById("admin"); let x;
+  const rr = () => { if(el && ADM.tab === "plan") renderAdmPlan(el); };
+  if((x = e.target.closest("[data-pn-f]"))){ PLN.fl = x.dataset.pnF; return rr(); }
+  if((x = e.target.closest("[data-pn-go]"))){ const id = x.dataset.pnGo, t = PLN_D.find(q => q.id === id); if(PLN.on[id]) delete PLN.on[id]; else { PLN.on[id] = Date.now(); ag3Copy(null, t.p); } plnSave(); return rr(); }
+  if((x = e.target.closest("[data-pn-cp]"))){ const t = PLN_D.find(q => q.id === x.dataset.pnCp); if(t) ag3Copy(x, t.p); return; }
+  if((x = e.target.closest("[data-pn-o]"))){ PLN.open = PLN.open === x.dataset.pnO ? null : x.dataset.pnO; return rr(); }
+});
+document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest("[data-pn-o]"); if(r && e.target === r && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); r.click(); } });
 function renderAdmPanel(el){
   const U = ADM.users, cnt = r => U.filter(x => x.role === r).length, stud = rosterStud().length, ann = annGet();
   const par = U.filter(x => x.role === "parent"), parNo = par.filter(x => x.v && x.v.reg === "no").length;
@@ -14132,6 +14266,131 @@ h1,h2,.headline,.brand-name,.prof-name{font-variation-settings:"wght" 400}
 </style>
 <style id="act-short">.act-all{appearance:none;border:0;background:none;color:var(--pen);font:500 12.5px var(--f-body);cursor:pointer;padding:0 0 0 8px}.act-all:hover{text-decoration:underline}</style>
 <style id="ag-cols">@media(min-width:900px){#adm-ag .reg2 .ag-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:18px}}</style>
+<style id="ag3-css">
+.ag3{display:grid;gap:8px}
+.ag3-lg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;font-size:12px;color:var(--muted);margin:0 2px 10px}
+.ag3-lg span{display:inline-flex;align-items:center;gap:6px}
+.ag3-lg i,.ag3-wb i,.ag3-pop .pp-h i,.mx3-r>i{background:var(--good)}
+.ag3-lg i{width:5px;height:14px;border-radius:99px}
+.ag3-lg em{font-style:normal;margin-left:auto}
+.ag3-lg i.warn,.ag3-wb i.warn,.ag3-pop .pp-h i.warn,.mx3-r>i.warn{background:#EBA83A}
+.ag3-lg i.fail,.ag3-wb i.fail,.ag3-pop .pp-h i.fail,.mx3-r>i.fail{background:#D9483B}
+.ag3-lg i.o,.ag3-wb i.o,.ag3-pop .pp-h i.o{background:color-mix(in srgb,var(--ink) 11%,transparent)}
+.ag3-g{border-radius:18px;background:color-mix(in srgb,var(--ink) 3.500%,transparent);transition:background-color .2s}
+.ag3-g.open{padding-bottom:10px}
+.ag3-g>.ag-list{margin:0 10px!important}
+.ag3-gh{display:grid;grid-template-columns:28px minmax(150px,220px) minmax(0,1fr) auto 16px;gap:12px;align-items:center;padding:10px 14px;cursor:pointer;border-radius:18px;transition:box-shadow .2s,background-color .18s}
+.ag3-gh:hover{box-shadow:inset 0 0 0 1.500px color-mix(in srgb,var(--pen) 45%,transparent)}
+.ag3-gh:focus-visible{outline:none;box-shadow:inset 0 0 0 1.5px var(--pen)}
+.ag3-gn{min-width:0}
+.ag3-gn b{display:block;font-size:14.5px;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag3-gn small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag3-rg circle{fill:none;stroke:color-mix(in srgb,var(--ink) 9%,transparent);stroke-width:3}
+.ag3-rg .v{stroke:var(--pen);stroke-linecap:round}
+.ag3-rg.ok .v{stroke:var(--good)}
+.ag3-w{display:block;min-width:0}
+.ag3-wb{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:3px;align-items:center;height:26px}
+.ag3-wb i{display:block;height:100%;border-radius:99px;cursor:pointer;transition:transform .15s}
+.ag3-wb i.o{height:36%}
+.ag3-wb i:hover{transform:scaleY(1.12)}
+.ag3-wb i.sel{transform:scaleY(1.14);box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--pen)}
+.ag3-wt{display:block;position:relative;height:12px;margin-top:4px;font-size:10.5px;color:var(--muted);line-height:12px}
+.ag3-wt span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.ag3-wt span:first-child{transform:none}
+.ag3-wt span:last-child{transform:translateX(-100%)}
+.ag3-p{font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap;color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.ag3-p.ok{color:var(--good);box-shadow:inset 0 0 0 1.5px var(--good)}
+.ag3-ch{width:15px;height:15px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.ag3-g.open>.ag3-gh .ag3-ch,.mx3-i.open .ag3-ch,.pn-i.open .ag3-ch{transform:rotate(180deg);stroke:var(--pen)}
+.ag3-pop{position:fixed;z-index:400;width:256px;background:var(--surface);color:var(--ink);border-radius:18px;padding:12px 14px;box-shadow:0 0 0 1px var(--line),0 14px 34px -8px rgba(0,0,0,.28);font-family:var(--f-body);animation:ag3pp .14s ease-out}
+@keyframes ag3pp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ag3-pop[hidden]{display:none}
+.ag3-pop::after{content:"";position:absolute;left:var(--ax,50%);width:12px;height:12px;margin-left:-6px;background:var(--surface);transform:rotate(45deg);border-radius:3px}
+.ag3-pop.up::after{bottom:-5px;box-shadow:1px 1px 0 var(--line)}
+.ag3-pop.dn::after{top:-5px;box-shadow:-1px -1px 0 var(--line)}
+.ag3-pop .pp-h{display:flex;align-items:center;gap:8px}
+.ag3-pop .pp-h i{width:9px;height:9px;border-radius:50%;flex:none}
+.ag3-pop .pp-h b{font-size:14.5px;font-weight:500}
+.ag3-pop .pp-h small{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.ag3-pop .pp-t{margin:6px 0 0;font-size:13px;color:var(--muted);line-height:1.4;overflow-wrap:anywhere}
+.ag3-pop .pp-k{display:flex;gap:6px;margin-top:10px}
+.ag3-pop .pp-k div{flex:1;background:color-mix(in srgb,var(--ink) 5%,transparent);border-radius:12px;padding:6px 10px;line-height:1.2}
+.ag3-pop .pp-k small{display:block;font-size:11px;color:var(--muted)}
+.ag3-pop .pp-k b{font-size:13.5px;font-weight:500}
+.ag3-pop .pp-b,.mx3-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ag3-pop .pp-b{flex-wrap:nowrap}
+.ag3-pop .pp-b button{flex:1;padding:0 6px}
+.ag3-pop .pp-b button,.mx3-b button,.pn-go,.pn-f{appearance:none;border:0;font:inherit;cursor:pointer;height:30px;padding:0 13px;border-radius:99px;font-size:12.5px;color:var(--ink);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .15s,color .15s,transform .1s}
+.ag3-pop .pp-b button:hover,.mx3-b button:hover,.pn-go:hover,.pn-f:hover,.ag3-pop .pp-b button.pr,.mx3-b button.pr{box-shadow:inset 0 0 0 1.5px var(--pen);color:var(--pen)}
+.ag3-pop .pp-b button:active,.mx3-b button:active,.pn-go:active,.pn-f:active{transform:scale(.96)}
+.mx3-b button.done{box-shadow:inset 0 0 0 1.5px var(--good);color:var(--good)}
+.mx3-h{display:flex;align-items:center;gap:10px}
+.mx3-av{width:36px;height:36px;border-radius:50%;background:var(--pen-soft);display:grid;place-items:center;flex:none}
+.mx3-av svg{width:19px;height:19px;fill:none;stroke:var(--pen);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mx3-t{min-width:0}
+.mx3-t b{display:block;font-size:15px;font-weight:500}
+.mx3-t small{display:block;font-size:12.5px;color:var(--muted)}
+.mx3-m{margin-left:auto;font-size:12px;color:var(--muted);padding:3px 10px;border-radius:99px;box-shadow:inset 0 0 0 1px var(--line);white-space:nowrap}
+.mx3-k,.pn-k{display:grid;gap:6px;margin:10px 0 8px}
+.mx3-k{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pn-k{grid-template-columns:repeat(4,minmax(0,1fr));margin:0 0 10px}
+.mx3-k div,.pn-k div{background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:14px;padding:7px 12px;line-height:1.2}
+.pn-k div{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px 14px}
+.mx3-k b,.pn-k b{font-size:17px;font-weight:500}
+.pn-k b{font-size:21px}
+.mx3-k small,.pn-k small{display:block;font-size:12px;color:var(--muted)}
+.mx3-k .ok b,.pn-k .ok b{color:var(--good)}
+.mx3-k .w b,.pn-k .w b{color:var(--pen)}
+.mx3-l,.pn-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mx3-i,.pn-i{background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:14px;transition:box-shadow .15s}
+.mx3-i.need{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 55%,transparent)}
+.pn-i.open{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mx3-r{appearance:none;border:0;background:none;font:inherit;color:inherit;cursor:pointer;display:grid;grid-template-columns:9px minmax(0,1fr) auto 15px;gap:10px;align-items:center;width:100%;padding:9px 12px;text-align:left;border-radius:14px}
+.mx3-r>i{width:9px;height:9px;border-radius:50%}
+.mx3-r b,.pn-r>span b{display:block;font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx3-r small,.pn-r>span small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mx3-r em,.pn-r em.who,.pn-gh em{font-style:normal;font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line);text-align:center}
+.mx3-r em.ok,.pn-r em.who.ok,.pn-gh em.ok{color:var(--good);box-shadow:inset 0 0 0 1.5px var(--good)}
+.mx3-r em.w,.pn-r em.who.w{color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mx3-d,.pn-d{padding:0 12px 11px 31px}
+.mx3-d p,.pn-d p,.mx3-e{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.pn-d p.pn-nd{color:var(--pen);margin-top:4px}
+.mx3-d pre,.pn-d pre{margin:8px 0 0;padding:10px 12px;background:var(--surface);border-radius:12px;font:12.5px/1.5 var(--f-mono);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.mx3-e{padding:2px 2px 0}
+.ag3-gh:active,.mx3-r:active,.pn-r:active{scale:1!important;background-color:color-mix(in srgb,var(--ink) 5%,transparent)}
+.mx3-r,.pn-r{transition:background-color .18s}
+.mx3-i:hover,.pn-i:hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pen) 40%,transparent)}
+.mx3-i.need:hover,.pn-i.open:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mx3-i,.pn-i{display:block!important}
+.mx3-d,.pn-d{display:block}
+.pn{display:block}
+.pn-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+.pn-f{height:32px;display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+.pn-f i{font-style:normal;font-size:11.5px}
+.pn-f.on{background:var(--pen-soft);color:var(--pen);box-shadow:inset 0 0 0 1.5px var(--pen);font-weight:500}
+.pn-hint{margin-left:auto;font-size:12px;color:var(--muted)}
+#admin .pn-g{padding:10px;margin-bottom:8px}
+.pn-gh{display:flex;align-items:center;gap:10px;padding:2px 6px 8px}
+.pn-gh b{font-size:15px;font-weight:500}
+.pn-gh small{font-size:12.5px;color:var(--muted)}
+.pn-gh em{margin-left:auto}
+.pn-r{display:grid;grid-template-columns:9px minmax(0,1fr) 30px 92px 104px 15px;gap:10px;align-items:center;padding:8px 12px;cursor:pointer;border-radius:14px}
+.pn-r:focus-visible{outline:none;box-shadow:inset 0 0 0 1.5px var(--pen)}
+.pn-r>i{width:9px;height:9px;border-radius:50%;background:color-mix(in srgb,var(--ink) 16%,transparent);transition:background-color .2s}
+.pn-i.pl .pn-r>i{background:var(--good)}
+.pn-r em.dy{font-style:normal;font-size:12px;color:var(--muted);text-align:center}
+.pn-r em.who{padding:3px 0;display:flex;justify-content:center}
+.pn-i.pl .pn-go{color:var(--good);box-shadow:inset 0 0 0 1.5px var(--good);background:transparent}
+@media(max-width:760px){
+.ag3-gh{grid-template-columns:28px minmax(0,1fr) auto 16px}.ag3-gh .ag3-w{grid-column:1/-1;grid-row:2}
+.ag3-wb{gap:2px}.ag3-lg em{display:none}.ag3-g>.ag-list{margin:0 6px!important}
+.mx3-m{display:none}.mx3-d,.pn-d{padding-left:12px}
+.pn-k{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pn-r{grid-template-columns:9px minmax(0,1fr) 96px 15px}.pn-r em.dy,.pn-r em.who{display:none}.pn-r>span b,.pn-r>span small{white-space:normal}
+.pn-hint{display:none}.pn-gh small{display:none}
+}
+</style>
+
 <style id="readable-fix">
 /* оценки-чипы: читаемый вес и цвет, без «тонкости» */
 .g,.g *,.jr-c .g,.jr-c .g *,.chips .g,.chips .g *,.chips .gv{font-variation-settings:"wght" 520!important}
