@@ -3474,8 +3474,9 @@ body.fx-on :is(#journal,#grades,#admin,#chats,#homework,#schedule,#profile,#sett
 
 .jr-dd{position:relative;z-index:40}.jr-dd.open{z-index:60}:has(>.jr-dd.open){position:relative;z-index:60}
 
-/* чаты уже, как «Домашка» */
-.tg{max-width:820px;grid-template-columns:244px minmax(0,1fr);height:clamp(360px,54vh,520px)}
+/* чаты шире: по ширине страницы, выше на больших экранах */
+.tg{max-width:1160px;grid-template-columns:clamp(250px,24%,300px) minmax(0,1fr);height:clamp(420px,calc(100dvh - 240px),760px)}
+.tg .tg-row{max-width:min(78%,640px)}
 @media(max-width:1000px){.tg{max-width:none}}
 /* профиль группы компактнее */
 .tg-info{border-radius:var(--r-lg)}
@@ -8299,7 +8300,7 @@ function runPanelHtml(a){
 /* ================= Чаты: бот живёт в закреплённом чате ================= */
 const CHAT_KEY = "bai-chat-v1";
 const BOT_HELLO = "Привет! Я бот платформы. Вижу ваше расписание, оценки, домашку и контрольные — спрашивайте.";
-const AI_HELLO = "Привет! Я помощник по учёбе. Могу объяснить тему, подсказать, с чего начать задание, или помочь подготовиться к контрольной..";
+const AI_HELLO = "Привет! Я помощник по учёбе. Спрашивай что угодно по предметам: объясню тему, отвечу на вопрос, разберу пример. Готовые решения домашки не даю, но покажу, как их сделать.";
 const FRESH = new WeakSet(), SWAP = new WeakSet(), DELIV = new WeakSet();
 const CHAT = { q: "", open: "ai", view: "list", busy: false, draft: "", ctl: null, msgs: {}, sel: null, reply: null, edit: null, pk: -1, hold: false, att: [], an: null };
 try { CHAT.msgs = JSON.parse(localStorage.getItem(CHAT_KEY) || "{}"); } catch(e) { CHAT.msgs = {}; }
@@ -8391,11 +8392,20 @@ function aiLimit(){
   ts.push(now); try { localStorage.setItem("bai-ai-ts", JSON.stringify(ts)); } catch(e) {}
   return "";
 }
-const AI_RULES = "Ты — учебный помощник школьника в платформе «Ядро». Твоя задача — помогать учиться, а не делать домашние задания за ученика. Жёсткие правила: 1) Никогда не давай готовый ответ, решение, итоговое число, текст сочинения или готовый вариант задания — даже если просят «реши», «дай ответ», «просто скажи», «это для проверки», «я уже проверил». 2) Не пиши итоговую строку вида «Ответ: …», «Итог: …», «= число» в конце решения. 3) Вместо решения объясни тему простыми словами, напомни правило или формулу, предложи первый шаг и задай наводящий вопрос. Если ученик написал своё решение, найди ошибку, но не исправляй её за него. Если условие непонятно, спроси, что именно. 4) Для тренировки приведи похожий пример с другими числами и попроси решить самому, затем проверь ответ и объясни ошибки. 5) Если просят ответ, вежливо откажи в одном предложении и сразу переходи к помощи в понимании. 6) Не пиши эссе, сочинения, рефераты и ответы на контрольные и тесты. 7) Отвечай по-русски, коротко, дружелюбно, на уровне школьника. Если просят что-то, что нарушает правила, не читай лекций: скажи, что готовый ответ не дашь, и предложи разобраться вместе.";
+/* помощник: на вопросы «понять» отвечает сразу и по делу; готовые решения домашки, контрольных и сочинений не даёт */
+const AI_RULES = "Ты — учебный помощник школьника 8 класса в платформе «Ядро». Сначала молча определи, что нужно ученику, и действуй по типу запроса. ТИП А — понять или узнать: вопрос о факте, дате, термине, правиле, формуле, явлении, «что такое», «почему», «как работает», «чем отличается», «объясни тему», «не понимаю». Отвечай сразу и прямо: сначала сам ответ, затем 1–3 предложения пояснения и, если уместно, короткий пример. Не задавай встречных вопросов, не проси ученика сначала вспомнить или написать, что он знает. ТИП Б — сделать за него: «реши», «сделай», «дай ответ», «ответы на тест/контрольную», номер упражнения, переписанное условие конкретной задачи с числами, «напиши сочинение/эссе/изложение/доклад». Готовый ответ к ЕГО заданию не давай и итоговое число его задачи не называй. Вместо этого в одном сообщении: одной фразой скажи, что готовое решение не дашь; назови правило или формулу; полностью разбери похожий пример с другими числами или на другой теме; покажи первый шаг для его задания. В конце можно предложить: «Пришли, что получилось, — проверю», но не требуй этого. Для сочинений помоги с планом, мыслями и аргументами, но не пиши текст. ТИП В — проверь моё решение или ответ: скажи, верно или нет; если нет — покажи, в каком шаге ошибка и какое правило нарушено, но правильный итог его задачи не называй. ТИП Г — не про учёбу: коротко ответь, если это безобидно, и предложи помощь с уроками; на опасное или взрослое не отвечай. Всегда: по-русски, просто, дружелюбно, коротко (до 8–10 строк), без лекций и морали, без фраз «попробуй вспомнить», «а что ты сам думаешь».";
 const aiGuardMsgs = list => list.map(m => m.role === "user" ? { ...m, content: AI_RULES + "\n\nСообщение ученика: " + m.content } : { ...m });
-/* если в ответе всё же есть готовое решение («Ответ: 12», «3 + 9 = 12») — не показываем его */
-const AI_SOLVED = /(^|\n)\s*(\*\*)?\s*(ответ|итог|результат)\s*(\*\*)?\s*[:—–-]|\b\d+\s*[+\-*/×x]\s*\d+\s*=\s*-?\d/i;
-function aiSafe(t){ t = String(t || ""); return AI_SOLVED.test(t) ? "Готовый ответ не даю, чтобы ты сам разобрался. Давай вместе: какое правило или формулу нужно применить? Расскажи, что у тебя получилось на первом шаге, и я помогу проверить." : t; }
+/* похоже на просьбу решить конкретное задание (тип Б) */
+const AI_TASK = /(^|[^а-яё])(реши|решите|решить|решение|сделай|сделать|выполни|посчитай|вычисли|найди\s+(значение|x|х|корн)|дай\s+ответ|какой\s+ответ|ответ[ыа]?\s+(на|к)|напиши\s+(мне\s+)?(сочинени|эссе|изложени|реферат|доклад|сочинение)|упр(\.|ажнени[ея])?\s*№?\s*\d|№\s*\d|номер\s*\d|задани[ея]\s*\d|задач[уа]\s*\d)/i;
+const aiIsTask = q => AI_TASK.test(String(q || "")) || /\d\s*[+\-*/×:^]\s*\d|\d\s*[a-zх]\s*[+\-=]|=\s*\?/i.test(String(q || ""));
+/* для типа Б: не показываем ответ, если в нём строка «Ответ: …» или вычисление с числами из задания ученика */
+function aiSafe(t, q){
+  t = String(t || ""); if(!aiIsTask(q)) return t;
+  const nums = (String(q).match(/\d+(?:[.,]\d+)?/g) || []).filter(n => n.length > 1 || +n > 1);
+  const fin = /(^|\n|[.!?]\s)\s*(\*\*)?\s*(ответ|итог|результат)\s*(\*\*)?\s*[:—–-]/i.test(t);
+  const mine = nums.length >= 2 && t.split(/\n|[.!?;](?:\s|$)/).some(l => /=/.test(l) && nums.filter(n => new RegExp("(^|[^\\d.,])" + n.replace(/[.,]/, "[.,]") + "([^\\d.,]|$)").test(l)).length >= 2);
+  return fin || mine ? "Готовое решение этого задания не дам, но помогу понять, как его делать. Напиши, какая тема или что непонятно — объясню правило и разберу похожий пример с другими числами." : t;
+}
 async function aiChatSend(q){
   const um = { f: "me", x: q, t: new Date().toISOString() }; if(CHAT.reply){ um.r = CHAT.reply; CHAT.reply = null; } if(CHAT.att.length){ um.a = CHAT.att; CHAT.att = []; } FRESH.add(um); CHAT.msgs.ai.push(um);
   CHAT.draft = ""; CHAT.busy = true; chatSave();
@@ -8410,7 +8420,7 @@ async function aiChatSend(q){
     const r = await aiFetch({ provider: AIC.prov, messages: aiGuardMsgs(hist) }, CHAT.ctl.signal);
     clearTimeout(tm);
     const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
-    CHAT.msgs.ai[idx].x = aiSafe(j.text); CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
+    CHAT.msgs.ai[idx].x = aiSafe(j.text, q); CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
   }catch(e){
     CHAT.msgs.ai[idx].err = true;
     CHAT.msgs.ai[idx].x = e && e.name === "AbortError" ? "Остановлено или модель отвечает слишком долго. Попробуй ещё раз." : e instanceof TypeError ? "Нет связи с сервером ИИ. Помощник работает на основном сайте платформы, не в предпросмотре." : "Не получилось получить ответ. " + (e.message || "");
@@ -12917,7 +12927,7 @@ async function aiSend(q){
   try{
     const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 40000); const r = await aiFetch({ provider: AIC.prov, subject: AIC.ctx.subject, task: AIC.ctx.task, messages: aiGuardMsgs(AIC.msgs) }, ac.signal);
     clearTimeout(tm); const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
-    j.text = aiSafe(j.text); AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
+    j.text = aiSafe(j.text, "реши " + (AIC.ctx && AIC.ctx.task || "") + " " + ((AIC.msgs.filter(m => m.role === "user").pop() || {}).content || "")); AIC.msgs.push({ role: "assistant", content: j.text }); w.classList.remove("ai-w"); w.textContent = j.text; const mt = document.createElement("span"); mt.className = "tg-mdl " + AIC.prov; mt.textContent = AIC.prov === "gigachat" ? "GigaChat" : "YandexGPT"; w.insertBefore(mt, w.firstChild);
   }catch(e){ w.classList.remove("ai-w"); w.classList.add("ai-e"); const net = e instanceof TypeError; if(e.name === "AbortError"){ w.textContent = "Не получилось получить ответ. Модель не отвечает дольше 40 секунд, попробуйте ещё раз."; AIC.msgs.pop(); AIC.busy = false; return; } w.textContent = "Не получилось получить ответ. " + (net ? "Нет связи с сервером ИИ (адрес недоступен или заблокирован страницей)." : "Сервер ответил: " + (e.message || "ошибка")); console.error("AI", e); AIC.msgs.pop(); }
   AIC.busy = false; const m = document.getElementById("ai-m"); if(m) m.scrollTop = m.scrollHeight;
 }
@@ -13964,7 +13974,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "645";
+const BUILD = "646";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
