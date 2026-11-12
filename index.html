@@ -13978,7 +13978,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "647";
+const BUILD = "648";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -16078,6 +16078,20 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 :is(#admin,#mk-layer) .mk .sv-msg{margin:0 2px 8px;font-size:13px;color:var(--ink);background:var(--pl);border-radius:12px;padding:8px 12px}
 :is(#admin,#mk-layer) .mk .sv-lk{color:var(--acc)}
 @media (max-width:600px){:is(#admin,#mk-layer) .mk .sv-l li{grid-template-columns:auto minmax(0,1fr)}:is(#admin,#mk-layer) .mk .sv-l li>:last-child{grid-column:1/-1;justify-self:end}}
+
+/* чётче: карточки внутри групп белые с тонкой линией, подписи контрастнее (сборка 648) */
+html :is(#admin,#mk-layer) .mk{--mut:#78736A;--line:#E5E0D6}
+html[data-theme="dark"] :is(#admin,#mk-layer) .mk{--mut:#A6A196;--line:#383530}
+:is(#admin,#mk-layer) .mk .ag2-gr .ag2-c,:is(#admin,#mk-layer) .mk.mk-agt .ag2-gr .ag2-c{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-gr .ag2-c:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 55%,var(--line))}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-gr .ag2-c.open{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-gr.open{box-shadow:0 1px 0 var(--line)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-gr.open>.ag2-gh{border-bottom:1px solid var(--line)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-d{border-top:1px solid var(--line);padding-top:10px}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-d>p,:is(#admin,#mk-layer) .mk.mk-agt .ag2-d>div:first-child:not(.ag2-k){color:color-mix(in srgb,var(--ink) 78%,var(--mut))}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-k div{background:var(--pl);box-shadow:none}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-k small{margin-bottom:2px}
+:is(#admin,#mk-layer) .mk #mat .is>li+li:not(.e){box-shadow:0 -1px 0 var(--line)}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
