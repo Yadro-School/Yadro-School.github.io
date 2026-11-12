@@ -7911,13 +7911,13 @@ function agEvents(a){
 }
 
 /* ---------- история запусков агентов (сервер: ag_log / ag_runs) ---------- */
-const AGR = { runs: {}, loaded: false, busy: false, t: {}, last: {} };
+const AGR = { runs: {}, jobs: [], srv: {}, loaded: false, busy: false, t: {}, last: {} };
 const AGR_C = { ok: "#16A34A", warn: "#F59E0B", fail: "#E11D48", skip: "#9AA0A6" };
 const AGR_T = { ok: "работал", warn: "замечание", fail: "сбой", skip: "пропущен" };
 function agrLoad(force){
   if(!CN.isAdmin || AGR.busy || (AGR.loaded && !force)) return;
   AGR.busy = true;
-  tgCall("ag_runs").then(j => { AGR.runs = (j && j.runs) || {}; AGR.loaded = true; }).catch(() => { AGR.loaded = true; }).finally(() => { AGR.busy = false; try { if(document.getElementById("adm-ag")) renderAgents(); } catch(e) {} });
+  tgCall("ag_runs").then(j => { AGR.runs = (j && j.runs) || {}; AGR.jobs = (j && j.jobs) || []; AGR.loaded = true; }).catch(() => { AGR.loaded = true; }).finally(() => { AGR.busy = false; try { if(document.getElementById("adm-ag")) renderAgents(); } catch(e) {} });
 }
 function agrOf(src){ try { return BUILTIN().find(a => a.name === src || (src && src.length > 4 && a.name.startsWith(src))) || null; } catch(e) { return null; } }
 function agrNote(lvl, src, msg){
@@ -8060,7 +8060,7 @@ const AGENTS = () => [
     from: ["Данные платформы"], to: ["Файл копии"],
     who: "Встроен в платформу, по кнопке",
     tech: ["снимок расписания, оценок, домашки и контрольных", "формат JSON, читается платформой обратно", "четверти с итогами хранятся отдельно"] },
-  { id: "access", cat: "Система", name: "Агент доступа", st: "wait", stText: "Нужен сервер", run: "none",
+  { id: "access", cat: "Система", name: "Агент доступа", st: agJob("access") ? "ok" : "wait", stText: agJob("access") ? "Работает" : "Нужен сервер", run: "none",
     role: "Будет вести роли и журнал входов: кто владелец, кто редактор, кто только смотрит.",
     from: ["Вход на платформу"], to: ["Администратор", "Журнал"],
     who: "Сервер платформы",
@@ -9399,12 +9399,12 @@ function renderAgents(){
         : mode === "ai" ? `<button type="button" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${icR}${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button type="button" data-ag-stop>Остановить</button>` : ""}`
         : mode === "open" ? `<button type="button" ${a.action.attr}>${icR}${esc(a.action.label)}</button>` : "")
       : `${mode === "ai" ? `<button type="button" data-ag-go="${a.id}" ${AG.busy ? "disabled" : ""}>${icR}${AG.busy ? "Работает…" : "Запустить"}</button>${AG.busy ? `<button type="button" data-ag-stop>Остановить</button>` : ""}` : ""}<button type="button" data-ag-edit="${a.id}">${icS}Настроить</button><button type="button" data-ag-toggle="${a.id}">${a.enabled === false ? "Включить" : "Выключить"}</button>${AG.confirmDel === a.id ? `<button type="button" data-ag-del="${a.id}">Точно удалить</button><button type="button" data-ag-delno>Нет</button>` : `<button type="button" data-ag-delask="${a.id}">Удалить</button>`}`;
-    const how = a.id === "updater" ? "Проверка идёт автоматически." : a.id === "notify" ? "Сам по таймерам; в боте /plan и /zavtra." : a.id === "news" ? "Сам каждое утро; в боте /news." : (mode === "none" && a.builtin ? "Запуск появится, когда будет сервер." : "");
+    const how = agJob(a.id) ? "Работает на сервере сам, по расписанию. «Запустить сейчас» — проверить без ожидания." : a.id === "updater" ? "Проверка идёт автоматически." : a.id === "notify" ? "Сам по таймерам; в боте /plan и /zavtra." : a.id === "news" ? "Сам каждое утро; в боте /news." : (mode === "none" && a.builtin ? "Запуск появится, когда будет сервер." : "");
     const okR = R.filter(r => r.st === "ok").length;
-    return `<div class="ag2-c${open ? " open" : ""}" data-k="${st.st === "ok" ? "g" : "w"}"><div class="ag2-r" data-ag-open="${a.id}" role="button" tabindex="0" aria-expanded="${open}"><i class="zd ${dotC(st.st)}"></i><div><b>${esc(a.name)}</b><small>${esc(desc)}</small></div>${spark(a)}<span class="ag2-p ${st.st === "ok" ? "ok" : "w"}">${esc(st.t)}</span><span class="ag2-rb" aria-hidden="true">${icR}</span></div>
-      ${open ? `<div class="ag2-d"><p class="ag2-m">${esc(desc)}${desc && !/[.!?]$/.test(desc) ? "." : ""} ${esc(needT || lastTxt || how || (st.st === "ok" ? "Работает." : ""))}</p>
-        <div class="ag2-k"><div><small>Где работает</small><b>${esc(String(a.who || (a.builtin ? "На странице" : "Создан на платформе")).split(/[,;]/)[0])}</b></div><div><small>Последний запуск</small><b>${last ? esc(fmtWhen(new Date(last.t).toISOString())) : "не запускался"}</b></div><div><small>Отклик</small><b>${last && last.ms != null ? last.ms + " мс" : "—"}</b></div></div>
-        <div class="ag2-b">${runBtn}<button type="button" data-ag2-log="${a.id}" aria-expanded="${AGV.lg === a.id}">${icL}Журнал${R.length ? " · " + okR + "/" + R.length : ""}</button></div>
+    return `<div class="ag2-c${open ? " open" : ""}" data-k="${st.st === "ok" ? "g" : "w"}"><div class="ag2-r" data-ag-open="${a.id}" role="button" tabindex="0" aria-expanded="${open}"><i class="zd ${dotC(st.st)}"></i><div><b>${esc(a.name)}</b><small>${esc(desc)}</small></div>${spark(a)}<span class="ag2-p ${st.st === "ok" && !(agJob(a.id) || {}).off ? "ok" : "w"}">${(agJob(a.id) || {}).off ? "На паузе" : esc(st.t)}</span><span class="ag2-rb" aria-hidden="true">${icR}</span></div>
+      ${open ? `<div class="ag2-d"><p class="ag2-m">${esc(desc)}${desc && !/[.!?]$/.test(desc) ? "." : ""} ${esc(agJob(a.id) ? how : needT || lastTxt || how || (st.st === "ok" ? "Работает." : ""))}</p>
+        <div class="ag2-k"><div><small>${agJob(a.id) ? "Расписание" : "Где работает"}</small><b>${agJob(a.id) ? "Сервер, " + esc(agJob(a.id).when) + (agJob(a.id).off ? " · пауза" : "") : esc(String(a.who || (a.builtin ? "На странице" : "Создан на платформе")).split(/[,;]/)[0])}</b></div><div><small>Последний запуск</small><b>${last ? esc(fmtWhen(new Date(last.t).toISOString())) : "не запускался"}</b></div><div><small>Отклик</small><b>${last && last.ms != null ? last.ms + " мс" : "—"}</b></div></div>
+        <div class="ag2-b">${agSrvBtns(a)}${runBtn}<button type="button" data-ag2-log="${a.id}" aria-expanded="${AGV.lg === a.id}">${icL}Журнал${R.length ? " · " + okR + "/" + R.length : ""}</button></div>
         ${AG.err ? `<p class="ag2-m mk-err">${esc(AG.err)}</p>` : ""}
         ${AGV.lg === a.id ? (R.length ? `<ul class="ag2-l">${R.slice(-8).reverse().map(r => `<li><span>${esc(fmtWhen(new Date(r.t).toISOString()))}</span><span>${esc(r.note || AGR_T[r.st])}${r.ms != null ? " · " + r.ms + " мс" : ""}</span><span class="${r.st}">${esc(AGR_T[r.st])}</span></li>`).join("")}</ul>` : `<p class="ag2-m">${AGR.loaded ? "Запусков ещё не было." : "Загружаю историю запусков…"}</p>`) : ""}
         ${a.id === "mod" ? modPanel() : ""}${a.id === "qa" ? qaPanel() : ""}
@@ -13960,7 +13960,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "642";
+const BUILD = "643";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14278,6 +14278,63 @@ function mkAttn(D){
   D.iss.slice(0, 2).forEach(x => L.push(["w", "Замечание к платформе", typeof x === "string" ? x : (x.t || x.l || "Автопроверка нашла, что поправить"), "Проверить", "agents"]));
   return L;
 }
+/* ---- Версии сайта (сборка 643): сохранить текущую сборку и откатить через сервер (GitHub) ---- */
+const SV = { d: null, busy: "", err: "", msg: "", more: false, ask: "", loading: false };
+function svLoad(force){
+  if(SV.loading || (SV.d && !force)) return; SV.loading = true;
+  tgCall("site_versions").then(j => { SV.d = j; SV.err = ""; }).catch(e => { const m = (e && e.message) || ""; SV.err = /Неизвестн/.test(m) ? "Сохранять и откатывать сайт можно после загрузки сервера v12" : m || "Не удалось загрузить версии"; }).finally(() => { SV.loading = false; svRedraw(); });
+}
+const svWhen = t => t ? new Date(t).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).replace(" г.", "") : "";
+function svRow(x, kind){
+  const cur = SV.d && SV.d.cur && SV.d.cur.sha === x.sha, ask = SV.ask === kind + x.sha;
+  const title = kind === "s" ? (x.note ? x.note.charAt(0).toUpperCase() + x.note.slice(1) : "Сохранённая версия") : x.msg.replace(/^Сборк[аи]\s+[\d–-]+:\s*/, "") || "Выкатка";
+  return `<li class="${cur ? "cur" : ""} ${ask ? "ask" : ""}"><span class="sv-b">${x.build ? esc(x.build) : esc(x.sha.slice(0, 7))}</span><div><b>${esc(title)}</b><small>${svWhen(x.at)}${kind === "s" && x.by ? " · " + esc(x.by) : ""}</small></div>${cur ? `<span class="sv-on">на сайте</span>` : ask ? `<div class="sv-ask"><span>Откатить сайт${x.build ? " к сборке " + esc(x.build) : ""}?</span><button type="button" class="y" data-sv-yes="${x.sha}">Да</button><button type="button" data-sv-no>Нет</button></div>` : `<button type="button" class="sv-rb" data-sv-rb="${kind + x.sha}" ${SV.busy ? "disabled" : ""}>Откатить</button>`}</li>`;
+}
+function svHtml(){
+  if(!window.yadroTg) return `<section class="ac" id="msv"><div class="ac-h"><div><h3>Версии сайта</h3><div class="sub2">Работает на сайте Ядра</div></div></div></section>`;
+  if(!SV.d && !SV.err) setTimeout(() => svLoad(false), 0);
+  const d = SV.d, saved = d ? d.saved || [] : [], recent = d ? d.recent || [] : [];
+  const sub = SV.busy ? esc(SV.busy) : d && d.cur ? `На сайте сборка ${esc(d.cur.build || d.cur.sha.slice(0, 7))} · ${svWhen(d.cur.at)}` : SV.err ? "" : "Загружаю…";
+  let body = "";
+  if(SV.err) body = `<p class="mk-nodata">${esc(SV.err)}${/GITHUB_TOKEN|функц|action|Неизвестн/i.test(SV.err) ? "" : ` <button type="button" class="sv-lk" data-sv="retry">Повторить</button>`}</p>`;
+  else if(d && !d.token) body = `<p class="mk-nodata">Чтобы сохранять и откатывать сайт, добавьте на сервер ключ GitHub: переменная <b>GITHUB_TOKEN</b> в функции yadro-api. Сохранённых версий: ${saved.length}.</p>`;
+  else if(d) body = `${saved.length ? `<div class="sv-h">Сохранённые</div><ul class="sv-l">${saved.slice(0, 6).map(x => svRow(x, "s")).join("")}</ul>` : `<p class="mk-nodata">Сохранённых версий пока нет. Нажмите «Сохранить версию» перед большой правкой.</p>`}
+<button type="button" class="sv-more ${SV.more ? "open" : ""}" data-sv="more" aria-expanded="${SV.more}">Последние выкатки · ${recent.length}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>${SV.more ? `<ul class="sv-l">${recent.map(x => svRow(x, "r")).join("")}</ul>` : ""}`;
+  return `<section class="ac" id="msv"><div class="ac-h"><div><h3>Версии сайта</h3><div class="sub2">${sub}</div></div>${d && d.token ? `<button type="button" class="an-add" data-sv="snap" ${SV.busy ? "disabled" : ""}><svg viewBox="0 0 24 24"><path d="M12 4.5v10"/><path d="M8 11l4 4 4-4"/><path d="M5.5 19h13"/></svg>Сохранить версию</button>` : ""}</div>${SV.msg ? `<p class="sv-msg">${esc(SV.msg)}</p>` : ""}${body}</section>`;
+}
+function svRedraw(){ const o = document.getElementById("msv"); if(!o) return; const t = document.createElement("div"); t.innerHTML = svHtml(); o.replaceWith(t.firstElementChild); }
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); if(!g("#msv")) return; let x;
+  if((x = g("[data-sv]"))){ const k = x.dataset.sv;
+    if(k === "more"){ SV.more = !SV.more; svRedraw(); return; }
+    if(k === "retry"){ SV.err = ""; svLoad(true); svRedraw(); return; }
+    if(k === "snap"){ SV.busy = "Сохраняю версию…"; SV.msg = ""; svRedraw();
+      tgCall("site_snap", { note: "" }).then(j => { SV.msg = j.saved && j.saved.same ? "Эта версия уже сохранена" : "Версия сохранена: сборка " + ((j.saved && j.saved.build) || ""); actLog("adm", "Сохранена версия сайта" + (j.saved && j.saved.build ? ": сборка " + j.saved.build : "")); })
+        .catch(er => { SV.msg = (er && er.message) || "Не удалось сохранить"; }).finally(() => { SV.busy = ""; svLoad(true); }); return; } }
+  if((x = g("[data-sv-rb]"))){ SV.ask = x.dataset.svRb; svRedraw(); return; }
+  if(g("[data-sv-no]")){ SV.ask = ""; svRedraw(); return; }
+  if((x = g("[data-sv-yes]"))){ const sha = x.dataset.svYes.slice(-40); SV.ask = ""; SV.busy = "Откатываю сайт…"; SV.msg = ""; svRedraw();
+    tgCall("site_rollback", { sha }).then(j => { SV.msg = "Готово: сайт откатывается к сборке " + (j.build || sha.slice(0, 7)) + ". Через 1–2 минуты обновите страницу. Текущая версия сохранена, её можно вернуть."; actLog("adm", "Сайт откачен к сборке " + (j.build || sha.slice(0, 7))); })
+      .catch(er => { SV.msg = (er && er.message) || "Не удалось откатить"; }).finally(() => { SV.busy = ""; svLoad(true); }); return; }
+});
+/* агенты сервера: расписание, запуск сейчас, пауза */
+const agJob = id => (AGR.jobs || []).find(j => j.id === id) || null;
+function agSrvBtns(a){
+  const j = agJob(a.id); if(!j) return "";
+  const b = AGR.srv[a.id] || "";
+  return `<button type="button" data-ag-srun="${a.id}" ${b ? "disabled" : ""}>${b === "run" ? "Запускаю…" : "Запустить сейчас"}</button><button type="button" data-ag-spause="${a.id}" ${b ? "disabled" : ""}>${j.off ? "Включить" : "Пауза"}</button>`;
+}
+document.addEventListener("click", e => {
+  const r = e.target.closest("[data-ag-srun],[data-ag-spause]"); if(!r) return; e.stopPropagation();
+  const id = r.dataset.agSrun || r.dataset.agSpause, j = agJob(id); if(!j) return; AGR.srv = AGR.srv || {};
+  if(r.dataset.agSrun){ AGR.srv[id] = "run"; renderAgents();
+    tgCall("ag_run", { id }).then(x => { if(x.run){ (AGR.runs[id] = AGR.runs[id] || []).push(x.run); } tgToast(x.run ? (AGR_T[x.run.st] || "Готово") + ": " + (x.run.note || "").replace(/^Вручную: /, "") : "Агент запущен"); actLog("adm", "Агент «" + (BUILTIN().find(b => b.id === id) || { name: id }).name + "» запущен вручную"); })
+      .catch(er => tgToast((er && er.message) || "Не удалось запустить")).finally(() => { delete AGR.srv[id]; renderAgents(); }); return; }
+  AGR.srv[id] = "pause"; renderAgents();
+  tgCall("ag_pause", { id, off: !j.off }).then(x => { j.off = !!x.off; tgToast(x.off ? "Агент на паузе: по расписанию не запускается" : "Агент снова работает по расписанию"); })
+    .catch(er => tgToast((er && er.message) || "Не удалось")).finally(() => { delete AGR.srv[id]; renderAgents(); });
+}, true);
+
 function renderAdmPanel(el){
   const D = mkData(), A = D.A, att = mkAttn(D), last = D.actT.length ? D.actT[D.actT.length - 1] : null;
   const pq = (k, l, v) => `<button type="button" class="pq ${MK.pq === k ? "on" : ""}" data-mk-pq="${k}">${MK_IC[k]}<small>${l}</small><b>${v}</b></button>`;
@@ -14307,6 +14364,7 @@ ${pqP}
 ${psP}
 </div></section>
 <section class="ac" id="mqa"><div class="ac-h"><div><h3>Быстрые действия</h3></div></div><div class="qa-g">${mkQa()}</div></section>
+${svHtml()}
 </div>
 <div class="gc">
 <section class="ac" id="mat"><div class="ac-h"><div><h3>Требует внимания</h3></div><span class="cn">${att.length}</span></div>${att.length ? `<ul class="is">${att.map(x => `<li class="${x[0]}"><i></i><div><b>${esc(x[1])}</b><small>${esc(x[2])}</small></div><button type="button" data-mk-att="${x[4]}">${x[3]}</button></li>`).join("")}</ul>` : `<p class="mk-nodata">Всё спокойно: сейчас ничего не требует внимания.</p>`}</section>
@@ -15978,6 +16036,30 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk .zq.zq-e{background:#352120}
 :is(#admin,#mk-layer) .mk .jx .jdi > .jwh{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px 24px;flex:1 1 100%;background:none!important;padding:2px 2px 4px!important;align-items:start}
 :is(#admin,#mk-layer) .mk .jx .jdi > .jwh > div{display:block;background:none;padding:0}
 @media (max-width:600px){:is(#admin,#mk-layer) .mk .jx .jdi > .jwh{grid-template-columns:1fr}}
+/* 643: версии сайта */
+:is(#admin,#mk-layer) .mk #msv .an-add[disabled]{opacity:.5;pointer-events:none}
+:is(#admin,#mk-layer) .mk .sv-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:2px 2px 6px}
+:is(#admin,#mk-layer) .mk .sv-l{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:2px}
+:is(#admin,#mk-layer) .mk .sv-l li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 10px;border-radius:14px;transition:background .15s}
+:is(#admin,#mk-layer) .mk .sv-l li:hover{background:var(--pl)}
+:is(#admin,#mk-layer) .mk .sv-l li.cur{background:var(--pl)}
+:is(#admin,#mk-layer) .mk .sv-b{min-width:44px;height:26px;padding:0 8px;border-radius:999px;display:inline-grid;place-items:center;font-size:12.5px;font-variant-numeric:tabular-nums;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);box-sizing:border-box}
+:is(#admin,#mk-layer) .mk .sv-l li.cur .sv-b{box-shadow:inset 0 0 0 1.5px var(--ok);color:var(--ok)}
+:is(#admin,#mk-layer) .mk .sv-l li b{display:block;font-weight:500;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:is(#admin,#mk-layer) .mk .sv-l li small{display:block;font-size:12px;color:var(--mut);margin-top:1px}
+:is(#admin,#mk-layer) .mk .sv-on{font-size:12px;color:var(--ok)}
+:is(#admin,#mk-layer) .mk .sv-rb,:is(#admin,#mk-layer) .mk .sv-ask button{height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;box-shadow:inset 0 0 0 1px var(--line);transition:box-shadow .15s,color .15s,transform .1s}
+:is(#admin,#mk-layer) .mk .sv-rb:hover,:is(#admin,#mk-layer) .mk .sv-ask button:hover{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc)}
+:is(#admin,#mk-layer) .mk .sv-rb:active,:is(#admin,#mk-layer) .mk .sv-ask button:active{transform:scale(.96)}
+:is(#admin,#mk-layer) .mk .sv-ask{display:flex;align-items:center;gap:6px;font-size:12.5px;flex-wrap:wrap;justify-content:flex-end}
+:is(#admin,#mk-layer) .mk .sv-ask .y{color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk .sv-more{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);padding:6px 10px;border-radius:999px}
+:is(#admin,#mk-layer) .mk .sv-more:hover{color:var(--acc)}
+:is(#admin,#mk-layer) .mk .sv-more svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;transition:transform .2s}
+:is(#admin,#mk-layer) .mk .sv-more.open svg{transform:rotate(180deg)}
+:is(#admin,#mk-layer) .mk .sv-msg{margin:0 2px 8px;font-size:13px;color:var(--ink);background:var(--pl);border-radius:12px;padding:8px 12px}
+:is(#admin,#mk-layer) .mk .sv-lk{color:var(--acc)}
+@media (max-width:600px){:is(#admin,#mk-layer) .mk .sv-l li{grid-template-columns:auto minmax(0,1fr)}:is(#admin,#mk-layer) .mk .sv-l li>:last-child{grid-column:1/-1;justify-self:end}}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
