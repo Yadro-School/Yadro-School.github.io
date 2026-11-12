@@ -6662,7 +6662,7 @@ function lessonsFor(date){
     const sub = DATA.subjects[sid] || { name: sid };
     return {
       i, sid, sub, k, date, num: it.n, time: (it.t || "").split("-"),
-      teacher: it.teacher || "", room: it.room || "",
+      teacher: it.teacher || "", room: it.room || "", ch: it.ch || null, off: !!it.off,
       place: [it.teacher, it.room].filter(Boolean).join(" · "),
       hw: first ? HW.filter(h => h.s === sid && key(h.dueD) === k) : [],
       test: first ? TESTS.find(t => t.s === sid && key(t.d) === k) : null,
@@ -6728,16 +6728,18 @@ function dayRow(L, wide){
   if(I.today) info.push(`<p class="di di-t"><span class="di-l">${esc(I.today.type)}</span><span>${esc(I.today.topic)}${I.today.prep ? `<small>Повторить: ${esc(I.today.prep)}</small>` : ""}</span></p>`);
   else if(I.next) info.push(`<p class="di di-t"><span class="di-l">${esc(I.next.type)}</span><span>${esc(I.next.type)}, ${fmtShort(I.next.d)} · ${countdown(I.next.d)}<small>${esc(I.next.topic)}</small></span></p>`);
   if(!I.hw.length) info.push(`<p class="di di-m"><span class="di-l">Домашнее задание</span><span>не задано</span></p>`);
+  const chT = L.off ? "Отмена" : L.ch ? (L.ch.was ? "Замена" : "Новый") : "";
+  if(chT) info.unshift(`<p class="di di-ch"><span class="di-l">${chT === "Новый" ? "Изменение" : chT}</span><span>${L.off ? "Урок убрали из расписания" : L.ch.was ? "Было: " + esc(L.ch.was) : "Урок добавили в расписание"}</span></p>`);
   const nIso = L.date ? isoDate(L.date) : "";
   if(nIso) info.push(`<div class="di di-nt"><span class="di-l">Заметки</span><div class="lnx" data-lnx="${nIso}|${L.sid}">${lnInner(nIso, L.sid)}</div></div>`);
   const hasNote = !!nIso && (CNOTES[nIso] || []).some(x => nS(x) === L.sid);
   const flat = L.sid === "line";
-  return `<li class="dr ${flat ? "dr-flat" : ""} ${L.sub.graded === false && !L.sub.soon ? "ng" : ""} ${L.now ? "is-now" : ""}" data-lesson>
+  return `<li class="dr ${L.off ? "dr-off" : ""} ${flat ? "dr-flat" : ""} ${L.sub.graded === false && !L.sub.soon ? "ng" : ""} ${L.now ? "is-now" : ""}" data-lesson>
     <div class="dr-row" ${flat ? "" : `role="button" tabindex="0" aria-expanded="false"`}>
       <span class="dr-n">${L.num || ""}</span>
       <span class="dr-t">${a || "—"}${b ? `<i>–${b}</i>` : ""}</span>
       <span class="dr-s">${esc(L.sub.name)}${lessonGrades(L)}</span>
-      <span class="dr-tg">${hasNote ? `<span class="dr-nt" title="Есть заметка">✎</span>` : ""}<span class="dr-m ${mk ? "m-" + mk.c : ""}" ${mk ? `title="${esc(mk.t)}"` : ""}>${mk ? (mk.type === "ДЗ" ? `ДЗ` : (TEST_SHORT[mk.type] || "КР")) : ""}</span></span>
+      <span class="dr-tg">${chT ? `<span class="dr-ch" title="${L.off ? "Урок убрали" : L.ch.was ? "Было: " + esc(L.ch.was) : "Урок добавили"}">${chT}</span>` : ""}${hasNote ? `<span class="dr-nt" title="Есть заметка">✎</span>` : ""}<span class="dr-m ${mk ? "m-" + mk.c : ""}" ${mk ? `title="${esc(mk.t)}"` : ""}>${mk ? (mk.type === "ДЗ" ? `ДЗ` : (TEST_SHORT[mk.type] || "КР")) : ""}</span></span>
       ${flat ? `<span></span>` : `<svg class="dr-c" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
     </div>
     ${flat ? "" : `<div class="dr-d"><div class="dr-di">${info.join("")}</div></div>`}
@@ -9509,7 +9511,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { user = await window.claude?.use?.("user"); } catch(e) {}
   try { CN.isAdmin = !!(user && ((await user.isOwner()) || (await user.canEdit()))); } catch(e) { CN.isAdmin = false; }
   if(!CN.isAdmin && OWNER_LOCAL()) CN.isAdmin = true;   // сайт вне Claude: временный режим владельца по коду
-  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; realMode(m); if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE === "parent" && m && m.child){ if(m.cls) schForStudent(m.cls); gradesForMe(m.child); } if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
+  try { if(user && user.me){ const m = await user.me(); ME_ROLE = (m && m.role) || ""; ME_INFO = m || null; realMode(m); if(ME_ROLE === "student" && m && m.cls) schForStudent(m.cls); if(ME_ROLE && ME_ROLE !== "student" && ME_ROLE !== "parent") schForStudent("8 «А»", true); if(ME_ROLE === "student" && m && m.id) gradesForMe(m.id); if(ME_ROLE === "parent" && m && m.child){ if(m.cls) schForStudent(m.cls); gradesForMe(m.child); } if(ME_ROLE && ME_ROLE !== "student"){ try { vaApply(); } catch(_) {} buildBnav(); try { renderAll(); } catch(_) {} } } } catch(e) {}
   const btn = document.getElementById("tab-admin");
   if(btn) btn.hidden = !CN.isAdmin;
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
@@ -9784,9 +9786,11 @@ async function gradesForMe(uid){
     try { renderAll(); } catch(e) {}
   } catch(e) {}
 }
-async function schForStudent(cls){
+let SCH_LIVE = null;
+async function schForStudent(cls, sheetOnly){
   if(!DB) return;
-  try { const snap = await DB.doc(schKey(cls)).get(), d = snap.exists ? snap.data() : {}; DATA.timetable = d.timetable || {}; DATA.weeks = Object.assign({}, d.weeks || {}); if(d.subjects) Object.assign(DATA.subjects, d.subjects); }
+  if(!SCH_LIVE){ SCH_LIVE = [cls, sheetOnly]; setInterval(() => { if(!document.hidden) schForStudent(SCH_LIVE[0], SCH_LIVE[1]); }, 15 * 60000); }   // замены подтягиваются сами
+  try { const snap = await DB.doc(schKey(cls)).get(), d = snap.exists ? snap.data() : {}; if(sheetOnly && d.source !== "sheet") return; DATA.timetable = d.timetable || {}; DATA.weeks = Object.assign({}, d.weeks || {}); if(d.subjects) Object.assign(DATA.subjects, d.subjects); }
   catch(e) { DATA.timetable = {}; }
   try { renderAll(); } catch(e) {}
 }
@@ -13974,7 +13978,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "646";
+const BUILD = "647";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -16692,5 +16696,9 @@ function ydSupport(){
 </style>
 <style id="prof-align-613">
 @media (min-width:901px){.top .brand{width:226px;justify-content:space-between}.top .brand .hd-prof-l{margin-left:auto}}
+/* замены в расписании */
+.dr-ch{display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;border:1px solid var(--pen);color:var(--pen);font:600 11px/1 var(--f-body);white-space:nowrap;margin-right:6px}
+.dr-off .dr-s,.dr-off .dr-t{text-decoration:line-through;opacity:.55}
+.di-ch .di-l{color:var(--pen)}
 </style>
 </body></html>
