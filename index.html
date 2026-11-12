@@ -5804,7 +5804,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
   window.yadroSec = function(){ return call("sec_stats"); };
-  window.yadroTg = function(a, b){ return /^(tg_|ag_|hw_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  window.yadroTg = function(a, b){ return /^(tg_|ag_|hw_|site_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   /* ИИ-сервер Ядра: сессия входа уходит только на этот адрес */
   var AI_URL = "https://functions.yandexcloud.net/d4eidkim00i3vsko02mm";
   window.yadroAi = function(payload, signal){ return fetch(AI_URL, { signal: signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload || {}, { t: tok || undefined })) }); };
@@ -13960,7 +13960,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "643";
+const BUILD = "644";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
