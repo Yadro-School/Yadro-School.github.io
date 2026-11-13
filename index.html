@@ -5805,7 +5805,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
   function logout(){ try { localStorage.removeItem(TK); } catch(e) {} location.reload(); }
   window.yadroLogout = logout;
   window.yadroSec = function(){ return call("sec_stats"); };
-  window.yadroTg = function(a, b){ return /^(tg_|ag_|hw_|site_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
+  window.yadroTg = function(a, b){ return /^(tg_|ag_|hw_|site_|err_)/.test(a) ? call(a, b) : Promise.reject(new Error("Нельзя")); };
   /* ИИ-сервер Ядра: сессия входа уходит только на этот адрес */
   var AI_URL = "https://functions.yandexcloud.net/d4eidkim00i3vsko02mm";
   window.yadroAi = function(payload, signal){ return fetch(AI_URL, { signal: signal, method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload || {}, { t: tok || undefined })) }); };
@@ -6064,7 +6064,7 @@ a.tgm-md:hover{background:var(--pen-soft);transform:translateY(-1px)}.tgm-md:act
 })();
 </script>
 <script>try{var __d=JSON.parse(localStorage.getItem("bai-defaults")||"null");if(__d)for(var __k in __d)if(localStorage.getItem(__k)===null)localStorage.setItem(__k,__d[__k])}catch(e){}</script>
-<script>try{var __r=document.documentElement,__g=function(k){return localStorage.getItem(k)};var __f=__g("bai-font");__r.setAttribute("data-font",["classic","claude","apple"].indexOf(__f)>=0?__f:"claude");var __c=__g("bai-chips");if(["outline","soft"].indexOf(__c)>=0)__r.setAttribute("data-chips",__c);var __sh=__g("bai-shape2")||"none";if(["round","none"].indexOf(__sh)>=0)__r.setAttribute("data-shape",__sh);var __t=__g("bai-theme");if(__t!=="system")__r.setAttribute("data-theme",__t==="dark"?"dark":"light");var __a=__g("bai-accent");if(__a)__r.setAttribute("data-accent",__a);var __i=__g("bai-icons");if(__i==="rich"||__i==="none")__r.setAttribute("data-icons",__i);var __mn=__g("bai-menu");if(__mn)__r.setAttribute("data-menu",__mn);if(__g("bai-glass")==="off")__r.setAttribute("data-glass","off");var __cb=__g("bai-chatbg");__r.setAttribute("data-chatbg",["warm","aurora","dusk","bubbles","dots","plain"].indexOf(__cb)>=0?__cb:"plain");var __gc=__g("bai-gcolor");if(__gc==="off")__r.setAttribute("data-gcolor","off");var __fn=__g("bai-fin");if(["pill","ring","col"].indexOf(__fn)>=0)__r.setAttribute("data-fin",__fn);var __tb=__g("bai-tabs");if(__tb)__r.setAttribute("data-tabs",__tb);if(__g("bai-density")==="compact")__r.setAttribute("data-density","compact");if(__g("bai-motion")==="off")__r.setAttribute("data-motion","off")}catch(e){}</script>
+<script>try{var __r=document.documentElement,__g=function(k){return localStorage.getItem(k)};if(__g("bai-ui")==="claude")__r.setAttribute("data-ui","claude");var __f=__g("bai-font");__r.setAttribute("data-font",["classic","claude","apple"].indexOf(__f)>=0?__f:"claude");var __c=__g("bai-chips");if(["outline","soft"].indexOf(__c)>=0)__r.setAttribute("data-chips",__c);var __sh=__g("bai-shape2")||"none";if(["round","none"].indexOf(__sh)>=0)__r.setAttribute("data-shape",__sh);var __t=__g("bai-theme");if(__t!=="system")__r.setAttribute("data-theme",__t==="dark"?"dark":"light");var __a=__g("bai-accent");if(__a)__r.setAttribute("data-accent",__a);var __i=__g("bai-icons");if(__i==="rich"||__i==="none")__r.setAttribute("data-icons",__i);var __mn=__g("bai-menu");if(__mn)__r.setAttribute("data-menu",__mn);if(__g("bai-glass")==="off")__r.setAttribute("data-glass","off");var __cb=__g("bai-chatbg");__r.setAttribute("data-chatbg",["warm","aurora","dusk","bubbles","dots","plain"].indexOf(__cb)>=0?__cb:"plain");var __gc=__g("bai-gcolor");if(__gc==="off")__r.setAttribute("data-gcolor","off");var __fn=__g("bai-fin");if(["pill","ring","col"].indexOf(__fn)>=0)__r.setAttribute("data-fin",__fn);var __tb=__g("bai-tabs");if(__tb)__r.setAttribute("data-tabs",__tb);if(__g("bai-density")==="compact")__r.setAttribute("data-density","compact");if(__g("bai-motion")==="off")__r.setAttribute("data-motion","off")}catch(e){}</script>
 
 <header class="top">
   <div class="wrap">
@@ -7920,7 +7920,7 @@ const AGR_T = { ok: "работал", warn: "замечание", fail: "сбо�
 function agrLoad(force){
   if(!CN.isAdmin || AGR.busy || (AGR.loaded && !force)) return;
   AGR.busy = true;
-  tgCall("ag_runs").then(j => { AGR.runs = (j && j.runs) || {}; AGR.jobs = (j && j.jobs) || []; AGR.loaded = true; }).catch(() => { AGR.loaded = true; }).finally(() => { AGR.busy = false; try { if(document.getElementById("adm-ag")) renderAgents(); } catch(e) {} });
+  tgCall("ag_runs").then(j => { AGR.runs = (j && j.runs) || {}; AGR.jobs = (j && j.jobs) || []; AGR.stop = (j && j.stop) || null; AGR.v15 = !!j && "stop" in j; errsLoad(); AGR.loaded = true; }).catch(() => { AGR.loaded = true; }).finally(() => { AGR.busy = false; try { if(document.getElementById("adm-ag")) renderAgents(); } catch(e) {} });
 }
 function agrOf(src){ try { return BUILTIN().find(a => a.name === src || (src && src.length > 4 && a.name.startsWith(src))) || null; } catch(e) { return null; } }
 function agrNote(lvl, src, msg){
@@ -9127,13 +9127,28 @@ function logAdd(lvl, src, msg){
   const el = document.getElementById("ag-log"); if(el){ el.innerHTML = el.classList.contains("zevl") ? mkLogRows() : logRows(); logFilter(); }
 }
 function logFilter(){ const q = document.getElementById("ag-log-q"), ul = document.getElementById("ag-log"); if(!q || !ul) return; const t = q.value.trim().toLowerCase().replace(/ё/g, "е"); let n = 0; ul.querySelectorAll("li.lg").forEach(li => { const ok = !t || li.textContent.toLowerCase().replace(/ё/g, "е").includes(t); li.hidden = !ok; if(ok) n++; }); let no = ul.querySelector(".lg-none"); if(!n && t){ if(!no){ no = document.createElement("li"); no.className = "lg-none"; no.textContent = "Ничего не найдено"; ul.appendChild(no); } } else if(no) no.remove(); }
-document.addEventListener("input", e => { if(e.target.id === "ag-log-q") logFilter(); });
+document.addEventListener("input", e => { if(e.target.id === "ag-log-q") logFilter(); if(e.target.id === "ag-err-q"){ AGV.eq = e.target.value; const ul = document.getElementById("ag-err"); if(ul) ul.innerHTML = errRows(); } });
 function bumpRun(id){
   const r = SYS.runs[id] || { n: 0 };
   SYS.runs[id] = { n: r.n + 1, at: new Date().toISOString() };
   try { localStorage.setItem(AGST_KEY, JSON.stringify(SYS.runs)); } catch(e) {}
 }
 const LVL = { ok: "ок", warn: "вним", fail: "сбой", info: "инфо" };
+/* ошибки сервера (v15): err_list, журнал событий → «Ошибки сервера» */
+const ERRS = { items: null, busy: false, err: "", at: 0 };
+function errsLoad(force){
+  if(ERRS.busy || (!force && ERRS.at && Date.now() - ERRS.at < 60000)) return; ERRS.busy = true;
+  tgCall("err_list").then(j => { ERRS.items = (j && j.items) || []; ERRS.err = ""; }).catch(e => { ERRS.err = /Неизвестное действие/.test(e && e.message || "") ? "Журнал ошибок появится после обновления сервера (v15)" : "Не удалось загрузить: " + ((e && e.message) || "нет связи"); })
+    .finally(() => { ERRS.busy = false; ERRS.at = Date.now(); try { if(document.getElementById("adm-ag") || document.querySelector(".mk-agt")) renderAgents(); } catch(e) {} });
+}
+function errRows(){
+  if(ERRS.err) return `<li class="zev er-m"><span>${esc(ERRS.err)}</span></li>`;
+  if(!ERRS.items) return `<li class="zev er-m"><span>Загружаю…</span></li>`;
+  if(!ERRS.items.length) return `<li class="zev er-m"><span>За 7 дней сервер не записал ни одной ошибки.</span></li>`;
+  const q = (AGV.eq || "").toLowerCase();
+  return ERRS.items.filter(x => !q || (x.w + " " + x.m).toLowerCase().includes(q)).map(x => { const d = new Date(x.t), when = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", hour12: false });
+    return `<li class="zev er"><time>${when}</time><b>${esc(x.w || "сервер")}</b><span>${esc(x.m)}${x.s ? `<small>${esc(x.s)}</small>` : ""}</span></li>`; }).join("");
+}
 function mkLogRows(){
   if(!LOG.list.length) return `<li class="zev lg"><time>--:--:--</time><b>система</b><span>Журнал пуст.</span></li>`;
   return LOG.list.slice(-120).reverse().map(x => { const d = new Date(x.t), hh = isNaN(d) ? "--:--:--" : d.toLocaleTimeString("ru-RU", { hour12: false }); return `<li class="zev lg ${x.lvl}"><time>${hh}</time><b>${esc(x.src)}</b><span>${esc(x.msg)}</span></li>`; }).join("");
@@ -9339,7 +9354,15 @@ document.addEventListener("click", e => {
   if((x = e.target.closest("[data-mxm]"))){ MXS.mode = x.dataset.mxm; try { localStorage.setItem("bai-mech-mode", MXS.mode); } catch(_) {} renderAgents(); return; }
   if(e.target.closest("[data-mxtg]")){ MXS.tg = !MXS.tg; try { localStorage.setItem("bai-mech-tg", MXS.tg ? "1" : "0"); } catch(_) {} renderAgents(); return; }
   if((x = e.target.closest("[data-ag2-log]"))){ AGV.lg = AGV.lg === x.dataset.ag2Log ? "" : x.dataset.ag2Log; renderAgents(); return; }
-  if(e.target.closest("[data-ag2-x]")){ AGV.log = !AGV.log; renderAgents(); return; }
+  if(e.target.closest("[data-ag2-x]")){ AGV.log = !AGV.log; if(AGV.log) errsLoad(); renderAgents(); return; }
+  if((x = e.target.closest("[data-ag-lt]"))){ AGV.lt = x.dataset.agLt; AGV.errAsk = false; if(AGV.lt === "srv") errsLoad(true); renderAgents(); return; }
+  if(e.target.closest("[data-err-re]")){ errsLoad(true); return; }
+  if(e.target.closest("[data-err-clear]")){ if(!AGV.errAsk){ AGV.errAsk = true; renderAgents(); return; } AGV.errAsk = false; tgCall("err_clear").then(() => { ERRS.items = []; }).catch(er => tgToast("Не очистилось: " + er.message)).finally(() => renderAgents()); return; }
+  if((x = e.target.closest("[data-ag-stop]"))){ const v = x.dataset.agStop;
+    if(v === "no"){ AGV.stopAsk = false; renderAgents(); return; }
+    if(!AGR.stop && v !== "1"){ AGV.stopAsk = true; renderAgents(); return; }
+    AGV.stopAsk = false; const want = !AGR.stop; x.disabled = true;
+    tgCall("ag_stop", { on: want }).then(j => { AGR.stop = j.stop || null; tgToast(AGR.stop ? "Агенты остановлены" : "Агенты снова работают"); actLog("adm", AGR.stop ? "Аварийная остановка агентов" : "Работа агентов возвращена"); }).catch(er => tgToast("Не получилось: " + er.message)).finally(() => renderAgents()); return; }
 });
 document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest(".ag2-r[data-ag-open]"); if(r && e.target === r && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); r.click(); } });
 function ag3PopHide(){ const p = document.getElementById("ag3-pop"); if(p) p.hidden = true; if(AG3.sel){ AG3.sel.classList.remove("sel"); AG3.sel = null; } }
@@ -9439,11 +9462,12 @@ function renderAgents(){
   }).join("");
   el.innerHTML = mkWrap("agt", `
     ${AG.wizard ? `<div class="wiz-wrap ${AG.wizIn ? "wiz-in" : ""}"><div class="wiz-inner">${wizardHtml()}</div></div>` : ""}
-    <section class="ag2-sys"><div class="sy-h"><b>Система</b><span class="zwn">${head[0] === "ok" ? "● всё в норме" : "● " + head[1]}</span><div class="sy-b"><button type="button" data-sys-run>Проверить</button><button type="button" data-ag-local="backup">Копия данных</button></div></div><div class="sy-g">${sc.map(sysT).join("")}</div></section>
+    ${AGR.stop ? `<section class="ag2-stopb" role="status"><i></i><div><b>Агенты остановлены</b><small>С ${new Date(AGR.stop.at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${esc(AGR.stop.by || "администратор")}. Таймер и ручной запуск ничего не делают. Вернуть: кнопка справа или /stop в Telegram</small></div><button type="button" data-ag-stop>Вернуть работу</button></section>` : ""}
+    <section class="ag2-sys"><div class="sy-h"><b>Система</b><span class="zwn">${head[0] === "ok" ? "● всё в норме" : "● " + head[1]}</span><div class="sy-b">${AGR.v15 ? (AGV.stopAsk ? `<span class="sy-ask">Остановить всех агентов?</span><button type="button" class="sy-stop on" data-ag-stop="1">Остановить</button><button type="button" data-ag-stop="no">Отмена</button>` : `<button type="button" class="sy-stop${AGR.stop ? " on" : ""}" data-ag-stop>${AGR.stop ? "Вернуть работу" : "Аварийная остановка"}</button>`) : ""}<button type="button" data-sys-run>Проверить</button><button type="button" data-ag-local="backup">Копия данных</button></div></div><div class="sy-g">${sc.map(sysT).join("")}</div></section>
     ${mkMech(all)}
     <div class="ag2" id="ag2"><div class="ag2-top">${[["all", "Все", sorted.length], ["wait", "Ждут", nWait], ["ok", "Работают", nOk]].map(f => `<button type="button" class="ag2-f${AGV.flt === f[0] ? " on" : ""}" data-agfl="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="ag2-lg"><i style="background:var(--ok)"></i>работал<i style="background:#EBA83A"></i>замечание<i style="background:#D9483B"></i>сбой<i style="background:var(--pl2)"></i>простой<em>сутки, шаг 30 мин</em></span></div>${grp || `<p class="mk-nodata">Таких агентов нет</p>`}</div>
     ${!AG.loaded ? `<p class="mk-nodata">Загружаю созданных агентов…</p>` : AG.store !== "db" ? `<p class="mk-nodata">Созданные агенты хранятся только в этом браузере.</p>` : ""}
-    <div class="ag2-x"><button type="button" class="ag2-xh${AGV.log ? " open" : ""}" data-ag2-x aria-expanded="${!!AGV.log}"><b>Журнал событий</b><i class="zmut">${LOG.list.length}</i><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-xb" id="ag-log-w"${AGV.log ? "" : " hidden"}><div class="mk-lq"><input type="text" id="ag-log-q" placeholder="Поиск по журналу" autocomplete="off" aria-label="Поиск по журналу событий"><button type="button" class="zb" data-log-clear>Очистить</button></div><ul class="zevl" id="ag-log">${mkLogRows()}</ul></div></div>`);
+    <div class="ag2-x"><button type="button" class="ag2-xh${AGV.log ? " open" : ""}" data-ag2-x aria-expanded="${!!AGV.log}"><b>Журнал событий</b><i class="zmut">${LOG.list.length}</i>${ERRS.items && ERRS.items.length ? `<em class="er-n">ошибок сервера: ${ERRS.items.length}</em>` : ""}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button><div class="ag2-xb" id="ag-log-w"${AGV.log ? "" : " hidden"}><div class="er-sw" role="group" aria-label="Что показать">${[["site", "События сайта", LOG.list.length], ["srv", "Ошибки сервера", ERRS.items ? ERRS.items.length : "…"]].map(t => `<button type="button" class="${(AGV.lt || "site") === t[0] ? "on" : ""}" data-ag-lt="${t[0]}">${t[1]}<i>${t[2]}</i></button>`).join("")}</div>${(AGV.lt || "site") === "srv" ? `<div class="mk-lq"><input type="text" id="ag-err-q" placeholder="Поиск по ошибкам" autocomplete="off" aria-label="Поиск по ошибкам сервера" value="${esc(AGV.eq || "")}"><button type="button" class="zb" data-err-re>Обновить</button><button type="button" class="zb" data-err-clear>${AGV.errAsk ? "Точно очистить?" : "Очистить"}</button></div><ul class="zevl" id="ag-err">${errRows()}</ul>` : `<div class="mk-lq"><input type="text" id="ag-log-q" placeholder="Поиск по журналу" autocomplete="off" aria-label="Поиск по журналу событий"><button type="button" class="zb" data-log-clear>Очистить</button></div><ul class="zevl" id="ag-log">${mkLogRows()}</ul>`}</div></div>`);
   AGV.anim = false;
 }
 /* ================= Администратор: коннекторы ================= */
@@ -11238,7 +11262,8 @@ const PREF = (() => { const g = k => { try { return localStorage.getItem(k); } c
     menu: ["flat","single","soft","rail"].includes(g("bai-menu")) ? g("bai-menu") : "card", icons: ["rich","none"].includes(g("bai-icons")) ? g("bai-icons") : "line", tabs: ["plain","soft","outline","bar","plateo"].includes(g("bai-tabs")) ? g("bai-tabs") : "plate", chatsel: ["plain","soft","outline","bar"].includes(g("bai-chatsel")) ? g("bai-chatsel") : "plate", chatbg: CHATBG_NAMES[g("bai-chatbg")] ? g("bai-chatbg") : "plain",
     density: g("bai-density") === "compact" ? "compact" : "normal", motion: g("bai-motion") === "off" ? "off" : "on", glass: g("bai-glass") === "off" ? "off" : "on",
     chips: ["outline","soft"].includes(g("bai-chips")) ? g("bai-chips") : "fill", gcolor: g("bai-gcolor") === "off" ? "off" : "on", fin: ["pill","ring","col"].includes(g("bai-fin")) ? g("bai-fin") : "flat",
-    shape: ["round","none","square"].includes(g("bai-shape2")) ? g("bai-shape2") : "none" }; })();
+    shape: ["round","none","square"].includes(g("bai-shape2")) ? g("bai-shape2") : "none", ui: g("bai-ui") === "claude" ? "claude" : "yadro" }; })();
+const UI_NAMES = { yadro: "Ядро — мягкие скругления", claude: "Claude — строгий" };
 const THEME_NAMES = { system: "Системная", light: "Светлая", dark: "Тёмная" };
 const ACCENT_NAMES = { orange: "Оранжевый", violet: "Фиолетовый", blue: "Синий", green: "Зелёный", rose: "Розовый" };
 const ICON_NAMES = { line: "Простые", rich: "Выразительные", none: "Без иконок" };
@@ -11253,10 +11278,26 @@ const GCOLOR_NAMES = { on: "Цветные", off: "Без цвета" };
 const FIN_NAMES = { flat: "Без плашки", pill: "Овал в строке", ring: "Кружок", col: "Колонка" };
 const SHAPE_NAMES = { square: "Квадратики", round: "Кружки", none: "Без формы" };
 const SCHED_NAMES = { compact: "По дням", week: "Вся неделя" };
+/* стиль «Claude»: строгие углы. Берём все правила со скруглением и пишем поверх меньшие: таблетки → 8px, карточки → 12px; круги (50%) не трогаем */
+function uiRadius(){
+  let st = document.getElementById("ui-claude-r"); const on = document.documentElement.getAttribute("data-ui") === "claude";
+  if(st){ st.disabled = !on; return; } if(!on) return;
+  if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", () => uiRadius(), { once: true }); return; }
+  const pre = sel => { const parts = []; let d = 0, cur = ""; for(const ch of sel){ if(ch === "(") d++; if(ch === ")") d--; if(ch === "," && !d){ parts.push(cur); cur = ""; } else cur += ch; } parts.push(cur); return parts.map(x => ":root[data-ui=claude] " + x.trim().replace(/^:root\s*/, "").replace(/^html\s*/, "")).join(","); };
+  const out = [], conv = v => { if(!v || /%/.test(v)) return null; let ch = false; const nv = v.replace(/(\d*\.?\d+)px/g, (m, n) => { n = +n; if(n >= 100){ ch = true; return "8px"; } if(n > 12){ ch = true; return "12px"; } return m; }); return ch ? nv : null; };
+  const walk = (rules, wrap) => { for(const r of rules){
+    if(r.cssRules && (r.media || r.conditionText != null) && !r.selectorText){ const head = r.media ? "@media " + r.media.mediaText : "@supports " + r.conditionText; const inner = []; walk(r.cssRules, inner); if(inner.length) wrap.push(head + "{" + inner.join("") + "}"); continue; }
+    if(!r.selectorText || !r.style || !r.style.borderRadius && !r.style.borderTopLeftRadius) continue;
+    const props = ["border-radius", "border-top-left-radius", "border-top-right-radius", "border-bottom-left-radius", "border-bottom-right-radius"].map(k => { const nv = conv(r.style.getPropertyValue(k)); return nv ? k + ":" + nv + "!important" : ""; }).filter(Boolean);
+    if(props.length) wrap.push(pre(r.selectorText) + "{" + props.join(";") + "}"); } };
+  for(const sh of document.styleSheets){ let rs; try { rs = sh.cssRules; } catch(e) { continue; } if(rs) walk(rs, out); }
+  st = document.createElement("style"); st.id = "ui-claude-r"; st.textContent = out.join("\n"); document.head.appendChild(st);
+}
 function applyPrefs(){
   const r = document.documentElement;
   if(PREF.theme === "system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme", PREF.theme);
   if(PREF.accent === "orange") r.removeAttribute("data-accent"); else r.setAttribute("data-accent", PREF.accent);
+  if(PREF.ui === "claude") r.setAttribute("data-ui", "claude"); else r.removeAttribute("data-ui"); uiRadius();
   if(PREF.icons === "line") r.removeAttribute("data-icons"); else r.setAttribute("data-icons", PREF.icons);
   if(PREF.menu === "card") r.removeAttribute("data-menu"); else r.setAttribute("data-menu", PREF.menu);
   if(PREF.tabs === "plate") r.removeAttribute("data-tabs"); else r.setAttribute("data-tabs", PREF.tabs);
@@ -11285,8 +11326,8 @@ function renderSettings(listOnly){
   const fontName = (FONT_LIST.find(f => f[0] === FONT_CUR) || FONT_LIST[1])[1];
   const hintScale = SCALE === "s5" ? "8–10 → 5, 6–7 → 4, 4–5 → 3, 0–3 → 2" : SCALE === "s100" ? "Оценка × 10: «7» → «70»" : "Как в школе, 10 баллов";
   const look = [
-    acc("theme", "Тема и цвет", `${THEME_NAMES[PREF.theme]} · ${ACCENT_NAMES[PREF.accent]}`,
-      line("Тема", D("theme", THEME_NAMES, PREF.theme, "Тема")) + line("Акцент", D("accent", ACCENT_NAMES, PREF.accent, "Акцентный цвет"))),
+    acc("theme", "Тема и стиль", `${THEME_NAMES[PREF.theme]} · ${PREF.ui === "claude" ? "Claude" : "Ядро"} · ${ACCENT_NAMES[PREF.accent]}`,
+      line("Стиль интерфейса", D("ui", UI_NAMES, PREF.ui, "Стиль интерфейса")) + line("Тема", D("theme", THEME_NAMES, PREF.theme, "Тема")) + line("Акцент", D("accent", ACCENT_NAMES, PREF.accent, "Акцентный цвет"))),
     acc("menu", "Меню и чат", `${TABS_NAMES[PREF.tabs]} · ${ICON_NAMES[PREF.icons]}`,
       line("Выбранная вкладка", D("tabs", TABS_NAMES, PREF.tabs, "Выбранная вкладка")) + line("Выбранный чат", D("chatsel", CHATSEL_NAMES, PREF.chatsel, "Выбранный чат")) + line("Иконки", D("icons", ICON_NAMES, PREF.icons, "Иконки")) + line("Фон чата", D("chatbg", CHATBG_NAMES, PREF.chatbg, "Фон чата")) + line("Liquid Glass", D("glass", GLASS_NAMES, PREF.glass, "Liquid Glass")) + `<p class="set-hint">Liquid Glass — стеклянное полупрозрачное нижнее меню на телефоне. Выключенное — обычная сплошная панель.</p>`),
     acc("text", "Шрифт и вид", `${fontName} · ${DENS_NAMES[PREF.density]}`,
@@ -11487,6 +11528,7 @@ function applySetting(key, val){
   if(key === "sort"){ state.gradeSort = SORT_LABELS[val] ? val : "name"; put("bai-sort", state.gradeSort); }
   if(key === "empty"){ EMPTY = EMPTY_NAMES[val] ? val : "dots"; put("bai-empty", EMPTY); }
   if(key === "avgna"){ AVGNA = AVGNA_NAMES[val] ? val : "dots"; put("bai-avgna", AVGNA); }
+  if(key === "ui"){ PREF.ui = UI_NAMES[val] ? val : "yadro"; put("bai-ui", PREF.ui); applyPrefs(); }
   if(key === "theme"){ PREF.theme = THEME_NAMES[val] ? val : "system"; put("bai-theme", PREF.theme); applyPrefs(); }
   if(key === "accent"){ PREF.accent = ACCENT_NAMES[val] ? val : "orange"; put("bai-accent", PREF.accent); applyPrefs(); }
   if(key === "menu"){ PREF.menu = MENU_NAMES[val] ? val : "card"; put("bai-menu", PREF.menu); applyPrefs(); requestAnimationFrame(() => movePill(true)); }
@@ -11504,7 +11546,7 @@ function applySetting(key, val){
   if(key === "sched"){ SCHED_VIEW = val === "week" ? "week" : "compact"; put("bai-sched", SCHED_VIEW); }
   if(key === "font") setFont(val);
   if(key === "defsave"){
-    const map = { "bai-theme": PREF.theme, "bai-accent": PREF.accent, "bai-menu": PREF.menu, "bai-icons": PREF.icons, "bai-tabs": PREF.tabs, "bai-chatsel": PREF.chatsel, "bai-chatbg": PREF.chatbg, "bai-density": PREF.density, "bai-motion": PREF.motion, "bai-glass": PREF.glass, "bai-chips": PREF.chips, "bai-gcolor": PREF.gcolor, "bai-fin": PREF.fin, "bai-shape2": PREF.shape, "bai-font": FONT_CUR, "bai-sched": SCHED_VIEW, "bai-scale": SCALE, "bai-empty": EMPTY, "bai-avgna": AVGNA, "bai-sort": state.gradeSort };
+    const map = { "bai-ui": PREF.ui, "bai-theme": PREF.theme, "bai-accent": PREF.accent, "bai-menu": PREF.menu, "bai-icons": PREF.icons, "bai-tabs": PREF.tabs, "bai-chatsel": PREF.chatsel, "bai-chatbg": PREF.chatbg, "bai-density": PREF.density, "bai-motion": PREF.motion, "bai-glass": PREF.glass, "bai-chips": PREF.chips, "bai-gcolor": PREF.gcolor, "bai-fin": PREF.fin, "bai-shape2": PREF.shape, "bai-font": FONT_CUR, "bai-sched": SCHED_VIEW, "bai-scale": SCALE, "bai-empty": EMPTY, "bai-avgna": AVGNA, "bai-sort": state.gradeSort };
     try { localStorage.setItem("bai-defaults", JSON.stringify(map)); } catch(e) {}
     if(DB) DB.doc("config/defaults").set({ v: map, at: new Date().toISOString() }).then(() => tgToast("Стандартные настройки сохранены для всех"), () => tgToast("Сохранились только на этом устройстве"));
     else tgToast("Сохранено на этом устройстве (для всех — после подключения сервера)");
@@ -11513,7 +11555,7 @@ function applySetting(key, val){
   if(key === "reset"){
     SCALE = "orig"; EMPTY = "dots"; AVGNA = "dots"; SCHED_VIEW = "compact"; state.gradeSort = "name";
     Object.assign(PREF, { gcolor: "on", fin: "flat", theme: "light", accent: "orange", menu: "card", icons: "line", tabs: "plate", density: "normal", motion: "on", glass: "on" });
-    ["bai-glass", "bai-scale", "bai-sort", "bai-empty", "bai-avgna", "bai-theme", "bai-accent", "bai-density", "bai-motion", "bai-sched", "bai-icons", "bai-tabs", "bai-chatsel", "bai-chatbg", "bai-menu", "bai-gcolor", "bai-fin"].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+    ["bai-ui", "bai-glass", "bai-scale", "bai-sort", "bai-empty", "bai-avgna", "bai-theme", "bai-accent", "bai-density", "bai-motion", "bai-sched", "bai-icons", "bai-tabs", "bai-chatsel", "bai-chatbg", "bai-menu", "bai-gcolor", "bai-fin"].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
     applyPrefs(); setFont("claude");
     try { if(localStorage.getItem("bai-defaults")){ location.reload(); return; } } catch(e) {}
   }
@@ -13338,7 +13380,7 @@ let SEC_DEMO = false; try { SEC_DEMO = sessionStorage.getItem("bai-sec-demo") ==
 function secIncidents(){
   const out = [];
   if(SEC_DEMO){ out.push({ t: "DDoS-атака: 12 400 запросов за 5 минут с 230 адресов, сайт открывался по 8 секунд", fix: "Включите в Cloudflare режим «Under Attack» и проверьте, что сайт снова быстрый", demo: 1 }); out.push({ t: "Сбой помощника: 3 ошибки за час, сервер не ответил вовремя", fix: "Проверьте функцию в Yandex Cloud: логи и лимиты", demo: 1 }); }
-  try { const d0 = SECSTAT.data && SECSTAT.data.days && SECSTAT.data.days[0]; if(d0 && (d0.ev.brute_block || 0) > 0) out.push({ t: `Подбор кода: блокировок за сутки ${d0.ev.brute_block}`, fix: "Кто-то подбирает код входа. Вход закрыт на 15 минут. Код никому не сообщайте" }); } catch(e) {}
+  try { const d0 = SECSTAT.data && SECSTAT.data.days && SECSTAT.data.days[0]; if(d0 && (d0.ev.brute_block || 0) > 0) out.push({ t: `Подбор кода: блокировок за сутки ${d0.ev.brute_block}`, fix: "Зафиксирован подбор кода входа; вход с адреса блокировался на 15 минут. Не передавайте код третьим лицам" }); } catch(e) {}
   (SEC.res || []).filter(r => r.st === "fail").forEach(r => out.push({ t: `${r.l}: ${r.t}`, fix: r.fix }));
   const pi = platformIssues(); if(pi.length && !out.some(x => x.t.startsWith("Целостность"))) out.push({ t: `Целостность данных: проблем ${pi.length}`, fix: "Агенты → Система → Проверить" });
   if(JS_ERRS.length && !out.some(x => x.t.startsWith("Ошибки"))) out.push({ t: `Ошибки в коде: ${JS_ERRS.length}`, fix: "Перезагрузите страницу; если повторится — сообщите разработчику" });
@@ -13357,13 +13399,13 @@ function ovAlertHtml(){
 const SY_HELP = { "Ядро": "Версия платформы. Меняется с каждым обновлением.", "Среда": "Где открыт сайт. Без Claude агенты с ИИ работают только через сервер.", "Хранилище": "Где лежат данные: в этом браузере или в общей базе для всех.", "Сервер": "Отдельная машина, чтобы агенты запускались сами по расписанию.", "Источник": "Откуда берутся оценки: вручную или из ЭПОС.", "Данные": "Сколько оценок, предметов и уроков загружено.", "Целостность": "Проверка, что в коде платформы нет ошибок.", "Отклик": "За сколько собирается страница. До 500 мс — быстро." };
 /* ---- настоящая статистика с сервера (yadro-api, действие sec_stats) ---- */
 const SECSTAT = { data: null, err: "", busy: false, at: 0 };
-const SEC_EVL = { login_ok: "Вход", code_send: "Запрос кода", code_fail: "Неверный код", brute_block: "Подбор кода: вход закрыт на 15 мин", login_blocked: "Вход отклонён: доступ закрыт", session_blocked: "Старая сессия отклонена", forbidden: "Запрос без прав", limited: "Сработал лимит запросов", code_limit: "Слишком много запросов кода", unknown_action: "Неизвестный запрос", passkey_fail: "Ключ доступа не подошёл" };
+const SEC_EVL = { login_ok: "Вход", code_send: "Запрос кода", code_fail: "Неверный код", brute_block: "Подбор кода: вход закрыт на 15 мин", login_blocked: "Вход отклонён: доступ закрыт", session_blocked: "Сессия отклонена", forbidden: "Запрос без прав", limited: "Сработал лимит запросов", code_limit: "Слишком много запросов кода", unknown_action: "Несуществующее действие", passkey_fail: "Ключ доступа не принят" };
 const SEC_G = [   // что считаем «отбитым»: id, название, события, что это, как защищено
-  ["closed", "Вход при закрытом доступе", ["login_blocked", "session_blocked"], "Кто-то просил код или пытался войти, пока вход закрыт.", "Сервер отказал и не создал аккаунт."],
-  ["brute", "Подбор кода", ["code_fail", "brute_block"], "Неверные коды для вашей почты.", "5 ошибок подряд закрывают вход на 15 минут."],
-  ["forb", "Запросы без прав", ["forbidden", "passkey_fail"], "Запрос к данным без права на них.", "Сервер отказал и записал попытку."],
-  ["lim", "Частые запросы", ["limited", "code_limit"], "Сработал лимит: владельцу не больше 30 кодов в час.", "Лишние запросы отклоняются."],
-  ["unk", "Неизвестные запросы", ["unknown_action"], "Запросы к несуществующим действиям: так ищут дыры.", "Сервер отвечает отказом."]
+  ["closed", "Вход при закрытом доступе", ["login_blocked", "session_blocked"], "Запросы кода и попытки входа, пока доступ открыт только администратору.", "Запросы отклонены, сессии не выданы."],
+  ["brute", "Подбор кода", ["code_fail", "brute_block"], "Неверные коды подтверждения.", "5 ошибок подряд блокируют вход с адреса на 15 минут."],
+  ["forb", "Запросы без прав", ["forbidden", "passkey_fail"], "Запросы к данным без соответствующих прав.", "Запросы отклонены и записаны в журнал."],
+  ["lim", "Частые запросы", ["limited", "code_limit"], "Превышены лимиты частоты запросов (не более 30 кодов в час).", "Запросы сверх лимита отклоняются."],
+  ["unk", "Неизвестные запросы", ["unknown_action"], "Запросы к несуществующим действиям — признак сканера уязвимостей.", "Все такие запросы отклоняются."]
 ];
 const secSum = (d, keys) => keys.reduce((a, k) => a + ((d && d.ev && d.ev[k]) || 0), 0);
 function secErrText(m){ m = String(m || ""); if(/Malformed serverless|ProxyIntegration/.test(m)) return "Сервер ответил ошибкой хранилища. Загрузите свежий код функции yadro-api"; if(/ResourceExhausted|RESOURCE_EXHAUSTED/.test(m)) return "База данных упёрлась в лимит запросов. Подождите минуту, это пройдёт"; if(m.length > 160) m = m.slice(0, 160) + "…"; return /Неизвестное действие/.test(m) ? "Сервер ещё не обновлён: загрузите новый код функции yadro-api" : /Нет доступа/.test(m) ? "Нужен вход администратора" : m || "Сервер не ответил"; }
@@ -13451,23 +13493,24 @@ const SEC_DENY = ["login_blocked", "session_blocked", "code_fail", "brute_block"
 const SEC_ACT = { code_send: "Запрос кода на почту", code_verify: "Ввод кода из письма", ya_login: "Вход через Яндекс ID", pk_auth_finish: "Вход по ключу доступа", pk_auth_start: "Вход по ключу доступа", me: "Проверка сессии" };
 /* что произошло: заголовок, исход (bad — отказано, ok — вошли, mid — нейтрально), что это значит, что делать */
 function secWhat(f){
-  const a = SEC_ACT[f.a] || "Обращение к серверу", sc = f.ua === "script" ? " Запрос пришёл от программы-бота, не от человека." : "";
+  const a = SEC_ACT[f.a] ? "«" + SEC_ACT[f.a] + "»" : (f.a ? "«" + f.a + "»" : "запрос к серверу"), sc = f.ua === "script" ? " Источник — программа, а не браузер." : "";
+  const how = ({ ya_login: "через Яндекс ID", pk_auth_finish: "по ключу доступа (passkey)" })[f.a] || "по коду из письма";
   const M = {
-    login_ok: [({ ya_login: "Вошли через Яндекс ID", pk_auth_finish: "Вошли по ключу доступа" })[f.a] || "Вошли по коду из почты", "ok", "Вы успешно вошли на сайт.", "Ничего. Если это были не вы, смените SESSION_SECRET: все сессии завершатся."],
-    code_send: ["Запросили код входа", "mid", "Письмо с кодом ушло на почту владельца." + (f.who ? " Почта: " + f.who + "." : ""), "Ничего."],
-    code_fail: ["Подбирают код входа", "bad", "Кто-то ввёл неверный код из письма. Возможно, пытается угадать." + sc, "Ничего. После 5 ошибок подряд вход закроется на 15 минут."],
-    brute_block: ["Подбор кода, вход закрыт на 15 минут", "bad", "Кто-то 5 раз подряд ввёл неверный код. Сервер закрыл вход на 15 минут." + sc, "Следите, не повторится ли. Если да, подключите Cloudflare."],
-    login_blocked: [({ code_send: "Просят код, вход закрыт", code_verify: "Пробуют войти, вход закрыт", ya_login: "Пробуют войти через Яндекс ID", pk_auth_finish: "Пробуют войти по ключу" })[f.a] || "Пробуют войти, вход закрыт", "bad", "Кто-то попробовал войти, но сейчас пускают только вас. Его не пустили." + sc, "Ничего. Аккаунт не создан, письмо не отправлено."],
-    session_blocked: ["Старая сессия отклонена", "bad", "Этот человек уже заходил раньше и открыл сайт снова. Сейчас вход закрыт, поэтому сервер его выбросил.", "Ничего. Ему нужно закрыть вкладку."],
-    forbidden: ["Запрос данных без прав", "bad", "Кто-то попросил данные, которые ему видеть нельзя. Сервер ничего не отдал." + sc, "Ничего. Если повторяется часто, смотрите IP."],
-    passkey_fail: ["Ключ доступа не подошёл", "bad", "Кто-то пробовал войти по ключу доступа, но проверка не прошла.", "Ничего, если это были не вы."],
-    limited: ["Слишком частые запросы", "bad", "Кто-то слал запросы слишком часто. Лишнее сервер отбросил." + sc, "Ничего."],
-    code_limit: ["Слишком много запросов кода", "bad", "За час запросили больше 30 кодов. Сервер перестал отправлять письма.", "Если это были не вы, кто-то забивает вам почту."],
-    unknown_action: ["Сканер ищет слабые места", "bad", "Кто-то стучится на сайт по случайным адресам и проверяет, не откликнется ли что-нибудь. Обычно это автоматический бот." + sc.replace(" Запрос пришёл не из браузера, а из программы: так работают боты и сканеры.", ""), "Ничего: сервер на всё отвечает отказом. Если IP стучится часто, закройте его в Cloudflare."],
-    code_expired: ["Ввели просроченный код", "mid", "Код из письма действует 10 минут, этот уже устарел.", "Ничего."],
-    bad_request: ["Почта введена с ошибкой", "mid", "В адресе почты не хватает символов.", "Ничего."]
-  }, m = M[f.ev] || [SEC_EVL[f.ev] || f.ev, "mid", a + ".", "Ничего."];
-  const many = f.many ? " С этого IP пробовали 3 и больше разных почт: ищут чужие аккаунты." : "";
+    login_ok: ["Успешный вход", "ok", "Вход выполнен " + how + ", сессия выдана.", "Действий не требуется. Если входили не вы — смените SESSION_SECRET: все сессии будут завершены."],
+    code_send: ["Запрошен код входа", "mid", "Код подтверждения отправлен на почту" + (f.who ? " " + f.who : "") + ".", "Действий не требуется."],
+    code_fail: ["Неверный код входа", "bad", "Введён неверный код подтверждения. Возможна попытка подбора." + sc, "Действий не требуется: после 5 неудачных попыток вход с адреса блокируется на 15 минут."],
+    brute_block: ["Вход заблокирован: подбор кода", "bad", "5 неверных кодов подряд. Вход с этого адреса заблокирован на 15 минут." + sc, "Проверьте, повторяется ли событие. При повторах заблокируйте адрес в Cloudflare."],
+    login_blocked: ["Попытка входа при закрытом доступе", "bad", "Сейчас вход открыт только администратору. Попытка входа (" + (SEC_ACT[f.a] || "вход").toLowerCase() + ") отклонена." + sc, "Действий не требуется. Чтобы пустить пользователей, откройте вход на вкладке «Безопасность»."],
+    session_blocked: ["Сессия отклонена", "bad", "Пользователь с ранее выданной сессией обратился к сайту при закрытом доступе. Сессия не принята.", "Действий не требуется. Доступ восстановится, когда вход будет открыт."],
+    forbidden: ["Запрос без прав доступа", "bad", "Запрошено действие " + a + ", недоступное для этой сессии. Сервер отказал и данных не передал." + sc, "Действий не требуется. При частых повторах с одного адреса — проверьте его и при необходимости заблокируйте в Cloudflare."],
+    passkey_fail: ["Ключ доступа не принят", "bad", "Проверка ключа доступа (passkey) не пройдена.", "Действий не требуется, если это не ваши попытки."],
+    limited: ["Превышен лимит запросов", "bad", "С адреса поступает больше запросов, чем допускает лимит. Лишние запросы отклонены." + sc, "Действий не требуется."],
+    code_limit: ["Превышен лимит писем с кодом", "bad", "За час запрошено более 30 кодов. Отправка писем приостановлена.", "Если запросы не ваши — это попытка засорить почту. Проверьте адреса в журнале."],
+    unknown_action: ["Обращение к несуществующему действию", "bad", "Запрос к действию " + a + ", которого нет на сервере. Так работают автоматические сканеры уязвимостей." + sc, "Действий не требуется: сервер отвечает отказом."],
+    code_expired: ["Просроченный код", "mid", "Введён код с истёкшим сроком действия (10 минут).", "Действий не требуется."],
+    bad_request: ["Некорректный адрес почты", "mid", "Адрес почты введён в неверном формате.", "Действий не требуется."]
+  }, m = M[f.ev] || [SEC_EVL[f.ev] || f.ev, "mid", "Действие: " + a + ".", "Действий не требуется."];
+  const many = f.many ? " С этого адреса проверялись 3 и более разных почт — признак перебора аккаунтов." : "";
   return { t: m[0], r: m[1], why: m[2] + many, todo: m[3], many: !!f.many };
 }
 let SEC_RN; try { SEC_RN = new Intl.DisplayNames(["ru"], { type: "region" }); } catch(e) { SEC_RN = null; }
@@ -13488,10 +13531,10 @@ function secTiles(D, t0, days){
   const top = SEC_DENY.map(k => [k, ev(k)]).filter(x => x[1]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(x => `${(SEC_EVL[x[0]] || x[0]).toLowerCase()}: ${x[1]}`).join("; ");
   const al = [];
   if(t0){
-    if(ev("brute_block")) al.push(["Подбор кода: вход закрывался " + ev("brute_block") + " раз(а)", "Кто-то вводит чужие коды. Сервер блокирует вход на 15 минут."]);
-    if(ev("unknown_action") >= 20) al.push(["Сканер: " + ev("unknown_action") + " запросов к несуществующим действиям", "Так ищут дыры. Сервер отвечает отказом."]);
-    if(ev("code_limit")) al.push(["Сработал лимит запросов кода", "Больше 30 писем с кодом за час. Если это не вы, кто-то забивает почту."]);
-    if(D && D.feed && D.feed.some(f => f.many)) al.push(["Перебор почт с одного IP", "Кто-то пробует много разных адресов. В журнале справа такие строки помечены."]);
+    if(ev("brute_block")) al.push(["Подбор кода: вход закрывался " + ev("brute_block") + " раз(а)", "Вводятся неверные коды подтверждения. Каждый раз вход с адреса блокировался на 15 минут."]);
+    if(ev("unknown_action") >= 20) al.push(["Сканер: " + ev("unknown_action") + " запросов к несуществующим действиям", "Признак автоматического сканера уязвимостей. Все запросы отклонены."]);
+    if(ev("code_limit")) al.push(["Сработал лимит запросов кода", "Более 30 писем с кодом за час. Если запросы не ваши — это попытка засорить почту."]);
+    if(D && D.feed && D.feed.some(f => f.many)) al.push(["Перебор почт с одного IP", "С одного адреса проверяются разные почты — признак перебора аккаунтов. Такие строки в журнале помечены."]);
   }
   const fd = (D && D.feed) || [], lastOk = fd.find(f => f.ev === "login_ok"), lastBad = fd.find(f => secWhat(f).r === "bad");
   const place = f => [f.ip, secCountry(f.cc)].filter(Boolean).join(", ") || "место неизвестно";
@@ -13978,7 +14021,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "648";
+const BUILD = "649";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14192,28 +14235,37 @@ const PLN_D = [
   ["a2", 2, "Проверка, что копия восстанавливается", "Чтобы копия точно пригодилась, когда понадобится", "Чт", "", "Раз в неделю копия разворачивается в пробную базу и сверяется с рабочей.", "Добавь еженедельную проверку копии данных: восстановление в пробную базу, сверка числа записей, отчёт в Telegram. Собери ZIP и короткую инструкцию по загрузке.", 1],
   ["a3", 2, "Кнопка «Стоп» для всех агентов", "Остановить всё одним нажатием, если что-то пошло не так", "Чт", "", "Одна кнопка в админке и команда в Telegram ставят всех агентов на паузу.", "Добавь аварийную остановку агентов: кнопка в админке и команда /stop в Telegram-боте. Повторное нажатие возвращает работу. Собери ZIP и короткую инструкцию по загрузке.", 1]
 ].map(x => ({ id: x[0], g: x[1], t: x[2], s: x[3], d: x[4], nd: x[5], w: x[6], p: x[7], z: x[8] }));
-const PLN_ZIP = "Нужно от тебя: загрузить ZIP на сервер, 2 минуты. Одна загрузка покрывает все задачи дня.";
-const plnSave = () => { try { localStorage.setItem("bai-plan-v1", JSON.stringify(PLN.on)); } catch(e) {} };
+const PLN_ZIP = "Правка сервера: после проверки выкладывается сама через репозиторий yadro-api, загружать ZIP не нужно.";
+/* завершённые задачи: отмечены вручную («Завершить») или выполнены в выкатках */
+const PLN_FIN = { c1: "Сервер v11 · 11.11: все агенты по таймеру, у каждого своё расписание", c2: "Сервер v11 · 11.11: Контролёр, Сторож данных и Архивариус работают на сервере", c5: "Сервер v11 · 11.11: Механик сообщает о сбоях в Telegram с готовым промптом", a0: "12.11: закрытый репозиторий yadro-api, выкладка в Яндекс Облако после каждой правки", a1: "Сервер v15 · 12.11: ошибки пишутся в базу, видны в «Журнале событий»", a2: "Сервер v15 · 12.11: по воскресеньям в 04:00 копия восстанавливается в пробную базу, отчёт в Telegram", a3: "Сервер v15 · 12.11: кнопка на вкладке «Агенты» и /stop в Telegram" };
+PLN.done = (() => { try { return JSON.parse(localStorage.getItem("bai-plan-done") || "null"); } catch(e) { return null; } })() || {};
+Object.keys(PLN_FIN).forEach(id => { if(!(id in PLN.done)) PLN.done[id] = { t: Date.now(), auto: true }; });
+const plnDone = id => PLN.done[id] && PLN.done[id] !== 0 ? PLN.done[id] : null;
+const plnSave = () => { try { localStorage.setItem("bai-plan-v1", JSON.stringify(PLN.on)); localStorage.setItem("bai-plan-done", JSON.stringify(PLN.done)); } catch(e) {} };
 function renderAdmPlan(el){
-  const D = PLN_D, n = D.length, on = D.filter(x => PLN.on[x.id]).length, me = D.filter(x => x.nd || x.z).length, zd = [...new Set(D.filter(x => x.z).map(x => x.d.toLowerCase()))];
+  const D = PLN_D, n = D.length, dn = D.filter(x => plnDone(x.id)).length, on = D.filter(x => PLN.on[x.id] && !plnDone(x.id)).length, me = D.filter(x => x.nd || x.z).length, zd = [...new Set(D.filter(x => x.z).map(x => x.d.toLowerCase()))];
   const left = Math.max(0, Math.ceil((PLN_END - new Date().setHours(0, 0, 0, 0)) / 86400000));
   const vis = x => PLN.fl === "all" || (PLN.fl === "me" ? !!(x.nd || x.z) : x.g === +PLN.fl);
   const chv = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>', play = '<svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg>';
-  const row = x => { const o = PLN.open === x.id, w = !!PLN.on[x.id];
-    return `<li class="pn-i ${w ? "pl" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i class="zd ${w ? "g" : "n"}"></i><span><b>${x.t}</b><small>${x.s}</small></span><em class="dy">${x.d}</em><em class="who ${x.nd || x.z ? "w" : "ok"}">${x.nd ? "Нужен ты" : x.z ? "Нужен ZIP" : "Сам"}</em><button type="button" class="pn-go" data-pn-go="${x.id}" title="${w ? "Снять отметку" : "Отметить и скопировать промпт"}">${w ? "В работе" : play + "В работу"}</button>${chv}</div><div class="pn-d" ${o ? "" : "hidden"}><p>${x.w}</p>${x.nd || x.z ? `<p class="nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="pn-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div></li>`; };
-  el.innerHTML = admHead("План") + mkWrap("pln", `<div id="ap-pln" class="zpn"><div class="zh"><span>Работа без Claude <span class="pn-dl">до пятницы, 13 ноября</span></span><div><button type="button" class="zb pr" data-pn-all title="Отметить все задачи и скопировать все промпты">${on === n ? "Всё в работе" : "Запустить всё"}</button></div></div><div id="pn">
-<div class="zst4"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${on}</b><small>в работе</small></div><div class="w"><b>${zd.length}</b><small>${plural(zd.length, ["загрузка", "загрузки", "загрузок"])} ZIP от тебя: ${zd.join(" и ")}</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы</small></div></div>
-<div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» ставит отметку и копирует промпт для Claude</span></div>
-${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => PLN.on[x.id]).length;
-  return `<section class="pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} в работе</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
+  const ck = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const row = x => { const o = PLN.open === x.id, f = plnDone(x.id), w = !!PLN.on[x.id] && !f;
+    const note = f ? (PLN_FIN[x.id] && f.auto ? PLN_FIN[x.id] : "Завершено " + new Date(f.t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })) : "";
+    const btn = f ? `<button type="button" class="pn-go dn" data-pn-done="${x.id}" title="Вернуть в работу">${ck}Готово</button>` : w ? `<button type="button" class="pn-go fin" data-pn-done="${x.id}" title="Отметить задачу выполненной">${ck}Завершить</button>` : `<button type="button" class="pn-go" data-pn-go="${x.id}" title="Отметить и скопировать промпт">${play}В работу</button>`;
+    return `<li class="pn-i ${w ? "pl" : ""} ${f ? "dn" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i class="zd ${f ? "g" : w ? "y" : "n"}"></i><span><b>${x.t}</b><small>${f ? esc(note) : x.s}</small></span><em class="dy">${x.d}</em><em class="who ${f ? "ok" : x.nd || x.z ? "w" : "ok"}">${f ? "Выполнено" : w ? "В работе" : x.nd ? "Нужен ты" : x.z ? "Сервер" : "Сам"}</em>${btn}${chv}</div><div class="pn-d" ${o ? "" : "hidden"}><p>${x.w}</p>${f ? `<p class="fn">${esc(note)}</p>` : x.nd || x.z ? `<p class="nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="pn-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div></li>`; };
+  el.innerHTML = admHead("План") + mkWrap("pln", `<div id="ap-pln" class="zpn"><div class="zh"><span>Работа без Claude <span class="pn-dl">до пятницы, 13 ноября</span></span><div><button type="button" class="zb pr" data-pn-all title="Отметить все невыполненные задачи и скопировать их промпты">${D.every(x => PLN.on[x.id] || plnDone(x.id)) ? "Всё в работе" : "Запустить всё"}</button></div></div><div id="pn">
+<div class="zst4"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${dn}</b><small>выполнено</small></div><div class="w"><b>${on}</b><small>в работе</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы</small></div></div>
+<div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» копирует промпт для Claude, «Завершить» отмечает выполненное</span></div>
+${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => plnDone(x.id)).length;
+  return `<section class="pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} выполнено</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
 </div></div>`);
 }
-document.addEventListener("click", e => { const x = e.target.closest(".mk-pln [data-pn-all]"); if(!x) return; const L = PLN_D.filter(t => !PLN.on[t.id]); if(!L.length) return; L.forEach(t => { PLN.on[t.id] = Date.now(); }); plnSave(); ag3Copy(null, L.map((t, i) => (i + 1) + ". " + t.t + "\n" + t.p).join("\n\n")); const el = document.getElementById("admin"); if(el && ADM.tab === "plan") renderAdmPlan(el); });
+document.addEventListener("click", e => { const x = e.target.closest(".mk-pln [data-pn-all]"); if(!x) return; const L = PLN_D.filter(t => !PLN.on[t.id] && !plnDone(t.id)); if(!L.length) return; L.forEach(t => { PLN.on[t.id] = Date.now(); }); plnSave(); ag3Copy(null, L.map((t, i) => (i + 1) + ". " + t.t + "\n" + t.p).join("\n\n")); const el = document.getElementById("admin"); if(el && ADM.tab === "plan") renderAdmPlan(el); });
 document.addEventListener("click", e => {
   if(!e.target.closest("#pn") || e.target.closest("[data-pn-all]")) return; const el = document.getElementById("admin"); let x;
   const rr = () => { if(el && ADM.tab === "plan") renderAdmPlan(el); };
   if((x = e.target.closest("[data-pn-f]"))){ PLN.fl = x.dataset.pnF; return rr(); }
   if((x = e.target.closest("[data-pn-go]"))){ const id = x.dataset.pnGo, t = PLN_D.find(q => q.id === id); if(PLN.on[id]) delete PLN.on[id]; else { PLN.on[id] = Date.now(); ag3Copy(null, t.p); } plnSave(); return rr(); }
+  if((x = e.target.closest("[data-pn-done]"))){ const id = x.dataset.pnDone; if(plnDone(id)){ PLN.done[id] = 0; PLN.on[id] = PLN.on[id] || Date.now(); } else PLN.done[id] = { t: Date.now() }; plnSave(); return rr(); }
   if((x = e.target.closest("[data-pn-cp]"))){ const t = PLN_D.find(q => q.id === x.dataset.pnCp); if(t) ag3Copy(x, t.p); return; }
   if((x = e.target.closest("[data-pn-o]"))){ PLN.open = PLN.open === x.dataset.pnO ? null : x.dataset.pnO; return rr(); }
 });
@@ -16092,6 +16144,44 @@ html[data-theme="dark"] :is(#admin,#mk-layer) .mk{--mut:#A6A196;--line:#383530}
 :is(#admin,#mk-layer) .mk.mk-agt .ag2-k div{background:var(--pl);box-shadow:none}
 :is(#admin,#mk-layer) .mk.mk-agt .ag2-k small{margin-bottom:2px}
 :is(#admin,#mk-layer) .mk #mat .is>li+li:not(.e){box-shadow:0 -1px 0 var(--line)}
+
+/* аварийная остановка и ошибки сервера (сборка 649) */
+:is(#admin,#mk-layer) .mk.mk-agt .sy-b{align-items:center}
+:is(#admin,#mk-layer) .mk.mk-agt .sy-b .sy-stop{background:transparent;box-shadow:inset 0 0 0 1px #D9483B;color:#D9483B}
+:is(#admin,#mk-layer) .mk.mk-agt .sy-b .sy-stop:hover{background:color-mix(in srgb,#D9483B 8%,transparent)}
+:is(#admin,#mk-layer) .mk.mk-agt .sy-b .sy-stop.on{background:#D9483B;color:#fff;box-shadow:none}
+:is(#admin,#mk-layer) .mk.mk-agt .sy-ask{font-size:12.5px;color:var(--ink);margin-right:2px}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:8px;border-radius:20px;background:var(--card);box-shadow:inset 0 0 0 1.5px #D9483B}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb>i{width:10px;height:10px;border-radius:50%;background:#D9483B;flex:none;box-shadow:0 0 0 4px color-mix(in srgb,#D9483B 18%,transparent)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb>div{flex:1;min-width:0}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb b{display:block;font-size:14.5px;font-weight:500;color:#D9483B}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb small{display:block;font-size:12.5px;color:var(--mut)}
+:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb button{height:32px;padding:0 16px;border-radius:999px;background:#D9483B;color:#fff;font-size:13px;flex:none}
+:is(#admin,#mk-layer) .mk.mk-agt .er-n{font-style:normal;font-size:12px;color:#D9483B;margin-left:10px;padding:2px 9px;border-radius:999px;box-shadow:inset 0 0 0 1px color-mix(in srgb,#D9483B 45%,transparent)}
+:is(#admin,#mk-layer) .mk.mk-agt .er-sw{display:flex;gap:6px;flex-wrap:wrap}
+:is(#admin,#mk-layer) .mk.mk-agt .er-sw button{height:30px;padding:0 13px;border-radius:999px;font-size:12.5px;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);display:inline-flex;align-items:center;gap:7px}
+:is(#admin,#mk-layer) .mk.mk-agt .er-sw button i{font-style:normal;font-size:11.5px;color:var(--mut)}
+:is(#admin,#mk-layer) .mk.mk-agt .er-sw button:hover{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk.mk-agt .er-sw button.on{background:var(--acc2);color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk .zev.er{grid-template-columns:92px 150px minmax(0,1fr)}
+:is(#admin,#mk-layer) .mk .zev.er b{color:#D9483B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:is(#admin,#mk-layer) .mk .zev.er span{color:var(--ink)}
+:is(#admin,#mk-layer) .mk .zev.er small{display:block;font-size:11.5px;color:var(--mut);margin-top:2px;word-break:break-word}
+:is(#admin,#mk-layer) .mk .zev.er+.zev.er{box-shadow:0 -1px 0 var(--line);border-radius:0}
+:is(#admin,#mk-layer) .mk .zev.er-m{display:block;color:var(--mut)}
+@media (max-width:700px){:is(#admin,#mk-layer) .mk .zev.er{grid-template-columns:1fr;gap:2px}:is(#admin,#mk-layer) .mk.mk-agt .ag2-stopb{flex-wrap:wrap}}
+
+/* план: выполненные задачи (сборка 649) */
+:is(#admin,#mk-layer) .mk.mk-pln .pn-g .pn-i{background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-g .pn-i:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 55%,var(--line))}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-g .pn-i.open{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-go svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-go.fin{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ok);color:var(--ok)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-go.fin:hover{background:color-mix(in srgb,var(--ok) 10%,transparent)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-go.dn{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);box-shadow:none}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-i.dn .pn-r b{color:color-mix(in srgb,var(--ink) 70%,var(--mut))}
+:is(#admin,#mk-layer) .mk.mk-pln .zd.y{background:#EBA83A}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-d .fn{color:var(--ok);font-size:13px}
 </style>
 <style id="sec5-css">
 .sj-note{display:flex;align-items:center;gap:10px;margin:0 0 10px}
@@ -16714,5 +16804,33 @@ function ydSupport(){
 .dr-ch{display:inline-flex;align-items:center;height:20px;padding:0 9px;border-radius:999px;border:1px solid var(--pen);color:var(--pen);font:600 11px/1 var(--f-body);white-space:nowrap;margin-right:6px}
 .dr-off .dr-s,.dr-off .dr-t{text-decoration:line-through;opacity:.55}
 .di-ch .di-l{color:var(--pen)}
+
+/* журнал подключений: прямые линии вместо скруглённых (сборка 649) */
+:is(#admin,#mk-layer) .mk .jx .jc4{border-radius:0!important;border:0!important;border-top:1px solid var(--line)!important}
+:is(#admin,#mk-layer) .mk .jx .jcell{border-radius:10px}
+
+/* профиль компактнее (сборка 649) */
+.pf-top3{align-items:start}
+.pf-top3 .pf-hero{padding:16px 18px!important;display:flex;align-items:center;gap:14px}
+.pf-top3 .pf-hero .prof-ava{width:52px;height:52px;font-size:22px;flex:none}
+.pf-top3 .pf-hero .prof-name{font-size:22px;line-height:1.15}
+.pf-top3 .pf-hero .prof-id{gap:3px}
+.pf-top3 .pf-hero .pf-edit-c{position:static;order:9;margin-left:auto;align-self:center;flex:none}
+.pf-edit{border-style:solid!important;border-color:color-mix(in srgb,var(--pen) 45%,var(--line))!important}
+.pf-row2{align-items:start}
+.pf-kpi.pf-kpi2{align-content:start}
+.pf-kpi2 .pk{min-height:0!important}
+.pf-mon .mon-rb{font-size:0!important;gap:0!important;padding:0!important;width:28px;justify-content:center}
+.pf-mon .mon-rb em{display:none}.pf-mon .mon-rb svg{width:14px;height:14px}
+.pf-mon .mon-t td.mon-rv,.pf-mon .mon-t th:nth-child(3){width:70px!important}
+@media(max-width:600px){.pf-top3 .pf-hero{padding:12px 14px!important;gap:12px}.pf-top3 .pf-hero .prof-ava{width:44px;height:44px;font-size:19px}.pf-top3 .pf-hero .prof-name{font-size:19px}}
+
+/* стиль «Claude»: палитра и строгие углы (сборка 649) */
+:root[data-ui="claude"]{--paper:#FAF9F5;--surface:#FFFFFF;--ink:#141413;--muted:#6F6E68;--line:#E6E3D8;--pick:#F0EEE6;--pen:#C96442;--pen-soft:rgba(201,100,66,.10);--r-lg:12px;--r-md:10px;--r-sm:8px}
+:root[data-ui="claude"][data-theme="dark"]{--paper:#262624;--surface:#30302E;--ink:#FAF9F5;--muted:#A6A39A;--line:#3E3E3A;--pick:#3A3A37;--pen:#D97757}
+@media (prefers-color-scheme: dark){:root[data-ui="claude"]:not([data-theme="light"]){--paper:#262624;--surface:#30302E;--ink:#FAF9F5;--muted:#A6A39A;--line:#3E3E3A;--pick:#3A3A37;--pen:#D97757}}
+:root[data-ui="claude"] :is(#admin,#mk-layer) .mk{--bg:#FAF9F5;--card:#FFFFFF;--ink:#141413;--mut:#6F6E68;--line:#E6E3D8;--pl:#F3F1EA;--pl2:#E6E3D8;--acc:#C96442;--acc2:#F7E8E1}
+:root[data-ui="claude"][data-theme="dark"] :is(#admin,#mk-layer) .mk{--bg:#262624;--card:#30302E;--ink:#FAF9F5;--mut:#A6A39A;--line:#3E3E3A;--pl:#383836;--pl2:#45453F;--acc:#D97757;--acc2:#45302A}
+:root[data-ui="claude"] body{background:var(--paper)}
 </style>
 </body></html>
