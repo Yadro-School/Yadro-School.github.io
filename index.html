@@ -9144,17 +9144,64 @@ function errsLoad(force){
   tgCall("err_list").then(j => { ERRS.items = (j && j.items) || []; ERRS.err = ""; }).catch(e => { ERRS.err = /Неизвестное действие/.test(e && e.message || "") ? "Журнал ошибок появится после обновления сервера (v15)" : "Не удалось загрузить: " + ((e && e.message) || "нет связи"); })
     .finally(() => { ERRS.busy = false; ERRS.at = Date.now(); try { if(document.getElementById("adm-ag") || document.querySelector(".mk-agt")) renderAgents(); } catch(e) {} });
 }
+/* ---- «?» в журналах: помощник объясняет запись (сборка 652) ---- */
+const AIX = {};
+function evDet(key, ctx, F){
+  return `<div class="zevd"><div><div class="zevd-i">${F.map(r => `<div><small>${r[0]}</small><b>${esc(r[1])}</b></div>`).join("")}</div><div class="zevd-b"><button type="button" class="zb" data-ev-cp="${esc(ctx)}">Копировать</button><button type="button" class="zb zask" data-aix-go="${esc(key)}" data-aix-ctx="${esc(ctx)}" data-tip="Спросить помощника|Что значит эта запись и что можно сделать" aria-label="Спросить помощника">?</button></div>${aixBox(key)}</div></div>`;
+}
+function aixBox(key){
+  const x = AIX[key]; if(!x) return `<div class="zaix" data-aix-box="${esc(key)}" hidden></div>`;
+  return `<div class="zaix" data-aix-box="${esc(key)}">${aixInner(key)}</div>`;
+}
+function aixInner(key){
+  const x = AIX[key]; if(!x) return "";
+  const fmt = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-•*]\s+/gm, "• ").replace(/\n/g, "<br>");
+  const msgs = x.m.map(m => m.r === "u" ? `<div class="zaix-u">${esc(m.t)}</div>` : `<div class="zaix-a">${fmt(m.t)}</div>`).join("");
+  return `<div class="zaix-h"><span>Помощник</span><button type="button" class="zaix-x" data-aix-x="${esc(key)}" aria-label="Скрыть ответ" data-tip="Скрыть ответ">✕</button></div>${msgs}${x.busy ? `<div class="zaix-a zaix-l"><i></i><i></i><i></i></div>` : ""}${x.err ? `<div class="zaix-e">${esc(x.err)} <button type="button" class="zb" data-aix-re="${esc(key)}">Повторить</button></div>` : ""}
+    ${x.m.length && !x.busy ? `<div class="zaix-q">${["Это опасно?", "Что сделать?", "Почему так вышло?"].map(q => `<button type="button" class="zb" data-aix-q="${esc(key)}" data-q="${esc(q)}">${q}</button>`).join("")}</div>` : ""}
+    <form class="zaix-f" data-aix-f="${esc(key)}"><input type="text" placeholder="Спросите про эту запись" autocomplete="off" aria-label="Вопрос помощнику" ${x.busy ? "disabled" : ""}><button type="submit" class="zb" ${x.busy ? "disabled" : ""} aria-label="Отправить" data-tip="Отправить">→</button></form>`;
+}
+function aixPaint(key){ document.querySelectorAll("[data-aix-box]").forEach(b => { if(b.dataset.aixBox !== key) return; b.hidden = !AIX[key]; b.innerHTML = aixInner(key); }); }
+async function aixAsk(key, q){
+  const x = AIX[key]; if(!x || x.busy) return;
+  if(q) x.m.push({ r: "u", t: q });
+  x.busy = true; x.err = ""; aixPaint(key);
+  const hist = x.m.map(m => (m.r === "u" ? "Вопрос администратора: " : "Твой ответ: ") + m.t).join("\n");
+  const prompt = `Ты — помощник администратора школьной платформы «Ядро» (электронный дневник лицея: сайт yadro-ed.ru, сервер yadro-api в Яндекс Облаке, агенты по таймеру, вход по кодам и ссылкам).
+Объясни простыми словами одну запись журнала. Пиши по-русски, коротко, без вступлений, 3–6 строк. Структура: что это значит; нормально ли это или стоит обратить внимание; что можно сделать (конкретно, где на сайте). Не выдумывай факты, которых нет в записи; если данных мало — так и скажи и подскажи, что проверить. Никогда не проси и не показывай ключи, токены и пароли.
+Запись: ${x.ctx}
+${hist ? "\nРазговор:\n" + hist : ""}
+${q ? "\nОтветь на последний вопрос администратора." : ""}`;
+  try { const r = await agProxy(prompt); x.m.push({ r: "a", t: String(r.text || "").trim() || "Ответ пустой." }); }
+  catch(e) { x.err = e && e.message ? e.message : "Помощник не ответил"; }
+  x.busy = false; aixPaint(key);
+  const inp = document.querySelector(`[data-aix-f="${CSS.escape(key)}"] input`); if(inp && !x.err) inp.focus({ preventScroll: true });
+}
+document.addEventListener("click", e => {
+  let b;
+  if((b = e.target.closest("[data-aix-go]"))){ e.stopPropagation(); const k = b.dataset.aixGo; if(!AIX[k]){ AIX[k] = { ctx: b.dataset.aixCtx || "", m: [], busy: false, err: "" }; aixPaint(k); aixAsk(k); } else aixPaint(k); return; }
+  if((b = e.target.closest("[data-aix-x]"))){ e.stopPropagation(); delete AIX[b.dataset.aixX]; aixPaint(b.dataset.aixX); return; }
+  if((b = e.target.closest("[data-aix-re]"))){ e.stopPropagation(); aixAsk(b.dataset.aixRe); return; }
+  if((b = e.target.closest("[data-aix-q]"))){ e.stopPropagation(); aixAsk(b.dataset.aixQ, b.dataset.q); return; }
+  if((b = e.target.closest("[data-ev-cp]"))){ e.stopPropagation(); try { navigator.clipboard.writeText(b.dataset.evCp); tgToast("Скопировано"); } catch(_) {} return; }
+  if(e.target.closest(".zevd")) return;
+  if((b = e.target.closest("[data-ev-row]"))){ const k = b.dataset.evRow; AGV.evo = AGV.evo === k ? null : k; document.querySelectorAll("[data-ev-row]").forEach(li => li.classList.toggle("open", li.dataset.evRow === AGV.evo)); }
+}, true);
+document.addEventListener("keydown", e => { const li = e.target.closest && e.target.closest("[data-ev-row]"); if(li && e.target === li && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); li.click(); } });
+document.addEventListener("submit", e => { const f = e.target.closest("[data-aix-f]"); if(!f) return; e.preventDefault(); const i = f.querySelector("input"), q = (i.value || "").trim(); if(!q) return; i.value = ""; aixAsk(f.dataset.aixF, q); });
 function errRows(){
   if(ERRS.err) return `<li class="zev er-m"><span>${esc(ERRS.err)}</span></li>`;
   if(!ERRS.items) return `<li class="zev er-m"><span>Загружаю…</span></li>`;
   if(!ERRS.items.length) return `<li class="zev er-m"><span>За 7 дней сервер не записал ни одной ошибки.</span></li>`;
   const q = (AGV.eq || "").toLowerCase();
   return ERRS.items.filter(x => !q || (x.w + " " + x.m).toLowerCase().includes(q)).map(x => { const d = new Date(x.t), when = d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", hour12: false });
-    return `<li class="zev er"><time>${when}</time><b>${esc(x.w || "сервер")}</b><span>${esc(x.m)}${x.s ? `<small>${esc(x.s)}</small>` : ""}</span></li>`; }).join("");
+    const key = "s:" + x.t + ":" + (x.w || ""), op = AGV.evo === key;
+    return `<li class="zev er zevx ${op ? "open" : ""}" data-ev-row="${esc(key)}" tabindex="0"><time>${when}</time><b>${esc(x.w || "сервер")}</b><span>${esc(x.m)}${x.s ? `<small>${esc(x.s)}</small>` : ""}</span>${evDet(key, `Ошибка сервера yadro-api. Время: ${d.toLocaleString("ru-RU")}. Где: ${x.w || "сервер"}. Сообщение: ${x.m}.${x.s ? " Подробности: " + x.s : ""}`, [["Когда", d.toLocaleString("ru-RU")], ["Где", x.w || "сервер"], ["Уровень", "Ошибка сервера"]])}</li>`; }).join("");
 }
 function mkLogRows(){
   if(!LOG.list.length) return `<li class="zev lg"><time>--:--:--</time><b>система</b><span>Журнал пуст.</span></li>`;
-  return LOG.list.slice(-120).reverse().map(x => { const d = new Date(x.t), hh = isNaN(d) ? "--:--:--" : d.toLocaleTimeString("ru-RU", { hour12: false }); return `<li class="zev lg ${x.lvl}"><time>${hh}</time><b>${esc(x.src)}</b><span>${esc(x.msg)}</span></li>`; }).join("");
+  return LOG.list.slice(-120).reverse().map(x => { const d = new Date(x.t), hh = isNaN(d) ? "--:--:--" : d.toLocaleTimeString("ru-RU", { hour12: false }), key = "e:" + x.t + ":" + x.src, op = AGV.evo === key;
+    return `<li class="zev lg ${x.lvl} zevx ${op ? "open" : ""}" data-ev-row="${esc(key)}" tabindex="0"><time>${hh}</time><b>${esc(x.src)}</b><span>${esc(x.msg)}</span>${evDet(key, `Журнал событий сайта. Время: ${isNaN(d) ? "—" : d.toLocaleString("ru-RU")}. Источник: ${x.src}. Уровень: ${({ err: "ошибка", warn: "предупреждение", ok: "успешно" })[x.lvl] || "информация"}. Сообщение: ${x.msg}.`, [["Когда", isNaN(d) ? "—" : d.toLocaleString("ru-RU")], ["Источник", x.src], ["Уровень", ({ err: "Ошибка", warn: "Предупреждение", ok: "Успешно" })[x.lvl] || "Информация"]])}</li>`; }).join("");
 }
 function logRows(){
   if(!LOG.list.length) return `<li class="lg info"><span class="lg-t">--:--:--</span><span class="lg-s">система</span><span class="lg-m">Журнал пуст.</span></li>`;
@@ -14038,7 +14085,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "651";
+const BUILD = "652";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14166,8 +14213,8 @@ function actBody(){
   const tm = t => new Date(t).toLocaleTimeString("ru-RU");
   const row = a => { const sec = (/«(.+?)»/.exec(a.x) || [])[1] || "", k = a.t + ":" + a.i, op = ACT.fo === k;
     const F = [["Кто", a.w], ["Когда", new Date(a.t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" }) + ", " + tm(a.t)], ["Откуда", alUa + " · это устройство"], ["Тип", kn[a.k] || "Другое"], [a.k === "nav" ? "Раздел" : "Подробности", a.k === "nav" ? sec || "—" : a.m || "—"], ["Результат", a.k === "err" ? "Ошибка" : "Успешно"], ["ID записи", "#" + (a.i + 1)]];
-    const B = (a.k === "nav" && sec ? `<button type="button" class="zb" data-al-go="${esc(sec)}">Открыть раздел</button>` : "") + `<button type="button" class="zb" data-al-who="${esc(a.w)}">Все действия человека</button><button type="button" class="zb" data-al-cp="${esc(k)}">Копировать</button>`;
-    return `<li class="zlg2 ${op ? "open" : ""}" data-al-row="${esc(k)}"><time>${tm(a.t)}</time><span class="zq zq-${AL_Q[a.k] || "n"}">${esc(({ grade: "Оценки", adm: "Админка" })[a.k] || kn[a.k] || "Другое")}</span><span><b>${esc(a.x)}</b><small>${esc(alUa)}</small></span><em><b>${esc(a.w.split(" · ").pop())}</b><small>${alRel(a.t)}</small></em><div class="zdet"><div><div class="zdet-i">${F.map(r => `<div><small>${r[0]}</small><b>${esc(r[1])}</b></div>`).join("")}</div><div class="zdet-b">${B}</div></div></div></li>`; };
+    const B = (a.k === "nav" && sec ? `<button type="button" class="zb" data-al-go="${esc(sec)}">Открыть раздел</button>` : "") + `<button type="button" class="zb" data-al-who="${esc(a.w)}">Все действия человека</button><button type="button" class="zb" data-al-cp="${esc(k)}">Копировать</button><button type="button" class="zb zask" data-aix-go="${esc("a:" + k)}" data-aix-ctx="${esc(`Журнал действий. Время: ${new Date(a.t).toLocaleString("ru-RU")}. Кто: ${a.w}. Тип: ${kn[a.k] || "Другое"}. Действие: ${a.x}. Подробности: ${a.m || "—"}. Результат: ${a.k === "err" ? "ошибка" : "успешно"}.`)}" data-tip="Спросить помощника|Что значит это действие и что можно сделать" aria-label="Спросить помощника">?</button>`;
+    return `<li class="zlg2 ${op ? "open" : ""}" data-al-row="${esc(k)}"><time>${tm(a.t)}</time><span class="zq zq-${AL_Q[a.k] || "n"}">${esc(({ grade: "Оценки", adm: "Админка" })[a.k] || kn[a.k] || "Другое")}</span><span><b>${esc(a.x)}</b><small>${esc(alUa)}</small></span><em><b>${esc(a.w.split(" · ").pop())}</b><small>${alRel(a.t)}</small></em><div class="zdet"><div><div class="zdet-i">${F.map(r => `<div><small>${r[0]}</small><b>${esc(r[1])}</b></div>`).join("")}</div><div class="zdet-b">${B}</div>${aixBox("a:" + k)}</div></div></li>`; };
   const dt = d => `${d.getDate()} ${MG[d.getMonth()]} ${d.getFullYear()}`;
   return `<div class="zcnt">Записей: ${LA.length}${LA.length > 30 ? ` <b data-al-all tabindex="0" role="button">${ACT.all ? "Последние 30" : "Все · " + LA.length}</b>` : ""}</div><section class="ac">${groups.length ? `<div class="zsub">${dt(groups[0].d)}</div><div class="zlscroll">${groups.map((g, i) => (i ? `<div class="zsub zdate">${dt(g.d)}</div>` : "") + `<ul class="${i ? "zll2" : "zll"}">${g.items.map(row).join("")}</ul>`).join("")}</div>` : `<ul class="zll"><li class="zempty" style="padding:12px 10px;color:var(--mut)">Записей нет</li></ul>`}</section>`;
 }
@@ -17022,4 +17069,35 @@ function ydSupport(){
   new MutationObserver(() => { const k = document.getElementById("pe-hk"); if(k && !k.style.left) k.style.left = (200 / 359 * 100) + "%"; }).observe(document.body, { childList: true });
 })();
 </script>
+<style id="aix-css">
+/* «?» в журналах: помощник (сборка 652) */
+:is(#admin,#mk-layer) .mk .zask{min-width:32px;padding:0 10px;font-weight:500}
+:is(#admin,#mk-layer) .mk .zevx{cursor:pointer;transition:box-shadow .18s}
+:is(#admin,#mk-layer) .mk .zevx.open{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk .zevd{grid-column:1/-1;display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+:is(#admin,#mk-layer) .mk .zevd>div{overflow:hidden;min-height:0}
+:is(#admin,#mk-layer) .mk .zevx.open .zevd{grid-template-rows:1fr}
+:is(#admin,#mk-layer) .mk .zevd-i{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+:is(#admin,#mk-layer) .mk .zevd-i small{display:block;font-size:11px;color:var(--mut)}:is(#admin,#mk-layer) .mk .zevd-i b{font-weight:400;color:var(--ink);font-size:13px}
+:is(#admin,#mk-layer) .mk .zevd span,:is(#admin,#mk-layer) .mk .zevd small{color:var(--mut)}:is(#admin,#mk-layer) .mk .zevd .zaix-a,:is(#admin,#mk-layer) .mk .zevd .zaix-u{color:var(--ink)}
+:is(#admin,#mk-layer) .mk .zevd-b{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+:is(#admin,#mk-layer) .mk .zaix{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line, color-mix(in srgb,var(--ink) 12%,transparent));display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.5;cursor:default}
+:is(#admin,#mk-layer) .mk .zaix-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+:is(#admin,#mk-layer) .mk .zaix-x{appearance:none;border:0;background:none;color:var(--mut);width:26px;height:26px;border-radius:999px;cursor:pointer;transition:background .18s}
+:is(#admin,#mk-layer) .mk .zaix-x:hover{background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink)}
+:is(#admin,#mk-layer) .mk .zaix-a{color:var(--ink)}:is(#admin,#mk-layer) .mk .zaix-a b{font-weight:500;color:var(--ink)}
+:is(#admin,#mk-layer) .mk .zaix-u{align-self:flex-end;max-width:80%;padding:5px 10px;border-radius:12px;background:color-mix(in srgb,var(--acc) 12%,transparent);color:var(--ink)}
+:is(#admin,#mk-layer) .mk .zaix-e{color:var(--mut);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+:is(#admin,#mk-layer) .mk .zaix-q{display:flex;gap:6px;flex-wrap:wrap}
+:is(#admin,#mk-layer) .mk .zaix-f{display:flex;gap:6px}
+:is(#admin,#mk-layer) .mk .zaix-f input{flex:1;min-width:0;height:32px;padding:0 12px;border-radius:999px;border:1px solid color-mix(in srgb,var(--ink) 14%,transparent);background:transparent;color:var(--ink);font:inherit;outline:0}
+:is(#admin,#mk-layer) .mk .zaix-f input:focus{border-color:var(--acc)}
+:is(#admin,#mk-layer) .mk .zaix-l{display:flex;gap:4px;padding:4px 0}
+:is(#admin,#mk-layer) .mk .zaix-l i{width:5px;height:5px;border-radius:999px;background:var(--mut);animation:aixb 1s infinite ease-in-out}
+:is(#admin,#mk-layer) .mk .zaix-l i:nth-child(2){animation-delay:.15s}:is(#admin,#mk-layer) .mk .zaix-l i:nth-child(3){animation-delay:.3s}
+@keyframes aixb{0%,80%,100%{opacity:.25}40%{opacity:1}}
+:is(#admin,#mk-layer) .mk .zb:active{transform:scale(.96)}
+:root[data-motion="off"] :is(#admin,#mk-layer) .mk .zevd,:root[data-motion="off"] :is(#admin,#mk-layer) .mk .zaix-l i{transition:none!important;animation:none!important}
+@media(max-width:700px){:is(#admin,#mk-layer) .mk .zevd-i{grid-template-columns:1fr 1fr}}
+</style>
 </body></html>
