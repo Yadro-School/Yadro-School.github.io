@@ -9167,7 +9167,11 @@ async function aixAsk(key, q){
   if(q) x.m.push({ r: "u", t: q });
   x.busy = true; x.err = ""; aixPaint(key);
   const hist = x.m.map(m => (m.r === "u" ? "Вопрос администратора: " : "Твой ответ: ") + m.t).join("\n");
-  const prompt = `Ты — помощник администратора школьной платформы «Ядро» (электронный дневник лицея: сайт yadro-ed.ru, сервер yadro-api в Яндекс Облаке, агенты по таймеру, вход по кодам и ссылкам).
+  const prompt = x.kind === "mech" ? `Ты — Механик, агент-ремонтник школьной платформы «Ядро» (сайт yadro-ed.ru, сервер yadro-api в Яндекс Облаке: функция, база YDB, таймер запускает агентов каждые полчаса; ИИ через прокси; расписание из Google-таблицы; уведомления в Telegram).
+Тебе показали сбой агента. Пиши по-русски, коротко, без вступлений, 3–6 строк: что случилось простыми словами (например «fetch failed» — сервер не смог достучаться до внешнего адреса); страшно ли это (если следующий запуск прошёл — уже исправилось само); что сделать по шагам: кнопка «Перезапустить» в этом окне, где проверить на сайте, что передать Claude («Промпт»). Не выдумывай того, чего нет в данных; если причину не установить — скажи, что проверить. Никогда не проси и не показывай ключи, токены и пароли.
+Сбой: ${x.ctx}
+${hist ? "\nРазговор:\n" + hist : ""}
+${q ? "\nОтветь на последний вопрос администратора." : ""}` : `Ты — помощник администратора школьной платформы «Ядро» (электронный дневник лицея: сайт yadro-ed.ru, сервер yadro-api в Яндекс Облаке, агенты по таймеру, вход по кодам и ссылкам).
 Объясни простыми словами одну запись журнала. Пиши по-русски, коротко, без вступлений, 3–6 строк. Структура: что это значит; нормально ли это или стоит обратить внимание; что можно сделать (конкретно, где на сайте). Не выдумывай факты, которых нет в записи; если данных мало — так и скажи и подскажи, что проверить. Никогда не проси и не показывай ключи, токены и пароли.
 Запись: ${x.ctx}
 ${hist ? "\nРазговор:\n" + hist : ""}
@@ -9350,7 +9354,7 @@ function ag3Slots(list){
     if(r.t < start || r.t >= end) return; const x = S[Math.floor((r.t - start) / H)]; if(!x) return;
     x.n++; if(r.ms != null) x.ms.push(r.ms);
     if(r.st === "fail") x.st = "fail"; else if(r.st === "warn" && x.st !== "fail") x.st = "warn"; else if(r.st === "ok" && x.st === "o") x.st = "ok";
-    if(r.st === "fail" || r.st === "warn") x.notes.push(a.name + ": " + (r.note || AGR_T[r.st]));
+    if(r.st === "fail" || r.st === "warn"){ x.notes.push(a.name + ": " + (r.note || AGR_T[r.st])); (x.bad = x.bad || []).push({ a, r }); }
   }));
   return S;
 }
@@ -9415,6 +9419,35 @@ document.addEventListener("click", e => {
     tgCall("ag_stop", { on: want }).then(j => { AGR.stop = j.stop || null; tgToast(AGR.stop ? "Агенты остановлены" : "Агенты снова работают"); actLog("adm", AGR.stop ? "Аварийная остановка агентов" : "Работа агентов возвращена"); }).catch(er => tgToast("Не получилось: " + er.message)).finally(() => renderAgents()); return; }
 });
 document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest(".ag2-r[data-ag-open]"); if(r && e.target === r && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); r.click(); } });
+/* ---- Механик: окно разбора сбоя с помощником (сборка 654) ---- */
+const mxFlash = el => { if(!el || document.documentElement.dataset.motion === "off") return; el.classList.remove("mx-flash"); void el.offsetWidth; el.classList.add("mx-flash"); setTimeout(() => el.classList.remove("mx-flash"), 1600); };
+function mxClose(){ const m = document.getElementById("mx-mod"); if(m){ m.classList.remove("on"); setTimeout(() => m.remove(), document.documentElement.dataset.motion === "off" ? 0 : 200); } document.removeEventListener("keydown", mxKey); }
+function mxKey(e){ if(e.key === "Escape") mxClose(); }
+function mxOpen(gid, slot){
+  const all = [...BUILTIN(), ...AG.list], bad = (slot && slot.bad) || [], H = 1800000;
+  const span = slot ? `${ag3hm(slot.t)}–${ag3hm(slot.t + H)}` : "";
+  const runs0 = bad.length ? bad : ag3Inc(all).filter(x => !x.fixed).slice(0, 3).map(x => ({ a: x.a, r: { t: x.t, st: x.st, note: x.note } }));
+  const runs = []; runs0.forEach(x => { const o = runs.find(y => y.a.id === x.a.id && (y.r.note || "") === (x.r.note || "")); if(o){ o.n = (o.n || 1) + 1; if(x.r.t > o.r.t) o.r = x.r; } else runs.push({ ...x, n: 1 }); });
+  const after = r => { const R = AGR.runs[r.a.id] || []; const nx = R.find(q => q.t > r.r.t && q.st === "ok"); return nx ? "после этого прошёл в " + ag3hm(nx.t) : "успешного запуска после сбоя ещё не было"; };
+  const ctx = runs.length ? runs.map(x => `Агент «${x.a.name}» (${x.a.cat || "агент"}), ${x.n > 1 ? x.n + " раза подряд, последний" : "запуск"} в ${ag3hm(x.r.t)}: ${x.r.st === "fail" ? "сбой" : "замечание"} — ${x.r.note || AGR_T[x.r.st]}${x.r.ms != null ? `, ответ ${x.r.ms} мс` : ""}; ${after(x)}.`).join(" ") + (slot ? ` Всего запусков в эти полчаса: ${slot.n}.` : "") : "Сбоев за сутки нет.";
+  const key = "m:" + gid + ":" + (slot ? slot.t : "now");
+  if(!AIX[key]) AIX[key] = { ctx, m: [], busy: false, err: "", kind: "mech" };
+  const row = x => { const j = agJob(x.a.id); return `<li class="mxm-r"><i class="${x.r.st}"></i><span><b>${esc(x.a.name)}</b><small>${ag3hm(x.r.t)} · ${esc(x.r.note || AGR_T[x.r.st])}${x.r.ms != null ? " · " + x.r.ms + " мс" : ""}${x.n > 1 ? " · " + x.n + " раза" : ""}</small><small class="mxm-af">${esc(after(x))}</small></span><span class="mxm-b">${j ? `<button type="button" class="zb pr" data-ag-srun="${esc(x.a.id)}" data-tip="Запустить ещё раз|Агент выполнится на сервере сейчас">Перезапустить</button>` : ""}<button type="button" class="zb" data-mxm-cp="${esc(ag3Prompt({ a: x.a, t: x.r.t, note: x.r.note || AGR_T[x.r.st], n: 1 }))}" data-tip="Промпт для исправления|Скопировать и отправить Claude">Промпт</button></span></li>`; };
+  const html = `<div class="mxm" id="mx-mod" role="dialog" aria-modal="true" aria-label="Механик"><div class="mxm-bg" data-mxm-x></div><div class="mxm-p">
+    <div class="mxm-h"><span class="mx3-av" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/></svg></span><div><b>Механик</b><small>${slot ? "Сбой " + span : "Сбои за сутки"}</small></div><button type="button" class="zaix-x" data-mxm-x aria-label="Закрыть" data-tip="Закрыть">✕</button></div>
+    <div class="mxm-c">${runs.length ? `<ul class="mxm-l">${runs.map(row).join("")}</ul>` : `<p class="mk-nodata">Сбоев нет — всё работает.</p>`}
+    ${aixBox(key)}</div></div></div>`;
+  const old = document.getElementById("mx-mod"); if(old) old.remove();
+  const L = mkLayer("mech", ""); L.insertAdjacentHTML("beforeend", html);
+  const m = document.getElementById("mx-mod"); requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add("on")));
+  document.addEventListener("keydown", mxKey);
+  aixPaint(key); if(!AIX[key].m.length && !AIX[key].busy && runs.length) aixAsk(key);
+}
+document.addEventListener("click", e => {
+  let b;
+  if(e.target.closest("[data-mxm-x]")){ mxClose(); return; }
+  if((b = e.target.closest("[data-mxm-cp]"))){ ag3Copy(b, b.dataset.mxmCp); return; }
+});
 function ag3PopHide(){ const p = document.getElementById("ag3-pop"); if(p) p.hidden = true; if(AG3.sel){ AG3.sel.classList.remove("sel"); AG3.sel = null; } }
 function ag3PopShow(i){
   if(AG3.sel === i) return ag3PopHide(); ag3PopHide();
@@ -9424,7 +9457,7 @@ function ag3PopShow(i){
   const avg = x.ms.length ? Math.round(x.ms.reduce((a, b) => a + b, 0) / x.ms.length) : null;
   const txt = x.st === "o" ? "В эти полчаса агенты группы не запускались." : x.notes.length ? x.notes.slice(0, 2).map(esc).join("<br>") + (x.notes.length > 2 ? `<br>и ещё ${x.notes.length - 2}` : "") : `${x.n} ${plural(x.n, ["запуск", "запуска", "запусков"])} без замечаний.`;
   const pc = { ok: "var(--ok)", warn: "#EBA83A", fail: "#D9483B", o: "var(--pl2)" };
-  p.innerHTML = `<div class="pp-h"><i style="background:${pc[x.st]}"></i><b>${AG3_T[x.st]}</b><small>${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}</small></div><p class="pp-t">${txt}</p>${x.st === "o" ? "" : `<div class="pp-k"><div><small>Запусков</small><b>${x.n}</b></div><div><small>Ответ</small><b>${avg != null ? avg + " мс" : "—"}</b></div></div>`}<div class="pp-b">${x.st === "fail" || x.st === "warn" ? `<button type="button" class="pr" data-ag3-pp="mech" title="Что с этим сбоем">Механик</button><button type="button" data-ag3-pp="log" title="Открыть журнал событий">Журнал</button>` : ""}<button type="button" data-ag3-pp="open|${gid}" title="Показать агентов группы">Агенты</button></div>`;
+  p.innerHTML = `<div class="pp-h"><i style="background:${pc[x.st]}"></i><b>${AG3_T[x.st]}</b><small>${ag3hm(x.t)}–${ag3hm(x.t + 1800000)}</small></div><p class="pp-t">${txt}</p>${x.st === "o" ? "" : `<div class="pp-k"><div><small>Запусков</small><b>${x.n}</b></div><div><small>Ответ</small><b>${avg != null ? avg + " мс" : "—"}</b></div></div>`}<div class="pp-b">${x.st === "fail" || x.st === "warn" ? `<button type="button" class="pr" data-ag3-pp="mech|${gid}|${k}" data-tip="Механик|Объяснит сбой, поможет исправить">Механик</button><button type="button" data-ag3-pp="log|${gid}|${k}" data-tip="Журнал событий|Записи этого агента">Журнал</button>` : ""}<button type="button" data-ag3-pp="open|${gid}|${k}" data-tip="Агенты|Открыть карточку агента">Агенты</button></div>`;
   p.hidden = false; p.dataset.t = Date.now();
   const r = i.getBoundingClientRect(), pw = p.offsetWidth, ph = p.offsetHeight, cx = r.left + r.width / 2, L = Math.max(8, Math.min(innerWidth - pw - 8, cx - pw / 2)), up = r.top - ph - 12 > 8;
   p.className = "ag2-pop " + (up ? "up" : "dn"); p.style.left = L + "px"; p.style.top = (up ? r.top - ph - 12 : r.bottom + 12) + "px"; p.style.setProperty("--ax", (cx - L) + "px");
@@ -9435,9 +9468,14 @@ const ag3Copy = (b, t) => {
 };
 document.addEventListener("click", e => {
   let x;
-  if((x = e.target.closest("[data-ag3-pp]"))){ const [k, gid] = x.dataset.ag3Pp.split("|"); ag3PopHide();
-    if(k === "open"){ AG3.open[gid] = true; renderAgents(); const g = document.querySelector(`[data-ag3-g="${gid}"]`); if(g) g.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
-    else { if(k === "log" && !AGV.log){ AGV.log = true; renderAgents(); } const t = document.getElementById(k === "mech" ? "mx3" : "ag-log-w"); if(t) t.scrollIntoView({ behavior: "smooth", block: "center" }); }
+  if((x = e.target.closest("[data-ag3-pp]"))){ e.stopPropagation(); const [k, gid, si] = x.dataset.ag3Pp.split("|"), slot = (AG3.slots[gid] || [])[+si] || null, bad = (slot && slot.bad) || [], first = bad[0] ? bad[0].a : null; ag3PopHide();
+    if(k === "open"){ AG3.open[gid] = true; AGV.flt = "all"; if(first) AG.run = first.id; renderAgents();
+      setTimeout(() => { const r = first && [...document.querySelectorAll("[data-ag-open]")].find(b => b.dataset.agOpen === first.id), g = r || document.querySelector(`[data-ag3-g="${gid}"]`); if(g){ g.scrollIntoView({ behavior: "smooth", block: "center" }); mxFlash(g); } }, 60); }
+    else if(k === "log"){ AGV.log = true; AGV.lt = "site"; renderAgents();
+      setTimeout(() => { const q = document.getElementById("ag-log-q"), w = document.getElementById("ag-log-w") || document.querySelector(".ag2-x");
+        if(q && first){ q.value = first.name; logFilter(); const ul = document.getElementById("ag-log"); if(ul && ![...ul.querySelectorAll("li.lg")].some(li => !li.hidden && li.style.display !== "none")){ q.value = ""; logFilter(); } }
+        if(w){ w.scrollIntoView({ behavior: "smooth", block: "center" }); mxFlash(w); } }, 60); }
+    else mxOpen(gid, slot);
     return; }
   if((x = e.target.closest("[data-ag3-s]")) || ((x = e.target.closest(".ag2-wb")) && (x = [...x.querySelectorAll("[data-ag3-s]")].find(i => { const r = i.getBoundingClientRect(); return e.clientX >= r.left - 3 && e.clientX <= r.right + 3; })))){ ag3PopShow(x); return; }
   if(!e.target.closest("#ag3-pop")) ag3PopHide();
@@ -14085,7 +14123,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "653";
+const BUILD = "654";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -17112,5 +17150,31 @@ function ydSupport(){
 :is(#admin,#mk-layer) .mk .is li small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 :is(#admin,#mk-layer) .mk .is li .is-b,:is(#admin,#mk-layer) .mk .is li button{justify-self:end}
 :root[data-motion="off"] :is(#admin,#mk-layer) .mk .qa{transition:none!important}
+</style>
+<style id="mx-css">
+/* Механик: окно разбора сбоя (сборка 654) */
+#mk-layer .mk-mech{position:static}
+#mk-layer .mxm{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:16px}
+#mk-layer .mxm-bg{position:absolute;inset:0;background:rgba(20,19,18,.32);opacity:0;transition:opacity .2s}
+#mk-layer .mxm-p{position:relative;width:min(560px,100%);max-height:min(84vh,720px);display:flex;flex-direction:column;background:var(--card);color:var(--ink);border:1px solid var(--line, color-mix(in srgb,var(--ink) 10%,transparent));border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.18);transform:translateY(8px) scale(.98);opacity:0;transition:transform .2s,opacity .2s}
+#mk-layer .mxm.on .mxm-bg{opacity:1}#mk-layer .mxm.on .mxm-p{transform:none;opacity:1}
+#mk-layer .mxm-h{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,transparent)}
+#mk-layer .mxm-h>div{flex:1;min-width:0;display:flex;flex-direction:column}#mk-layer .mxm-h b{font-weight:500;font-size:16px}#mk-layer .mxm-h small{font-size:12.5px;color:var(--mut)}
+#mk-layer .mxm-h .mx3-av{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:color-mix(in srgb,var(--acc) 12%,transparent);color:var(--acc);flex:none}
+#mk-layer .mxm-h .mx3-av svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#mk-layer .mxm-c{overflow:auto;padding:12px 18px 16px;scrollbar-width:thin}
+#mk-layer .mxm-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+#mk-layer .mxm-r{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px;border-radius:14px;background:var(--pl)}
+#mk-layer .mxm-r>i{width:8px;height:8px;border-radius:50%;background:#EBA83A}#mk-layer .mxm-r>i.fail{background:#D9483B}
+#mk-layer .mxm-r>span:nth-child(2){display:flex;flex-direction:column;min-width:0}#mk-layer .mxm-r b{font-weight:500;font-size:14px}
+#mk-layer .mxm-r small{font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis}#mk-layer .mxm-r .mxm-af{font-size:11.5px}
+#mk-layer .mxm-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#mk-layer .mxm-b button{height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;cursor:pointer;transition:box-shadow .18s,transform .12s}
+#mk-layer .mxm-b button.pr{color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc);background:transparent}
+#mk-layer .mxm-b button:hover{box-shadow:inset 0 0 0 1.5px var(--acc)}#mk-layer .mxm-b button:active{transform:scale(.96)}
+#mk-layer .mxm .zaix{margin-top:12px}
+.mx-flash{animation:mxfl 1.6s ease}@keyframes mxfl{0%,60%{box-shadow:inset 0 0 0 2px var(--acc,#C25E3A)}100%{box-shadow:none}}
+:root[data-motion="off"] #mk-layer .mxm-bg,:root[data-motion="off"] #mk-layer .mxm-p,:root[data-motion="off"] .mx-flash{transition:none!important;animation:none!important}
+@media(max-width:600px){#mk-layer .mxm{padding:8px;place-items:end center}#mk-layer .mxm-p{max-height:88vh}#mk-layer .mxm-r{grid-template-columns:8px minmax(0,1fr)}#mk-layer .mxm-b{grid-column:2;justify-content:flex-start}}
 </style>
 </body></html>
