@@ -11284,8 +11284,8 @@ function movePill(instant){
   if(!mob && gp){
     // на широком экране одна плашка плавно переезжает между всеми вкладками, в том числе в нижнюю рамку
     if(ip) ip.style.opacity = "0"; if(xp) xp.style.opacity = "0";
-    const c = gp.parentElement.getBoundingClientRect(), r = b.getBoundingClientRect();
-    const par = gp.parentElement; put(gp, r.left - c.left - par.clientLeft, r.top - c.top - par.clientTop, r.width, r.height, instant);
+    const par = gp.offsetParent || gp.parentElement, c = par.getBoundingClientRect(), r = b.getBoundingClientRect();   // от того блока, от которого плашка реально отсчитывается
+    put(gp, r.left - c.left - par.clientLeft + par.scrollLeft, r.top - c.top - par.clientTop + par.scrollTop, r.width, r.height, instant);
     return;
   }
   if(gp) gp.style.opacity = "0";
@@ -14085,7 +14085,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "652";
+const BUILD = "653";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -16935,7 +16935,7 @@ function ydSupport(){
 .p2-avg{flex:0 1 300px;min-width:260px;display:flex;flex-direction:column;gap:6px}
 .p2-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:4px}
 .p2-h h2{margin:0;font-size:16px;font-weight:500}
-.p2-h .aside{font-size:12.5px;color:var(--muted)}.p2-h .aside{white-space:nowrap}@media(max-width:700px){.p2-mon .p2-h .aside i{display:none}}.p2-h .aside b{font-weight:500;color:var(--ink)}
+.p2-h .aside{font-size:12.5px;color:var(--muted)}.p2-h .aside{white-space:nowrap}.p2-h .aside i{font-style:normal}@media(max-width:700px){.p2-mon .p2-h .aside i{display:none}}.p2-h .aside b{font-weight:500;color:var(--ink)}
 .p2-id{display:flex;align-items:center;gap:14px}
 .p2-ava{width:52px!important;height:52px!important;font-size:21px!important;flex:none}
 .p2-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -16971,7 +16971,7 @@ function ydSupport(){
 .p2-day li.past .p2-dl{opacity:.5}
 .p2-day li.now .p2-dl{background:color-mix(in srgb,var(--pen) 9%,transparent);border-radius:8px}
 .p2-mt{overflow-x:auto}
-.p2-mr{display:grid;grid-template-columns:60px minmax(0,1fr) 54px 60px auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;min-width:440px}
+.p2-mr{display:grid;grid-template-columns:60px minmax(0,1fr) 54px 60px 190px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;min-width:440px}
 .p2-mhd{padding:0 0 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .p2-mu{color:var(--muted)}.p2-mc{font-family:ui-monospace,Menlo,monospace;font-size:13px}.p2-mn{text-align:center}
 .p2-mb{display:flex;gap:6px;justify-content:flex-end}
@@ -17099,5 +17099,18 @@ function ydSupport(){
 :is(#admin,#mk-layer) .mk .zb:active{transform:scale(.96)}
 :root[data-motion="off"] :is(#admin,#mk-layer) .mk .zevd,:root[data-motion="off"] :is(#admin,#mk-layer) .mk .zaix-l i{transition:none!important;animation:none!important}
 @media(max-width:700px){:is(#admin,#mk-layer) .mk .zevd-i{grid-template-columns:1fr 1fr}}
+</style>
+<style id="fix653">
+/* 653: панель админки — одна обводка на карточке действия, ровный список «Требует внимания» */
+:is(#admin,#mk-layer) .mk .qa .qa-b:hover,:is(#admin,#mk-layer) .mk .qa .qa-b:focus{box-shadow:none!important;background:transparent}
+:is(#admin,#mk-layer) .mk .qa{transition:box-shadow .18s,background .2s}
+:is(#admin,#mk-layer) .mk .is{display:grid;gap:4px}
+:is(#admin,#mk-layer) .mk .is li.e{box-shadow:none;background:color-mix(in srgb,#D23B3B 7%,transparent)}
+:is(#admin,#mk-layer) .mk .is li.e:hover{box-shadow:inset 0 0 0 1.5px var(--acc)}
+:is(#admin,#mk-layer) .mk .is li.e b{color:var(--ink)}
+:is(#admin,#mk-layer) .mk .is li > div{min-width:0}
+:is(#admin,#mk-layer) .mk .is li small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:is(#admin,#mk-layer) .mk .is li .is-b,:is(#admin,#mk-layer) .mk .is li button{justify-self:end}
+:root[data-motion="off"] :is(#admin,#mk-layer) .mk .qa{transition:none!important}
 </style>
 </body></html>
