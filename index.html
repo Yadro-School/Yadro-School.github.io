@@ -7533,7 +7533,8 @@ const HOVER = false;   // строки раскрываются только п�
 const LIBS = {
   xlsx: "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
   pdf: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
-  pdfWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"
+  pdfWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+  tess: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"
 };
 const SCHED_KEY = "bai-network-schedule-v1";
 const IMP = { open: false, file: null, text: "", cls: "8А", week: "", busy: false, status: "", err: "", result: null, ctl: null, started: 0 };
@@ -7621,40 +7622,328 @@ function applySchedule(doc, persist){
     if(DB) DB.doc("schedule/current").set(doc).catch(() => {});
   }
 }
+/* Разбор таблицы расписания без ИИ (сборка 655).
+   Формат лицея: столбец A — день (дата Excel или «Monday 9 Nov» / «Понедельник 9 ноября»), B — №, C — время,
+   дальше по столбцу на класс («8А (224)», «10 ТА (301)»…). Ячейка: «Предмет (Учитель, кабинет / Учитель, кабинет)».
+   Работает на книге SheetJS: xlsx, xls, ods, csv и вставленный из Google Таблиц текст (TSV). */
+const impSchKey = s => String(s || "").toLowerCase().replace(/ё/g, "е").replace(/\(.*$/, "").replace(/[«»"'\s.\-]/g, "").trim();
+const SCH_MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11, янв: 0, фев: 1, мар: 2, апр: 3, мая: 4, май: 4, июн: 5, июл: 6, авг: 7, сен: 8, окт: 9, ноя: 10, дек: 11 };
+const SCH_WD = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, понедельник: 1, вторник: 2, среда: 3, четверг: 4, пятница: 5, суббота: 6, пн: 1, вт: 2, ср: 3, чт: 4, пт: 5, сб: 6 };
+const SCH_FULLN = { "вис": "Вероятность и статистика", "английский": "Английский язык", "доп.главы": "Доп. главы по математике", "доп.главы по математике": "Доп. главы по математике", "обизр": "ОБиЗР" };
+function schDateOf(v, year){
+  if(v == null || v === "") return null;
+  if(v instanceof Date && !isNaN(v)) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  if(typeof v === "number" && v > 40000 && v < 80000){ const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+  const s = String(v).toLowerCase().replace(/ё/g, "е");
+  let m = /(\d{1,2})\s+([a-zа-я]{3})/.exec(s);
+  if(m && SCH_MON[m[2]] != null) return new Date(year, SCH_MON[m[2]], +m[1]);
+  m = /(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?/.exec(s);
+  if(m && SCH_WD[(s.match(/[a-zа-я]+/) || [""])[0]]) return new Date(m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : year, +m[2] - 1, +m[1]);
+  return null;
+}
+function schWdOf(v){ const w = (String(v || "").toLowerCase().match(/[a-zа-я]+/) || [""])[0]; return SCH_WD[w] || 0; }
+/* «Информатика (Ведерников В.В.., 120/ Петрова О.Н., 119)» → предмет, учителя, кабинеты */
+function schCellParse(text){
+  let t = String(text == null ? "" : text).replace(/\s+/g, " ").trim(); if(!t) return null;
+  if(/^\d-я суббота/i.test(t)) return null;
+  let name = t, inside = ""; const m = /^([^(]*)\((.*?)\)?\s*$/.exec(t); if(m){ name = m[1].trim(); inside = m[2].trim(); }
+  let teacher = "", room = "";
+  const event = !!name && name === name.toUpperCase() && /[А-ЯЁ]{4}/.test(name);
+  if(inside && event) room = inside.charAt(0) + inside.slice(1).toLowerCase();
+  else if(inside){
+    const ts = [], rs = [];
+    inside.split("/").forEach(p => { p = p.trim(); const i = p.indexOf(","); let a = (i < 0 ? p : p.slice(0, i)).trim().replace(/\.\.+$/, "."), b = i < 0 ? "" : p.slice(i + 1).trim();
+      if(!/[А-ЯЁ]\.\s?[А-ЯЁ]?\.?$|^[А-ЯЁ][а-яё]+$/.test(a) && !b){ b = a; a = ""; }
+      if(a) ts.push(a); rs.push(b); });
+    teacher = ts.join(" / ");
+    if(!name){ const ev = rs.find(x => /[А-ЯЁ]{4}/.test(x)); name = ev ? ev.replace(/["«»]/g, "").trim() : "Занятие"; name = name.charAt(0) + name.slice(1).toLowerCase(); }
+    else if(rs.length === 1 && /^\d{1,2}[.:]\d{2}$/.test(rs[0])) room = "Начало в " + rs[0];
+    else if(rs.some(Boolean)) room = rs.every(x => /^\d+$/.test(x)) ? "каб. " + rs.join(" / ") : rs.filter(Boolean).map(x => /^\d+$/.test(x) ? "каб. " + x : x.charAt(0).toUpperCase() + x.slice(1)).join(" / ");
+  }
+  if(event) name = name.charAt(0) + name.slice(1).toLowerCase();
+  if(/линейка/i.test(name) && event) return { subject: "Линейка", teacher: "", room };
+  name = SCH_FULLN[name.toLowerCase()] || name;
+  return { subject: name, teacher, room };
+}
+/* книга SheetJS → недели нужного класса: [{ title, mon: Date, base, days: [{ weekday, date, lessons }] }] */
+function schGridWeeks(wb, cls, year){
+  const want = impSchKey(cls), out = [];
+  for(const sn of wb.SheetNames){
+    const sh = wb.Sheets[sn]; if(!sh || !sh["!ref"]) continue;
+    const rows = XLSX.utils.sheet_to_json(sh, { header: 1, raw: true, defval: "", blankrows: true });
+    (sh["!merges"] || []).forEach(g => { const v = (rows[g.s.r] || [])[g.s.c]; if(v === "" || v == null) return;
+      for(let r = g.s.r; r <= g.e.r; r++) for(let c = g.s.c; c <= g.e.c; c++){ rows[r] = rows[r] || []; if(c >= 3 || c === g.s.c) rows[r][c] = v; } });
+    /* строка заголовков: в ней больше всего ячеек вида «8А (224)», «10 ТА» */
+    let hr = -1, col = -1, best = 0;
+    for(let r = 0; r < Math.min(rows.length, 12); r++){
+      const R = rows[r] || []; let n = 0, c0 = -1;
+      R.forEach((v, c) => { if(/^\s*\d{1,2}\s*[«"]?\s*[А-ЯЁA-Z]{1,2}\s*[»"]?(\s*\(\d+\))?\s*$/i.test(String(v))){ n++; if(impSchKey(v) === want) c0 = c; } });
+      if(n > best){ best = n; hr = r; col = c0; }
+    }
+    if(hr < 0 || col < 0) continue;
+    const H = rows[hr].map(v => String(v).toLowerCase());
+    const cN = Math.max(0, H.findIndex(v => /^№|^n$|номер/.test(v.trim()))), cT = H.findIndex(v => /врем/.test(v));
+    const cNum = cN > 0 ? cN : 1, cTime = cT >= 0 ? cT : 2;
+    const days = []; let cur = null;
+    for(let r = hr + 1; r < rows.length; r++){
+      const R = rows[r] || [], a = R[0], d = schDateOf(a, year), wd = d ? (d.getDay() || 7) : schWdOf(a);
+      if((d || wd) && (!cur || (d && (!cur.date || +d !== +cur.date)) || (!d && wd !== cur.weekday))) { cur = { weekday: wd, date: d, lessons: [] }; if(wd >= 1 && wd <= 6) days.push(cur); }
+      if(!cur) continue;
+      const t = String(R[cTime] == null ? "" : R[cTime]).replace(/\s+/g, "").replace(/[–—]/g, "-"), nv = R[cNum];
+      if(!t && (nv === "" || nv == null)) continue;
+      const L = schCellParse(R[col]); if(!L) continue;
+      cur.lessons.push({ n: typeof nv === "number" ? nv : (/^\d+$/.test(String(nv).trim()) ? +nv : ""), t, ...L });
+    }
+    const ds = days.filter(x => x.lessons.length); if(!ds.length) continue;
+    const d0 = ds.find(x => x.date); const mon = d0 ? new Date(d0.date.getFullYear(), d0.date.getMonth(), d0.date.getDate() - ((d0.date.getDay() + 6) % 7)) : null;
+    out.push({ title: sn.trim(), mon, base: /четверт|полугод|триместр|основн/i.test(sn), days: ds });
+  }
+  return out;
+}
+/* выбрать неделю: с нужным понедельником, иначе основное расписание, иначе первую */
+function schPickWeek(weeks, monday){
+  const key = d => d ? d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() : "";
+  return weeks.find(w => key(w.mon) === key(monday)) || weeks.find(w => w.base) || weeks[0] || null;
+}
+
+/* ---- Агент расписания без Claude: PDF и фото/сканы (сборка 655) ----
+   PDF с текстом: берём слова с координатами (pdf.js), столбцы — по подписям классов в шапке.
+   Фото и сканы: выравниваем наклон, находим вертикальные линии таблицы, читаем текст (Tesseract.js, русский)
+   и раскладываем слова по столбцам и строкам. ИИ здесь не нужен: дальше уроки разбираются по словарю предметов. */
+const IMP_SUBJ = ["Русский язык", "Литература", "История", "Обществознание", "Информатика", "Разговоры о важном", "Химия", "Алгебра", "Геометрия", "Английский язык", "Физика", "Биология", "География", "Экономика", "Физическая культура", "ОБиЗР", "Музыка", "Вероятность и статистика", "Индивидуальный проект", "Тренинг по математике", "Тренинг по информатике", "Мониторинг по математике", "Теория познания", "Психология", "Практикум по праву", "Доп. главы по математике", "Практическая грамматика английского языка", "Современные языки программирования", "Дополнительные занятия по русскому языку", "Дополнительные занятия по математике", "Занятия по экономике", "Линейка", "Предвыборные дебаты", "Торжественная линейка", "Право"];
+const impLat = s => String(s).replace(/[aAbBcCeEhHkKmMoOpPtTxXyY]/g, ch => ({ a: "а", A: "А", b: "в", B: "В", c: "с", C: "С", e: "е", E: "Е", h: "н", H: "Н", k: "к", K: "К", m: "м", M: "М", o: "о", O: "О", p: "р", P: "Р", t: "т", T: "Т", x: "х", X: "Х", y: "у", Y: "У" })[ch]);
+/* ключ класса из распознанного текста: «ЗА (224)» → «8а», «1О ТА» → «10та» */
+function impClsKey(s){
+  let k = impLat(String(s).replace(/\(.*$/, "")).toLowerCase().replace(/ё/g, "е").replace(/[^0-9а-я]/g, "");
+  k = k.replace(/^з(?=[а-я]{1,2}$)/, "8").replace(/^э(?=[а-я]{1,2}$)/, "9").replace(/^(1[01])6$/, "$1б").replace(/^[тi1l]([0о])(?=[а-я])/, "1$1").replace(/^1о/, "10").replace(/^б(?=[а-я]$)/, "6");
+  return k;
+}
+function impLev(a, b){ const m = a.length, n = b.length; if(!m) return n; if(!n) return m; let p = Array.from({ length: n + 1 }, (_, i) => i);
+  for(let i = 1; i <= m; i++){ const c = [i]; for(let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
+/* название предмета по распознанному тексту (опечатки распознавания: «Кимия» → «Химия») */
+function impSubject(raw, extra){
+  const s = impLat(raw).toLowerCase().replace(/ё/g, "е").replace(/[^а-я .]/g, " ").replace(/\s+/g, " ").trim(); if(s.length < 3) return null;
+  const voc = [...new Set([...(extra || []), ...IMP_SUBJ])];
+  let best = null, bd = 9;
+  for(const v of voc){ const t = v.toLowerCase().replace(/ё/g, "е"); const head = s.slice(0, t.length + 2);
+    const d = Math.min(impLev(head.slice(0, t.length), t), impLev(s.slice(0, Math.max(t.length, 4)), t)) / t.length;
+    if(d < bd){ bd = d; best = v; } }
+  return bd <= 0.34 ? best : null;
+}
+const impTeacher = s => { const m = /([А-ЯЁ][а-яё]{2,})\s*,?\s*([А-ЯЁ])\.?\s*([А-ЯЁ])\.?/.exec(impLat(s).replace(/[|_]/g, " ")); return m ? m[1] + " " + m[2] + "." + m[3] + "." : ""; };
+const impRoom = s => { const r = (String(s).match(/\b[1-4]\d{2}\b/g) || []).filter((x, i, a) => a.indexOf(x) === i); return r.length ? "каб. " + r.join(" / ") : (/спортзал/i.test(s) ? "спортзал" : ""); };
+/* слова [{t,x,y}] + границы столбцов → дни и уроки нужного класса */
+function impFromWords(words, bounds, cls, extra){
+  const colOf = x => { for(let j = 0; j < bounds.length - 1; j++) if(x >= bounds[j] && x < bounds[j + 1]) return j; return -1; };
+  words = words.filter(w => w.t && w.t.trim()).map(w => ({ ...w, t: w.t.trim(), c: colOf(w.x) }));
+  if(!words.length) return { err: "На картинке не нашлось текста" };
+  /* шапка: верхние слова; столбец класса — где склеенный текст шапки совпадает с классом */
+  const want = impClsKey(cls), ys = words.map(w => w.y).sort((a, b) => a - b);
+  const byCol = (from, to) => { const o = {}; words.filter(w => w.y >= from && w.y <= to).sort((a, b) => a.y - b.y || a.x - b.x).forEach(w => { (o[w.c] = o[w.c] || []).push(w.t); }); return o; };
+  let col = -1, hdrY = 0, nCol = -1, tCol = -1;
+  for(const w of words.filter(w => /\(\d{3}\)|^\d{1,2}$|^[0-9зЗэЭ1]{1,2}[А-ЯA-Zа-я]{0,2}$/.test(w.t)).sort((a, b) => a.y - b.y)){
+    const band = byCol(w.y - w.h * 0.8, w.y + w.h * 0.8), keys = Object.entries(band).filter(([c]) => c >= 0).map(([c, t]) => [+c, impClsKey(t.join(""))]);
+    const hits = keys.filter(([, k]) => /^\d{1,2}[а-я]{1,2}$/.test(k)).length;
+    if(hits >= 3){ const fs = keys.filter(([, k]) => k === want), g = k => +(/^\d+/.exec(k) || [0])[0], wg = g(want);
+      const ok = ([c]) => { const L = keys.filter(([cc, kk]) => cc < c && /^\d/.test(kk)).pop(), R = keys.find(([cc, kk]) => cc > c && /^\d/.test(kk)); return (!L || g(L[1]) <= wg) && (!R || g(R[1]) >= wg); };
+      const f = fs.find(ok) || fs[0]; hdrY = w.y; if(f){ col = f[0]; }
+      Object.entries(band).forEach(([c, t]) => { const s = t.join(" ").toLowerCase(); if(/№|n[eo]?$/.test(s)) nCol = +c; if(/врем|ремя/.test(s)) tCol = +c; });
+      break; }
+  }
+  if(col < 0) return { err: "Не нашёл столбец класса «" + cls + "» в шапке таблицы" };
+  const body = words.filter(w => w.y > hdrY + 4), firstCls = Math.max(nCol, tCol) + 1, lastCls = bounds.length - 2;
+  if(nCol < 0){ const cnt = {}; body.filter(w => /^\d{1,2}$/.test(w.t) && +w.t <= 12).forEach(w => { cnt[w.c] = (cnt[w.c] || 0) + 1; }); nCol = +(Object.entries(cnt).sort((a, b) => b[1] - a[1])[0] || [1])[0]; }
+  if(tCol < 0) tCol = nCol + 1;
+  /* опорные строки — время начала урока в столбце «время» («8.00-» и ниже «8.40»); новый день — когда время начала меньше прошлого */
+  const tm = []; body.filter(w => w.c === tCol).sort((p, q) => p.y - q.y).forEach(w => {
+    const re = /(\d{1,2})[.:,]?(\d{2})/g; let m; while((m = re.exec(w.t.replace(/[оО]/g, "0").replace(/[зЗ]/g, "3")))){ const h = +m[1], mi = +m[2]; if(h >= 7 && h <= 20 && mi < 60) tm.push({ v: h * 60 + mi, y: w.y, h: w.h, s: h + "." + m[2] }); } });
+  const anc = []; for(let i = 0; i < tm.length; i++){ const a = tm[i], b = tm[i + 1];
+    if(b && b.v > a.v && b.v - a.v <= 200 && b.y - a.y < a.h * 4){ anc.push({ y: a.y, h: a.h, v: a.v, t: a.s + "-" + b.s }); i++; } }
+  if(!anc.length) return { err: "Не нашёл время уроков" };
+  const days = []; let cur = null, prev = 1e9;
+  anc.forEach((a, i) => {
+    if(a.v < prev - 30 || !cur){ cur = { weekday: Math.min(6, days.length + 1), lessons: [] }; days.push(cur); }
+    prev = a.v;
+    const y0 = a.y - a.h * 0.9, y1 = i + 1 < anc.length ? anc[i + 1].y - anc[i + 1].h * 0.9 : a.y + a.h * 12;
+    const lines = []; body.filter(w => w.c === col && w.y >= y0 && w.y < y1).sort((p, q) => p.y - q.y || p.x - q.x).forEach(w => { const L = lines.find(l => Math.abs(l.y - w.y) < w.h * 0.6); if(L) L.t.push(w); else lines.push({ y: w.y, t: [w] }); });
+    const text = lines.map(l => l.t.sort((p, q) => p.x - q.x).map(w => w.t).join(" ")).join(" ").replace(/\s+/g, " ").trim();
+    const nw = body.find(w => w.c === nCol && w.y >= y0 && w.y < y1 && /^\d{1,2}$/.test(w.t.replace(/[|.,]/g, "")));
+    let subject = impSubject(text, extra), full = text;
+    if(!subject && text){   /* объединённая ячейка (линейка, занятия сразу у нескольких классов): фраза тянется вправо по той же строке */
+      const inRow = body.filter(w => w.y >= y0 && w.y < y1 && w.c >= col && w.c <= lastCls), first = inRow.filter(w => w.c === col).sort((p, q) => p.y - q.y)[0];
+      const line = inRow.filter(w => Math.abs(w.y - first.y) < first.h * 0.6);
+      let c2 = col; while(c2 + 1 <= lastCls && c2 - col < 6 && line.some(w => w.c === c2 + 1)) c2++;
+      full = line.filter(w => w.c <= c2).sort((p, q) => p.x - q.x).map(w => w.t).join(" "); subject = impSubject(full, extra);
+    }
+    if(!subject) return;
+    const dur = (() => { const m = /(\d+)\.(\d+)-(\d+)\.(\d+)/.exec(a.t); return m ? (+m[3] * 60 + +m[4]) - (+m[1] * 60 + +m[2]) : 40; })();
+    cur.k = (cur.k || 0) + (dur >= 30 ? 1 : 0);   // короткое (линейка) — без номера
+    cur.lessons.push({ n: nw ? +nw.t.replace(/[|.,]/g, "") : dur >= 30 ? cur.k : "", t: a.t, subject, teacher: impTeacher(full.replace(/^[^(]*/, "")), room: impRoom(full.replace(/^[^(]*/, "")), raw: full.slice(0, 120) });
+  });
+  return { days: days.filter(d => d.lessons.length) };
+}
+/* ---- PDF с текстом: слова с координатами ---- */
+async function impPdfWords(pdf, maxPages){
+  const words = []; let off = 0;
+  for(let i = 1; i <= Math.min(pdf.numPages, maxPages || 15); i++){
+    const pg = await pdf.getPage(i), vp = pg.getViewport({ scale: 1 }), tc = await pg.getTextContent();
+    tc.items.forEach(it => { if(!it.str || !it.str.trim()) return; const h = Math.abs(it.transform[3]) || 8;
+      it.str.split(/\s+/).filter(Boolean).forEach((p, k, arr) => { const share = (it.width || p.length * h * 0.5) / Math.max(1, it.str.length), before = it.str.indexOf(p, k ? it.str.indexOf(arr[k - 1]) + arr[k - 1].length : 0);
+        words.push({ t: p, x: it.transform[4] + share * (before + p.length / 2), y: off + (vp.height - it.transform[5]) - h / 2, h }); }); });
+    off += vp.height + 20;
+  }
+  return words;
+}
+/* границы столбцов PDF: по центрам подписей классов в шапке */
+function impPdfBounds(words){
+  const top = words.filter(w => w.y < Math.min(...words.map(v => v.y)) + 120);
+  const heads = top.filter(w => /^\(\d{3}\)$/.test(w.t)).sort((a, b) => a.x - b.x);   // «(224)» под каждым классом
+  const n = top.find(w => w.t === "№"), tm = top.find(w => /^время$/i.test(w.t));
+  if(!n || !tm || heads.length < 3) return null;
+  const cs = [n.x, tm.x, ...heads.map(h => h.x)], b = [-1e9, n.x - (tm.x - n.x) / 2];
+  for(let i = 0; i < cs.length - 1; i++) b.push((cs[i] + cs[i + 1]) / 2); b.push(1e9);
+  return b;
+}
+/* ---- фото и сканы ---- */
+function impImgData(img, maxW){ const sc = Math.min(1, (maxW || 2400) / img.width), c = document.createElement("canvas"); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); const x = c.getContext("2d", { willReadFrequently: true }); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); return c; }
+function impRotate(src, deg){ const c = document.createElement("canvas"); c.width = src.width; c.height = src.height; const x = c.getContext("2d", { willReadFrequently: true }); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.translate(c.width / 2, c.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(src, -src.width / 2, -src.height / 2); return c; }
+function impGray(c){ const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data, g = new Uint8Array(c.width * c.height); for(let i = 0; i < g.length; i++) g[i] = (d[i * 4] * 299 + d[i * 4 + 1] * 587 + d[i * 4 + 2] * 114) / 1000; return g; }
+function impPeaks(prof, k, gap){
+  const n = prof.length, w = 41, base = new Float32Array(n);
+  for(let i = 0; i < n; i++){ const s = prof.slice(Math.max(0, i - w), i + w).sort((a, b) => a - b); base[i] = s[s.length >> 1]; }
+  const d = prof.map((v, i) => v - base[i]), sd = Array.from(d).sort((a, b) => a - b), med = sd[sd.length >> 1], mad = Array.from(d).map(v => Math.abs(v - med)).sort((a, b) => a - b)[n >> 1] + 1e-6, mx = Math.max(...prof);
+  const idx = []; for(let i = 0; i < n; i++) if(d[i] > k * mad * 1.4826 + 0.02 * mx) idx.push(i);
+  const out = []; let g = []; idx.forEach(i => { if(g.length && i - g[g.length - 1] > gap){ out.push(g.reduce((a, b) => a + b) / g.length); g = []; } g.push(i); }); if(g.length) out.push(g.reduce((a, b) => a + b) / g.length);
+  return out;
+}
+/* наклон: угол, при котором вертикальные линии таблицы самые чёткие */
+function impDeskew(c){
+  const small = impImgData(c, 700); let best = [0, -1];
+  for(let a = -3; a <= 3.01; a += 0.25){ const r = impRotate(small, a), g = impGray(r), W = r.width, H = r.height, col = new Float32Array(W);
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++) if(g[y * W + x] < 215) col[x]++;
+    let s = 0; for(let x = 0; x < W; x++) s += (col[x] / H) ** 2; if(s > best[1]) best = [a, s]; }
+  return best[0];
+}
+function impVLines(c){ const g = impGray(c), W = c.width, H = Math.round(c.height * 0.5), p = new Float32Array(W);
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++) p[x] += 255 - g[y * W + x]; for(let x = 0; x < W; x++) p[x] /= H; return impPeaks(p, 6, 10); }
+let IMP_TESS = null;
+async function impOcr(file, cls, extra, onStep){
+  onStep && onStep("Готовлю картинку…");
+  const img = await createImageBitmap(file); let c = impImgData(img, 2400); img.close && img.close();
+  const ang = impDeskew(c); if(Math.abs(ang) > 0.1) c = impRotate(c, ang);
+  const vx = impVLines(c);
+  if(vx.length < 6) return { err: "Не вижу линий таблицы: сфотографируйте лист ровно, сверху, без перспективы — или загрузите файл Excel/PDF", photo: true };
+  onStep && onStep("Читаю текст с картинки… первый раз загружается словарь (≈3 МБ)");
+  if(!window.Tesseract) await loadScript(LIBS.tess);
+  if(!IMP_TESS){ IMP_TESS = await Tesseract.createWorker("rus", 1, { ...(window.IMP_TESS_OPTS || {}), logger: m => { if(m.status === "recognizing text" && onStep) onStep("Читаю текст с картинки… " + Math.round(m.progress * 100) + "%"); } }); await IMP_TESS.setParameters({ tessedit_pageseg_mode: "11", preserve_interword_spaces: "1" }); }
+  const up = document.createElement("canvas"), k = c.width < 2000 ? 2 : 1; up.width = c.width * k; up.height = c.height * k;
+  const ux = up.getContext("2d"); ux.imageSmoothingQuality = "high"; ux.filter = "grayscale(1) contrast(1.25)"; ux.drawImage(c, 0, 0, up.width, up.height);
+  const { data } = await IMP_TESS.recognize(up);
+  let words = (data.words || []).map(w => ({ t: w.text, x: (w.bbox.x0 + w.bbox.x1) / 2 / k, y: (w.bbox.y0 + w.bbox.y1) / 2 / k, h: (w.bbox.y1 - w.bbox.y0) / k }));
+  /* шапку читаем ещё раз по ячейкам: так «8А» не путается с «9А» */
+  const rooms = words.filter(w => /^\(?\d{3}\)?$/.test(w.t)).map(w => w.y).sort((a, b) => a - b);
+  if(rooms.length >= 3 && rooms.some(y => rooms.filter(z => Math.abs(z - y) < 8).length >= 3)){
+    const hy = rooms.find(y => rooms.filter(z => Math.abs(z - y) < 8).length >= 3), hh = Math.max(...words.filter(w => Math.abs(w.y - hy) < 6).map(w => w.h), 10), hdr = [];
+    onStep && onStep("Читаю шапку таблицы…");
+    await IMP_TESS.setParameters({ tessedit_pageseg_mode: "7" });
+    for(let j = 0; j < vx.length - 1; j++){ const x0 = vx[j] + 2, x1 = vx[j + 1] - 2; if(x1 - x0 < 12) continue;
+      const cc = document.createElement("canvas"), s3 = 3; cc.width = (x1 - x0) * s3; cc.height = Math.round(hh * 2.2) * s3;
+      const cx = cc.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cc.width, cc.height); cx.filter = "grayscale(1) contrast(1.4)"; cx.drawImage(c, x0, hy - hh * 1.1, x1 - x0, hh * 2.2, 0, 0, cc.width, cc.height);
+      const r = await IMP_TESS.recognize(cc); const t = (r.data.text || "").replace(/\s+/g, " ").trim(); if(t) hdr.push({ t, x: (x0 + x1) / 2, y: hy, h: hh, hdr: true }); }
+    await IMP_TESS.setParameters({ tessedit_pageseg_mode: "11" });
+    words = words.filter(w => Math.abs(w.y - hy) > hh * 0.9).concat(hdr);
+  }
+  return { ...impFromWords(words, vx, cls, extra), photo: true, angle: ang };
+}
+
+/* текст фото для агентов: обычное распознавание страницы (без таблицы) */
+async function impOcrText(blob, onStep){
+  if(!window.Tesseract) await loadScript(LIBS.tess);
+  if(!IMP_TESS){ IMP_TESS = await Tesseract.createWorker("rus", 1, { ...(window.IMP_TESS_OPTS || {}) }); }
+  await IMP_TESS.setParameters({ tessedit_pageseg_mode: "3" });
+  onStep && onStep("Читаю текст с фото…");
+  const img = await createImageBitmap(blob), c = impImgData(img, 2400); img.close && img.close();
+  const { data } = await IMP_TESS.recognize(c); await IMP_TESS.setParameters({ tessedit_pageseg_mode: "11" });
+  return String(data.text || "").trim();
+}
+/* ИИ-прокси Ядра (YandexGPT, при сбое GigaChat) для расписаний, которые не разобрались по таблице */
+async function impAi(text, cls, wk, signal, onStep){
+  const chunks = []; let t = String(text);
+  if(t.length > 11000){ const parts = t.split(/(?=(?:monday|tuesday|wednesday|thursday|friday|saturday|понедельник|вторник|среда|четверг|пятница|суббота))/i); let cur = ""; parts.forEach(p => { if((cur + p).length > 11000 && cur){ chunks.push(cur); cur = ""; } cur += p.slice(0, 11000); }); if(cur) chunks.push(cur); }
+  else chunks.push(t);
+  const days = {}; let model = "";
+  for(let i = 0; i < chunks.length && i < 8; i++){
+    onStep && onStep("Помощник разбирает расписание" + (chunks.length > 1 ? ` (часть ${i + 1} из ${Math.min(chunks.length, 8)})` : "") + "…");
+    const prompt = `Найди в данных расписание уроков класса «${cls}» на неделю с понедельника ${wk.getDate()} ${MG[wk.getMonth()]}. Данные могут быть таблицей, где каждый класс — отдельный столбец; бери только столбец «${cls}».
+Верни ТОЛЬКО JSON без пояснений: {"days":[{"weekday":1,"lessons":[{"n":1,"t":"8.00-8.40","subject":"Русский язык","teacher":"Базанова О.В.","room":"каб. 211"}]}]}
+weekday: 1 = понедельник … 6 = суббота. n — номер урока ("" для линейки и событий без номера). Если уроков класса в этих данных нет — {"days":[]}. Ничего не придумывай.
+ДАННЫЕ:
+${chunks[i]}`;
+    let j = null, last = "";
+    for(const prov of ["yandex", "gigachat"]){
+      try { const r = await aiFetch({ provider: prov, messages: [{ role: "user", content: prompt }] }, signal); const o = await r.json().catch(() => ({}));
+        if(!r.ok || !o.text){ last = o.error || "ИИ-сервер не ответил (код " + r.status + ")"; continue; }
+        const m = /\{[\s\S]*\}/.exec(String(o.text).replace(/```json|```/g, "")); if(!m){ last = "ответ без JSON"; continue; }
+        j = JSON.parse(m[0]); model = model || (prov === "yandex" ? "YandexGPT" : "GigaChat"); break;
+      } catch(e) { if(e && e.name === "AbortError") throw { code: "cancelled" }; last = e && e.message || "ошибка"; }
+    }
+    if(!j){ const e = new Error(last || "ИИ-сервер не ответил"); throw e; }
+    (j.days || []).forEach(d => { const wd = +d.weekday; if(wd >= 1 && wd <= 6 && (d.lessons || []).length) days[wd] = (days[wd] || []).concat(d.lessons); });
+  }
+  return { days: Object.entries(days).map(([weekday, lessons]) => ({ weekday: +weekday, lessons })), model };
+}
 async function runImport(){
   if(IMP.busy) return;
   IMP.err = ""; IMP.result = null;
-  if(!SAMPLE){ IMP.err = "Распознавание недоступно в этом окне: откройте страницу в Claude и разрешите ей обращаться к Claude."; renderSchedule(); return; }
   if(!IMP.file && !IMP.text.trim()){ IMP.err = "Выберите файл или вставьте текст расписания."; renderImp(); return; }
   IMP.busy = true; IMP.started = Date.now(); IMP.status = "Читаю файл…"; IMP.ctl = new AbortController(); renderImp();
+  const step = t => { IMP.status = t; const el = document.getElementById("imp-status"); if(el) el.textContent = t; };
   const tick = setInterval(() => { const el = document.getElementById("imp-status"); if(el && IMP.busy) el.textContent = `${IMP.status} ${Math.round((Date.now() - IMP.started)/1000)} с`; }, 1000);
   try {
-    let src = { text: IMP.text.trim() };
-    if(IMP.file){ const f = await extractFile(IMP.file); src = { text: (f.text || "") + (IMP.text.trim() ? "\n\n" + IMP.text.trim() : ""), images: f.images }; }
-    const wk = IMP.week ? new Date(IMP.week + "T00:00") : SCHED_MONDAY;
-    const prompt = `Ты агент расписания школьной платформы. Ниже данные из файла (таблица, PDF, текст или изображения скана) с расписанием уроков.
-Найди расписание класса «${IMP.cls}» на неделю, которая начинается в понедельник ${wk.getDate()} ${MG[wk.getMonth()]}. Если недель в данных несколько, возьми именно эту; если даты не указаны, возьми то расписание, что есть.
-Верни ТОЛЬКО JSON без пояснений в формате:
-{"days":[{"weekday":1,"lessons":[{"n":1,"t":"8.00-8.40","subject":"Русский язык","teacher":"Базанова О.В.","room":"каб. 211"}]}]}
-Правила: weekday 1 = понедельник … 6 = суббота; n — номер урока (для событий без номера, например линейки, пустая строка ""); t — время «Ч.ММ-Ч.ММ», как в источнике; subject — полное название предмета или события как в источнике; teacher и room — только если указаны, иначе пропусти поле; если у урока две группы, объедини учителей и кабинеты через « / »; пустые уроки не включай; ничего не придумывай.
-${src.text ? "\nДАННЫЕ:\n" + src.text.slice(0, 180000) : "\nДанные на приложенных изображениях."}`;
-    IMP.status = "Claude разбирает расписание…";
-    const opts = { modelTier: "complex", signal: IMP.ctl.signal };
-    if(src.images && src.images.length) opts.images = src.images;
-    const j = await SAMPLE.json(prompt, opts);
-    const r = normalizeParsed(j);
+    const wk = IMP.week ? new Date(IMP.week + "T00:00") : SCHED_MONDAY, year = wk.getFullYear(), cls = IMP.cls, f = IMP.file, name = f ? f.name.toLowerCase() : "";
+    const extra = Object.values(DATA.subjects || {}).map(x => x && x.name).filter(Boolean);
+    let days = null, how = "", warn = "", aiText = "";
+    const fromWeeks = weeks => { const w = schPickWeek(weeks, mondayOf(wk)); return w ? w.days : null; };
+    const pasted = IMP.text.trim();
+    if(f && /\.(xlsx|xlsm|xls|ods)$/.test(name)){
+      if(!window.XLSX) await loadScript(LIBS.xlsx);
+      const wb = XLSX.read(await f.arrayBuffer(), { type: "array" }); days = fromWeeks(schGridWeeks(wb, cls, year)); how = "table";
+      if(!days) aiText = wb.SheetNames.map(n => `=== Лист «${n}» ===\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n], { blankrows: false })).join("\n\n");
+    } else if((f && /\.(csv|tsv|txt)$/.test(name)) || (!f && pasted)){
+      if(!window.XLSX) await loadScript(LIBS.xlsx);
+      let txt = IMP.text.replace(/^\s*\n+|\s+$/g, ""); if(f){ const buf = await f.arrayBuffer(); txt = new TextDecoder("utf-8").decode(buf); if((txt.match(/�/g) || []).length > 5) txt = new TextDecoder("windows-1251").decode(buf); }
+      const wb = XLSX.read(txt, { type: "string", ...(/\t/.test(txt) ? { FS: "\t" } : {}) }); days = fromWeeks(schGridWeeks(wb, cls, year)); how = "table";
+      if(days) warn = "В CSV и скопированном тексте не видно объединённых ячеек: уроки сразу у нескольких классов (линейка, мониторинг) могут пропасть. Надёжнее загрузить файл Excel.";
+      else aiText = txt;
+    } else if(f && /\.pdf$/.test(name)){
+      if(!window.pdfjsLib) await loadScript(LIBS.pdf);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+      const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise, words = await impPdfWords(pdf, 15);
+      if(words.length > 40){ const b = impPdfBounds(words); if(b){ const r = impFromWords(words, b, cls, extra); if(r.days && r.days.length){ days = r.days; how = "pdf"; } }
+        if(!days){ const ex = await extractFile(f); aiText = ex.text || ""; } }
+      else {   /* скан в PDF: первая страница как картинка */
+        const page = await pdf.getPage(1), vp = page.getViewport({ scale: 2 }), c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+        await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+        const blob = await new Promise(r => c.toBlob(r, "image/png")), r = await impOcr(blob, cls, extra, step);
+        if(r.days && r.days.length){ days = r.days; how = "photo"; } else { warn = r.err || ""; aiText = await impOcrText(blob, step); how = "photo"; }
+      }
+    } else if(f && ((f.type || "").startsWith("image/") || /\.(png|jpe?g|webp|heic)$/.test(name))){
+      const r = await impOcr(f, cls, extra, step);
+      if(r.days && r.days.length){ days = r.days; how = "photo"; }
+      else { warn = r.err || ""; aiText = await impOcrText(f, step); how = "photo"; }
+    } else if(f){ aiText = await f.text(); }
+    let model = "";
+    if(!days && aiText.trim()){ const r = await impAi(aiText, cls, wk, IMP.ctl.signal, step); days = r.days; model = r.model; how = how === "photo" ? "photo+ai" : "ai"; }
+    if(!days || !days.length) throw { code: "empty", message: warn };
+    if(how.startsWith("photo")) warn = (warn ? warn + " " : "") + "Распознано с картинки: сверьте каждый урок перед тем, как применить.";
+    const r = normalizeParsed({ days });
     if(!Object.keys(r.timetable).length) throw { code: "empty", message: "" };
-    IMP.result = { ...r, weekStart: ddmm(mondayOf(wk)), cls: IMP.cls, source: IMP.file ? IMP.file.name : "вставленный текст" };
+    IMP.result = { ...r, weekStart: ddmm(mondayOf(wk)), cls: IMP.cls, source: IMP.file ? IMP.file.name : "вставленный текст", how, model, warn };
   } catch(e) {
     const c = e && e.code;
-    IMP.err = c === "cancelled" ? "Распознавание остановлено."
-      : c === "not_granted" ? "Без разрешения обращаться к Claude агент не может разобрать файл."
-      : c === "images_unavailable" || c === "image_rejected" ? "Изображение не удалось передать. Попробуйте файл Excel или PDF с текстом."
-      : c === "prompt_too_large" ? "Файл слишком большой. Оставьте в таблице только нужный лист или неделю."
-      : c === "rate_limited" ? "Слишком много запросов подряд. Подождите минуту и попробуйте снова."
-      : c === "empty" ? `Не нашёл расписание класса «${IMP.cls}». Проверьте название класса и неделю.`
-      : c === "invalid_json" ? "Ответ получился неполным. Попробуйте ещё раз или загрузите только нужную неделю."
-      : (e && e.message && !c) ? e.message : "Не получилось распознать расписание. Попробуйте другой файл.";
+    IMP.err = c === "cancelled" || (e && e.name === "AbortError") ? "Распознавание остановлено."
+      : c === "empty" ? (e.message ? e.message : `Не нашёл расписание класса «${IMP.cls}». Проверьте название класса и неделю.`)
+      : (e && e.message) ? "Не получилось: " + e.message : "Не получилось распознать расписание. Попробуйте другой файл.";
   } finally {
     clearInterval(tick); IMP.busy = false; IMP.status = ""; renderImp();
   }
@@ -7665,14 +7954,14 @@ function importPanelHtml(){
   if(IMP.result){
     const r = IMP.result, subs = { ...DATA.subjects, ...r.subjects };
     preview = `<div class="imp-preview">
-      <div class="imp-ph"><b>Нашёл ${Object.keys(r.timetable).length} ${plural(Object.keys(r.timetable).length,["день","дня","дней"])}, ${Object.values(r.timetable).reduce((a,l) => a + l.length, 0)} уроков</b><span class="muted">Проверьте и примените</span></div>
+      <div class="imp-ph"><b>Нашёл ${Object.keys(r.timetable).length} ${plural(Object.keys(r.timetable).length,["день","дня","дней"])}, ${Object.values(r.timetable).reduce((a,l) => a + l.length, 0)} уроков</b><span class="muted">${({ table: "По таблице, без ИИ", pdf: "По PDF, без ИИ", photo: "С картинки", "photo+ai": "С картинки, помощник " + (r.model || ""), ai: "Помощник " + (r.model || "") })[r.how] || "Проверьте и примените"}</span></div>${r.warn ? `<p class="imp-warn">${esc(r.warn)}</p>` : ""}
       <div class="imp-days">${Object.entries(r.timetable).map(([wd, ls]) => `<div class="imp-day"><div class="imp-dn">${WDL[+wd % 7]}</div><ol>${ls.map(l => `<li><span class="imp-n">${l.n}</span><span>${esc((subs[l.s] || {}).name || l.s)}</span><span class="imp-t">${esc(l.t)}</span></li>`).join("")}</ol></div>`).join("")}</div>
       <div class="imp-actions"><button class="btn primary" data-imp-apply>Применить расписание</button><button class="btn" data-imp-discard>Отменить</button></div>
     </div>`;
   }
   return `<section class="panel imp-panel">
     <div class="panel-head"><h2>Агент расписания <span class="beta">бета</span></h2><button class="link" data-imp-close>Закрыть</button></div>
-    <p class="muted imp-lede">Загрузите PDF, Excel, CSV, фото или скан расписания либо вставьте скопированную Google-таблицу. Агент найдёт уроки нужного класса и соберёт неделю.</p>
+    <p class="muted imp-lede">Загрузите Excel, PDF, CSV, фото или скан расписания либо вставьте скопированную Google-таблицу. Таблицы и PDF разбираются точно, без ИИ; с фото — проверьте результат.</p>
     <div class="imp-grid">
       <label class="imp-drop" for="imp-file"><input type="file" id="imp-file" accept=".pdf,.xlsx,.xlsm,.xls,.ods,.csv,.png,.jpg,.jpeg,.webp,.heic" data-imp-file>
         <b>${IMP.file ? esc(IMP.file.name) : "Выбрать файл"}</b><span>${IMP.file ? "Нажмите, чтобы заменить" : "PDF, Excel, CSV, фото или скан"}</span></label>
@@ -8239,6 +8528,11 @@ async function agRun(a){
   try {
     let src = { text: AG.text.trim() };
     if(AG.file){ const f = await extractFile(AG.file); src = { text: (f.text || "") + (src.text ? "\n\n" + src.text : ""), images: f.images }; }
+    if(!SAMPLE && src.images && src.images.length){   /* без Claude фото и сканы читаем сами (Tesseract) и отдаём ИИ-прокси текстом */
+      let ocr = ""; for(const im of src.images.slice(0, 4)){ try { ocr += "\n" + await impOcrText(im, t2 => { AG.out = t2; const el = document.getElementById("ag-out"); if(el) el.textContent = t2; }); } catch(e) {} }
+      src = { text: (src.text ? src.text + "\n\n" : "") + (ocr.trim() ? "ТЕКСТ С ФОТО (распознан автоматически, возможны опечатки):\n" + ocr.trim() : "") }; AG.out = "";
+      if(!src.text.trim()){ const e = new Error("На фото не нашлось текста: сфотографируйте ровнее и крупнее"); e.code = "no_images"; throw e; }
+    }
     const prompt = `Ты агент «${a.name}» школьной платформы Ядро для ученика 8 «А» (оценки по 10-балльной шкале). Отвечай по-русски, коротко и аккуратно.
 ИНСТРУКЦИЯ: ${a.prompt || t.prompt}${platformContext(t.ctx)}${src.text ? "\n\nДАННЫЕ ПОЛЬЗОВАТЕЛЯ:\n" + src.text.slice(0, 150000) : ""}${src.images && src.images.length ? "\n\nДанные также на приложенных изображениях." : ""}`;
     const opts = { modelTier: "default", signal: AG.ctl.signal, cache: false, onText: ({ text }) => { AG.out = text; const el = document.getElementById("ag-out"); if(el) el.textContent = text; } };
@@ -8438,9 +8732,9 @@ async function botSend(text){
   const q = (text || "").trim(); if(!q) return;
   const um = { f: "me", x: q, t: new Date().toISOString() }; if(CHAT.reply){ um.r = CHAT.reply; CHAT.reply = null; } if(CHAT.att.length){ um.a = CHAT.att; CHAT.att = []; } FRESH.add(um); CHAT.msgs.bot.push(um);
   CHAT.draft = ""; CHAT.busy = true; chatSave();
-  if(!SAMPLE){
+  if(!SAMPLE && false){
     CHAT.busy = false;
-    DELIV.add(um); const fm = { f: "bot", x: "Я отвечаю только когда платформа открыта в Claude и ей разрешено обращаться к Claude. Здесь пока не могу.", t: new Date().toISOString(), err: true }; FRESH.add(fm); CHAT.msgs.bot.push(fm);
+    DELIV.add(um); const fm = { f: "bot", x: "", t: new Date().toISOString(), err: true }; FRESH.add(fm); CHAT.msgs.bot.push(fm);
     chatSave(); renderChats(true); return;
   }
   logAdd("info", "Чат-бот", "Вопрос от ученика");
@@ -8452,12 +8746,21 @@ ${hist ? "\nПРЕДЫДУЩИЕ СООБЩЕНИЯ:\n" + hist : ""}
   const bm = { f: "bot", x: "", t: new Date().toISOString() }; FRESH.add(bm); const idx = CHAT.msgs.bot.push(bm) - 1; renderChats(true);
   try {
     CHAT.ctl = new AbortController();
-    const { text: out } = await SAMPLE(prompt, { modelTier: "default", cache: false, signal: CHAT.ctl.signal,
-      onText: ({ text: tx }) => { CHAT.msgs.bot[idx].x = tx; const b = document.getElementById("tg-last"); if(b) b.innerHTML = mdLite(tx); chatScroll(); } });
+    let out;
+    if(SAMPLE){ ({ text: out } = await SAMPLE(prompt, { modelTier: "default", cache: false, signal: CHAT.ctl.signal,
+      onText: ({ text: tx }) => { CHAT.msgs.bot[idx].x = tx; const b = document.getElementById("tg-last"); if(b) b.innerHTML = mdLite(tx); chatScroll(); } })); }
+    else {   /* без Claude — через ИИ-прокси Ядра (YandexGPT, при сбое GigaChat) */
+      let last = "";
+      for(const prov of [AIC.prov || "yandex", AIC.prov === "gigachat" ? "yandex" : "gigachat"]){
+        const r = await aiFetch({ provider: prov, messages: [{ role: "user", content: prompt.slice(0, 14000) }] }, CHAT.ctl.signal); const j = await r.json().catch(() => ({}));
+        if(r.ok && j.text){ out = j.text; break; } last = j.error || "сервер ИИ не ответил (код " + r.status + ")"; if(r.status === 401) break;
+      }
+      if(!out){ const e = new Error(last); e.code = "proxy"; throw e; }
+    }
     CHAT.msgs.bot[idx].x = out; logAdd("ok", "Чат-бот", "Ответ отправлен");
   } catch(e) {
     const c = e && e.code;
-    CHAT.msgs.bot[idx].x = c === "cancelled" ? "Остановлено." : c === "not_granted" ? "Без разрешения обращаться к Claude я не отвечу." : c === "rate_limited" ? "Слишком много вопросов подряд, подождите минуту." : "Не получилось ответить, попробуйте ещё раз.";
+    CHAT.msgs.bot[idx].x = c === "cancelled" ? "Остановлено." : c === "not_granted" ? "Без разрешения обращаться к Claude я не отвечу." : c === "rate_limited" ? "Слишком много вопросов подряд, подождите минуту." : c === "proxy" && e.message ? e.message : e && e.name === "AbortError" ? "Остановлено." : e instanceof TypeError ? "Нет связи с сервером ИИ." : "Не получилось ответить, попробуйте ещё раз.";
     CHAT.msgs.bot[idx].err = true; logAdd("fail", "Чат-бот", "Ошибка ответа" + (c ? ": " + c : ""));
   } finally { SWAP.add(CHAT.msgs.bot[idx]); DELIV.add(um); CHAT.busy = false; chatSave(); renderChats(true); }
 }
@@ -14123,7 +14426,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "654";
+const BUILD = "655";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -17176,5 +17479,9 @@ function ydSupport(){
 .mx-flash{animation:mxfl 1.6s ease}@keyframes mxfl{0%,60%{box-shadow:inset 0 0 0 2px var(--acc,#C25E3A)}100%{box-shadow:none}}
 :root[data-motion="off"] #mk-layer .mxm-bg,:root[data-motion="off"] #mk-layer .mxm-p,:root[data-motion="off"] .mx-flash{transition:none!important;animation:none!important}
 @media(max-width:600px){#mk-layer .mxm{padding:8px;place-items:end center}#mk-layer .mxm-p{max-height:88vh}#mk-layer .mxm-r{grid-template-columns:8px minmax(0,1fr)}#mk-layer .mxm-b{grid-column:2;justify-content:flex-start}}
+</style>
+<style id="imp-css655">
+/* агент расписания без Claude (сборка 655) */
+.imp-warn{margin:6px 0 0;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,#D99A2B 12%,transparent);color:var(--ink);font-size:13px;line-height:1.45}
 </style>
 </body></html>
