@@ -109,7 +109,8 @@
 </style></head><body>
 <title>Ядро</title>
 <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
-<link rel="apple-touch-icon" href="images/favicon.svg">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@100..900&family=Montserrat:wght@100..900&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
 <style>
@@ -2406,6 +2407,9 @@ body{overflow-x:clip}
 .au-me{grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:12px}
 .au-av{width:44px;height:44px;border-radius:50%;background:var(--pen);color:#fff;display:grid;place-items:center;font-weight:500;overflow:hidden}
 .au-av img{width:100%;height:100%;object-fit:cover}
+#norole{display:flex;gap:12px;align-items:flex-start;margin:0 0 16px;padding:14px 16px;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+#norole svg{flex:none;width:20px;height:20px;margin-top:1px;fill:none;stroke:var(--pen);stroke-width:1.8;stroke-linecap:round}
+#norole span{display:grid;gap:3px;min-width:0}#norole b{font-weight:500;font-size:14.5px}#norole small{font-size:13px;line-height:1.45;color:var(--muted)}
 .au-mi{display:grid;min-width:0;line-height:1.3}
 .au-mi b{font-size:15px}.au-mi span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .au-role{font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:99px;background:var(--pick);color:var(--muted)}
@@ -10155,6 +10159,7 @@ async function schSave(){
 const HWF = { on: false };
 function hwFeedPull(){
   if(typeof window.yadroTg !== "function") return;
+  if(ME_INFO && roleNone(ME_INFO)) return;
   window.yadroTg("hw_feed").then(j => {
     if(!j || !Array.isArray(j.items)) return;
     HW.length = 0; j.items.forEach(h => { try { HW.push({ ...h, files: [], dueD: dd(h.due), givenD: dd(h.given) }); } catch(_) {} });
@@ -10167,15 +10172,27 @@ function monEmpty(){
   return `<div class="mon-emp"><span class="mon-emp-i" aria-hidden="true">○</span><b>Мониторингов пока нет</b><span>Здесь появятся результаты и средний балл, когда учитель загрузит тесты.</span><button type="button" class="ovnx-btn" data-go="homework">Подготовиться</button></div>`;
 }
 /* настоящий ученик или родитель (не владелец): демо-данные владельца не показываем, оценки приходят из журнала */
+const ROLE_STAFF = ["teacher", "methodist", "zavuch", "deputy", "director", "controller", "admin"];
+const roleNone = m => !!m && !CN.isAdmin && !["student", "parent"].includes(m.role) && !ROLE_STAFF.includes(m.role);   // роль пустая или неизвестная
+/* аккаунт без роли: вместо чужих демо-данных — понятная полоса «роль не назначена» */
+function noRoleBar(on){
+  let el = document.getElementById("norole"); if(!on){ if(el) el.remove(); return; }
+  if(el) return; const main = document.querySelector("main"); if(!main) return;
+  el = document.createElement("div"); el.id = "norole"; el.setAttribute("role", "status");
+  el.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg><span><b>Роль пока не назначена</b><small>Оценки, домашка и расписание появятся, когда администратор укажет, кто вы: ученик, родитель или сотрудник. Напишите ему или в поддержку.</small></span>';
+  main.insertBefore(el, main.firstChild);
+}
 function realMode(m){
-  if(!m || CN.isAdmin || !["student", "parent"].includes(m.role)) return;
+  if(!m || CN.isAdmin || ROLE_STAFF.includes(m.role)) return;
+  const none = roleNone(m);
   try {
     Object.keys(ALLG).forEach(k => { ALLG[k] = []; });
     MON.length = 0; HW.length = 0; TESTS.length = 0;
     const nm = String(m.name || "").trim().split(/\s+/); DATA.studentName = m.role === "student" ? (nm[1] || nm[0] || "Ученик") : (nm[0] || "Пользователь");
     STATS.length = 0; try { statsFor(CUR).forEach(x => STATS.push(x)); } catch(_) {}
+    noRoleBar(none);
     renderAll();
-    hwFeedStart();
+    if(!none) hwFeedStart();   // лента домашки есть только у ученика и родителя; без роли сервер её не выдаёт
   } catch(e) {}
 }
 async function gradesForMe(uid){
@@ -14425,7 +14442,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "659";
+const BUILD = "660";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -17531,4 +17548,15 @@ document.addEventListener("click", e => { if(e.target.closest("[data-ros-retry]"
 :is(#admin,#mk-layer) .mk.mk-pln .pn-e small{font-size:12.5px;color:var(--mut)}
 :root[data-motion="off"] .pn-bar{display:none}
 </style>
+<script>
+/* картинка не загрузилась (аватар Яндекса удалён, значок недоступен): аватар заменяется первой буквой имени, остальное прячется.
+   Обложки новостей и вложения чатов обрабатываются в своих местах */
+document.addEventListener("error", function(e){
+  var im = e.target; if(!im || im.tagName !== "IMG" || im.dataset.bad) return; im.dataset.bad = "1";
+  var av = im.closest(".au-av");
+  if(av){ var nm = ""; try { nm = (AUTH.user && AUTH.user.name) || ""; } catch(_) {} av.textContent = (nm || "?").charAt(0).toUpperCase();
+    try { if(AUTH.user && AUTH.user.avatar){ AUTH.user.avatar = ""; localStorage.setItem("bai-auth", JSON.stringify(AUTH.user)); } } catch(_) {} return; }
+  if(im.closest(".au-mk, .sec-fl")) im.style.display = "none";
+}, true);
+</script>
 </body></html>
