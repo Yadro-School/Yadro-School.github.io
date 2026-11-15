@@ -14425,7 +14425,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "658";
+const BUILD = "659";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14645,22 +14645,38 @@ const PLN_FIN = { c1: "Сервер v11 · 11.11: все агенты по та�
 PLN.done = (() => { try { return JSON.parse(localStorage.getItem("bai-plan-done") || "null"); } catch(e) { return null; } })() || {};
 Object.keys(PLN_FIN).forEach(id => { if(!(id in PLN.done)) PLN.done[id] = { t: Date.now(), auto: true }; });
 const plnDone = id => PLN.done[id] && PLN.done[id] !== 0 ? PLN.done[id] : null;
+/* только что отмеченные: 5 секунд зачёркнуты на месте (можно передумать), потом уезжают во вкладку «Завершённые» */
+PLN.pend = {}; const PLN_WAIT = 5000;
+function plnFinish(id){
+  const el = () => { const a = document.getElementById("admin"); return a && ADM.tab === "plan" ? a : null; };
+  if(PLN.pend[id]){ clearTimeout(PLN.pend[id].tm); delete PLN.pend[id]; PLN.done[id] = 0; plnSave(); const a = el(); if(a) renderAdmPlan(a); return; }   // передумал
+  if(plnDone(id)){ PLN.done[id] = 0; plnSave(); const a = el(); if(a) renderAdmPlan(a); return; }                                                    // вернуть из завершённых
+  PLN.done[id] = { t: Date.now() }; delete PLN.on[id]; plnSave();
+  PLN.pend[id] = { t: Date.now(), tm: setTimeout(() => { delete PLN.pend[id]; const a = el(), li = a && a.querySelector('.pn-i[data-pn-id="' + id + '"]');
+    if(li && PLN.fl !== "fin"){ li.classList.add("out"); setTimeout(() => { const b = el(); if(b) renderAdmPlan(b); }, 320); } else if(a) renderAdmPlan(a); }, PLN_WAIT) };
+  const a = el(); if(a) renderAdmPlan(a);
+}
 const plnSave = () => { try { localStorage.setItem("bai-plan-v1", JSON.stringify(PLN.on)); localStorage.setItem("bai-plan-done", JSON.stringify(PLN.done)); } catch(e) {} };
 function renderAdmPlan(el){
   const D = PLN_D, n = D.length, dn = D.filter(x => plnDone(x.id)).length, on = D.filter(x => PLN.on[x.id] && !plnDone(x.id)).length, me = D.filter(x => x.nd || x.z).length, zd = [...new Set(D.filter(x => x.z).map(x => x.d.toLowerCase()))];
   const left = Math.max(0, Math.ceil((PLN_END - new Date().setHours(0, 0, 0, 0)) / 86400000));
-  const vis = x => PLN.fl === "all" || (PLN.fl === "me" ? !!(x.nd || x.z) : x.g === +PLN.fl);
+  const act = x => !plnDone(x.id) || !!PLN.pend[x.id];   // ещё в списке: не завершена или досчитывает 5 секунд
+  const vis = x => PLN.fl === "fin" ? !!plnDone(x.id) && !PLN.pend[x.id] : act(x) && (PLN.fl === "all" || (PLN.fl === "me" ? !!(x.nd || x.z) : x.g === +PLN.fl));
   const chv = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>', play = '<svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg>';
   const ck = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  const row = x => { const o = PLN.open === x.id, f = plnDone(x.id), w = !!PLN.on[x.id] && !f;
+  const row = x => { const o = PLN.open === x.id, f = plnDone(x.id), pd = PLN.pend[x.id], w = !!PLN.on[x.id] && !f;
     const note = f ? (PLN_FIN[x.id] && f.auto ? PLN_FIN[x.id] : "Завершено " + new Date(f.t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })) : "";
-    const btn = f ? `<button type="button" class="pn-go dn" data-pn-done="${x.id}" title="Вернуть в работу">${ck}Готово</button>` : w ? `<button type="button" class="pn-go fin" data-pn-done="${x.id}" title="Отметить задачу выполненной">${ck}Завершить</button>` : `<button type="button" class="pn-go" data-pn-go="${x.id}" title="Отметить и скопировать промпт">${play}В работу</button>`;
-    return `<li class="pn-i ${w ? "pl" : ""} ${f ? "dn" : ""} ${o ? "open" : ""}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><i class="zd ${f ? "g" : w ? "y" : "n"}"></i><span><b>${x.t}</b><small>${f ? esc(note) : x.s}</small></span><em class="dy">${x.d}</em><em class="who ${f ? "ok" : x.nd || x.z ? "w" : "ok"}">${f ? "Выполнено" : w ? "В работе" : x.nd ? "Нужен ты" : x.z ? "Сервер" : "Сам"}</em>${btn}${chv}</div><div class="pn-d" ${o ? "" : "hidden"}><p>${x.w}</p>${f ? `<p class="fn">${esc(note)}</p>` : x.nd || x.z ? `<p class="nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="pn-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div></li>`; };
+    const btn = pd ? `<button type="button" class="pn-go un" data-pn-done="${x.id}" title="Вернуть задачу в план">Отменить</button>` : f ? `<button type="button" class="pn-go dn" data-pn-done="${x.id}" title="Вернуть задачу в план">Вернуть</button>` : w ? `<button type="button" class="pn-go fin" data-pn-done="${x.id}" title="Отметить задачу выполненной">${ck}Завершить</button>` : `<button type="button" class="pn-go" data-pn-go="${x.id}" title="Отметить и скопировать промпт">${play}В работу</button>`;
+    return `<li class="pn-i ${w ? "pl" : ""} ${f ? "dn" : ""} ${pd ? "pd" : ""} ${o ? "open" : ""}" data-pn-id="${x.id}"><div class="pn-r" data-pn-o="${x.id}" role="button" tabindex="0" aria-expanded="${o}"><button type="button" class="pn-ck ${f ? "on" : ""}" data-pn-done="${x.id}" role="checkbox" aria-checked="${!!f}" title="${pd ? "Отменить" : f ? "Вернуть задачу в план" : "Задача выполнена"}" aria-label="${f ? "Вернуть задачу в план" : "Отметить задачу выполненной"}: ${esc(x.t)}">${ck}</button><span><b>${x.t}</b><small>${pd ? "Выполнено · через 5 секунд уйдёт в «Завершённые»" : f ? esc(note) : x.s}</small></span><em class="dy">${x.d}</em><em class="who ${f ? "ok" : x.nd || x.z ? "w" : "ok"}">${f ? "Выполнено" : w ? "В работе" : x.nd ? "Нужен ты" : x.z ? "Сервер" : "Сам"}</em>${btn}${chv}</div>${pd ? `<i class="pn-bar" style="animation-delay:-${Math.min(PLN_WAIT, Date.now() - pd.t)}ms"></i>` : ""}<div class="pn-d" ${o ? "" : "hidden"}><p>${x.w}</p>${f ? `<p class="fn">${esc(note)}</p>` : x.nd || x.z ? `<p class="nd">${x.nd || PLN_ZIP}</p>` : ""}<pre>${esc(x.p)}</pre><div class="pn-b"><button type="button" data-pn-cp="${x.id}" title="Скопировать текст для Claude">Скопировать промпт</button></div></div></li>`; };
+  const A0 = D.filter(act), finL = D.filter(x => plnDone(x.id) && !PLN.pend[x.id]).sort((a, b) => plnDone(b.id).t - plnDone(a.id).t);
+  const empty = t => `<div class="pn-e">${ck}<b>${t[0]}</b><small>${t[1]}</small></div>`;
+  const body = PLN.fl === "fin" ? (finL.length ? `<section class="pn-g"><div class="pn-gh"><b>Завершённые</b><small>Нажмите на галочку или «Вернуть», чтобы задача снова попала в план</small><em class="ok">${finL.length} из ${n}</em></div><ul class="pn-l">${finL.map(row).join("")}</ul></section>` : empty(["Здесь пока пусто", "Отмеченные выполненными задачи появятся здесь"]))
+    : (PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => plnDone(x.id)).length;
+        return `<section class="pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} выполнено</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("") || empty(["Всё сделано", "В этом списке не осталось задач. Выполненные — во вкладке «Завершённые»"]));
   el.innerHTML = admHead("План") + mkWrap("pln", `<div id="ap-pln" class="zpn"><div class="zh"><span>Работа без Claude <span class="pn-dl">до пятницы, 13 ноября</span></span><div><button type="button" class="zb pr" data-pn-all title="Отметить все невыполненные задачи и скопировать их промпты">${D.every(x => PLN.on[x.id] || plnDone(x.id)) ? "Всё в работе" : "Запустить всё"}</button></div></div><div id="pn">
 <div class="zst4"><div><b>${n}</b><small>задач в плане</small></div><div class="ok"><b>${dn}</b><small>выполнено</small></div><div class="w"><b>${on}</b><small>в работе</small></div><div><b>${left} ${plural(left, ["день", "дня", "дней"])}</b><small>до пятницы</small></div></div>
-<div class="pn-top">${[["all", "Все", n], ["0", "Ошибки", D.filter(x => x.g === 0).length], ["1", "Без Claude", D.filter(x => x.g === 1).length], ["2", "Добавить", D.filter(x => x.g === 2).length], ["me", "Нужен ты", me]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">«В работу» копирует промпт для Claude, «Завершить» отмечает выполненное</span></div>
-${PLN_GR.map((g, gi) => { const L = D.filter(x => x.g === gi && vis(x)); if(!L.length) return ""; const A = D.filter(x => x.g === gi), k = A.filter(x => plnDone(x.id)).length;
-  return `<section class="pn-g"><div class="pn-gh"><b>${g[0]}</b><small>${g[1]}</small><em class="${k === A.length ? "ok" : ""}">${k} из ${A.length} выполнено</em></div><ul class="pn-l">${L.map(row).join("")}</ul></section>`; }).join("")}
+<div class="pn-top">${[["all", "Все", A0.length], ["0", "Ошибки", A0.filter(x => x.g === 0).length], ["1", "Без Claude", A0.filter(x => x.g === 1).length], ["2", "Добавить", A0.filter(x => x.g === 2).length], ["me", "Нужен ты", A0.filter(x => x.nd || x.z).length], ["fin", "Завершённые", finL.length]].map(f => `<button type="button" class="pn-f ${PLN.fl === f[0] ? "on" : ""}" data-pn-f="${f[0]}">${f[1]}<i>${f[2]}</i></button>`).join("")}<span class="pn-hint">Галочка слева отмечает задачу выполненной</span></div>
+${body}
 </div></div>`);
 }
 document.addEventListener("click", e => { const x = e.target.closest(".mk-pln [data-pn-all]"); if(!x) return; const L = PLN_D.filter(t => !PLN.on[t.id] && !plnDone(t.id)); if(!L.length) return; L.forEach(t => { PLN.on[t.id] = Date.now(); }); plnSave(); ag3Copy(null, L.map((t, i) => (i + 1) + ". " + t.t + "\n" + t.p).join("\n\n")); const el = document.getElementById("admin"); if(el && ADM.tab === "plan") renderAdmPlan(el); });
@@ -14669,7 +14685,7 @@ document.addEventListener("click", e => {
   const rr = () => { if(el && ADM.tab === "plan") renderAdmPlan(el); };
   if((x = e.target.closest("[data-pn-f]"))){ PLN.fl = x.dataset.pnF; return rr(); }
   if((x = e.target.closest("[data-pn-go]"))){ const id = x.dataset.pnGo, t = PLN_D.find(q => q.id === id); if(PLN.on[id]) delete PLN.on[id]; else { PLN.on[id] = Date.now(); ag3Copy(null, t.p); } plnSave(); return rr(); }
-  if((x = e.target.closest("[data-pn-done]"))){ const id = x.dataset.pnDone; if(plnDone(id)){ PLN.done[id] = 0; PLN.on[id] = PLN.on[id] || Date.now(); } else PLN.done[id] = { t: Date.now() }; plnSave(); return rr(); }
+  if((x = e.target.closest("[data-pn-done]"))){ plnFinish(x.dataset.pnDone); return; }
   if((x = e.target.closest("[data-pn-cp]"))){ const t = PLN_D.find(q => q.id === x.dataset.pnCp); if(t) ag3Copy(x, t.p); return; }
   if((x = e.target.closest("[data-pn-o]"))){ PLN.open = PLN.open === x.dataset.pnO ? null : x.dataset.pnO; return rr(); }
 });
@@ -17491,4 +17507,28 @@ document.addEventListener("change", async e => { const f = e.target.closest && e
 document.addEventListener("click", e => { if(e.target.closest("[data-ros-retry]")){ ROSTER.err = ""; ROSTER.at = 0; rosterLoad(true).then(() => renderJournal()); renderJournal(); } });
 </script>
 <style id="ros-css">.ros-e{display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:640px}.ros-e p{margin:0}.ros-up{cursor:pointer}</style>
+<style id="pn-fin-css">
+:is(#admin,#mk-layer) .mk.mk-pln .pn-r{grid-template-columns:22px minmax(0,1fr) 34px 96px 150px 16px}
+@media (max-width:760px){:is(#admin,#mk-layer) .mk.mk-pln .pn-r{grid-template-columns:22px minmax(0,1fr) 112px 16px}}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck{width:22px;height:22px;min-width:0;padding:0;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--pl2);display:grid;place-items:center;cursor:pointer;transition:box-shadow .15s,background .2s,transform .12s}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .25s .05s}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck:hover{box-shadow:inset 0 0 0 1.5px var(--ok)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck:active{transform:scale(.9)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck.on{background:var(--ok);box-shadow:none}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-ck.on svg{stroke-dashoffset:0}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-i{position:relative;overflow:hidden}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-i.pd .pn-r>span b{text-decoration:line-through;text-decoration-color:var(--mut);color:var(--mut)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-i.dn:not(.pd) .pn-r>span b{color:var(--mut)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-bar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:var(--ok);transform-origin:left;animation:pnBar 5s linear forwards}
+@keyframes pnBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-i.out{animation:pnOut .3s ease forwards}
+@keyframes pnOut{to{opacity:0;transform:translateX(24px)}}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-go.un,:is(#admin,#mk-layer) .mk.mk-pln .pn-go.dn{color:var(--mut)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-e{display:grid;justify-items:center;gap:4px;padding:34px 16px;text-align:center;background:var(--card);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line)}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-e svg{width:26px;height:26px;fill:none;stroke:var(--ok);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:4px}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-e b{font-size:14px;font-weight:500}
+:is(#admin,#mk-layer) .mk.mk-pln .pn-e small{font-size:12.5px;color:var(--mut)}
+:root[data-motion="off"] .pn-bar{display:none}
+</style>
 </body></html>
