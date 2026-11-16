@@ -14442,7 +14442,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "661";
+const BUILD = "662";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -17879,24 +17879,14 @@ function onlListHtml(){
   const doneRows = VCS.done.slice(-5).reverse().map(d => `<div class="vc-row"><time><b>${esc(hhmm(d.time))}</b>${esc(d.date.slice(8, 10) + "." + d.date.slice(5, 7))}</time><span class="vc-rt"><b>${esc(d.subjName)}</b><small>${esc(d.cls)} · было ${d.n} из ${d.total}</small></span><button type="button" class="vc-b vc-ra" data-vc-sum="${esc(d.id)}">Итоги</button></div>`).join("");
   return vcHead("Видеосвязь класса", "Онлайн-уроки",
     `<div class="vc-sub">${staff ? `<button type="button" class="vc-b p" data-vc-new>${svg(IC.plus, 16)}Новый онлайн-урок</button>` : ""}<span class="vc-pill">${esc(WDL[TODAY.getDay()])}, ${TODAY.getDate()} ${esc(MG[TODAY.getMonth()])}</span></div>`) +
-  `<div class="vc-g2"><div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+  `<div style="display:flex;flex-direction:column;gap:14px;max-width:860px">
     <section class="panel"><div class="panel-head"><h2>Сегодня · ${esc(myCls())}</h2><button class="link" data-go="schedule">Расписание</button></div>
       ${rows.length ? rows.map(row).join("") : `<p class="muted">Сегодня уроков нет.</p>`}</section>
     ${staff ? `<section class="panel"><div class="panel-head"><h2>Мои онлайн-уроки</h2></div>
-      ${mineVc.length ? mineVc.map(vrow).join("") : `<p class="muted">Онлайн-уроков пока нет. Создайте первый кнопкой «Новый онлайн-урок» — он появится у класса в этом списке.</p>`}</section>` : ""}
+      ${mineVc.length ? mineVc.map(vrow).join("") : `<p class="muted">Нажмите «Новый онлайн-урок» — он появится здесь и у класса.</p>`}</section>` : ""}
     ${doneRows ? `<section class="panel"><div class="panel-head"><h2>Прошедшие</h2></div>${doneRows}</section>` : ""}
-  </div>
-  <div style="display:flex;flex-direction:column;gap:14px">
-    <section class="panel"><div class="panel-head"><h2>Как проходит урок</h2></div>
-      <p class="vc-note" style="margin:0 0 6px">Микрофон при входе выключен. Чтобы ответить, поднимите руку.</p>
-      <p class="vc-note" style="margin:0 0 6px">Присутствие отмечается и попадает к учителю в итоги урока.</p>
-      <p class="vc-note" style="margin:0">Перед входом сайт проверяет камеру, микрофон и связь.</p></section>
-    <section class="panel"><div class="panel-head"><h2>Подключение</h2></div>
-      <div class="vc-chk"><div class="r"><span>Камера и микрофон</span><b style="color:var(--good)">проверяются по-настоящему</b></div>
-      <div class="r"><span>Список уроков и итоги</span><b style="color:var(--good)">работают</b></div>
-      <div class="r"><span>Звук и видео между участниками</span><b style="color:var(--warn)">нужен сервер связи</b></div></div>
-      <p class="vc-note" style="margin:8px 0 0">Сервер связи подключается отдельным обновлением yadro-api.</p></section>
-  </div></div>`;
+    <p class="vc-note">Звук и видео между участниками появятся после обновления сервера.</p>
+  </div>`;
 }
 function onlLobbyHtml(){
   const v = ONL.cur || {};
@@ -17905,35 +17895,19 @@ function onlLobbyHtml(){
   const okMic = !!(ONL.stream && ONL.stream.getAudioTracks().some(t => t.readyState === "live"));
   const err = ONL.err;
   return vcHead(esc(v.cls || myCls()) + " · " + esc(hhmm(v.time || "")), v.subjName || "Онлайн-урок",
-    `<div class="vc-sub"><button type="button" class="vc-b gh" data-vc-back>${svg(IC.left, 16)}К списку</button><span class="vc-pill a">Проверка перед входом</span></div>`) +
-  `<div class="vc-g2"><section class="panel" style="display:flex;flex-direction:column;gap:10px">
-    <div class="vc-cam ${ONL.camBlur ? "blur" : ""}" id="vc-cambox">${err ? "" : `<video id="vc-prev" autoplay playsinline muted></video>`}<div class="vc-off" ${okCam && !err ? "hidden" : ""}><span class="vc-ava">${esc(ini2(DATA.studentName || "Вы"))}</span><span>${err ? "Камера и микрофон закрыты" : "Камера выключена"}</span></div></div>
-    <div class="vc-ctl">
+    `<div class="vc-sub"><button type="button" class="vc-b gh" data-vc-back>${svg(IC.left, 16)}К списку</button></div>`) +
+  `<div style="max-width:620px;display:flex;flex-direction:column;gap:12px">
+    <section class="panel" style="display:flex;flex-direction:column;gap:10px">
+    <div class="vc-cam" id="vc-cambox">${err ? "" : `<video id="vc-prev" autoplay playsinline muted></video>`}<div class="vc-off" ${okCam && !err ? "hidden" : ""}><span class="vc-ava">${esc(ini2(DATA.studentName || "Вы"))}</span><span>${err ? "Камера и микрофон закрыты" : "Камера выключена"}</span></div></div>
+    ${err ? `<p class="vc-note" style="margin:0">Нажмите на замок слева от адреса сайта, разрешите камеру и микрофон — и «Проверить снова».</p>
+      <button type="button" class="vc-b" data-vc-retry>Проверить снова</button>` : `<div class="vc-ctl">
       <button type="button" class="vc-k ${ONL.mic ? "" : "off"}" data-vc-mic aria-pressed="${ONL.mic}" aria-label="${ONL.mic ? "Выключить микрофон" : "Включить микрофон"}" title="${ONL.mic ? "Выключить микрофон" : "Включить микрофон"}">${svg(ONL.mic ? IC.mic : IC.micOff, 22)}</button>
       <button type="button" class="vc-k ${ONL.cam ? "" : "off"}" data-vc-cam aria-pressed="${ONL.cam}" aria-label="${ONL.cam ? "Выключить камеру" : "Включить камеру"}" title="${ONL.cam ? "Выключить камеру" : "Включить камеру"}">${svg(ONL.cam ? IC.cam : IC.camOff, 22)}</button>
     </div>
-    <div class="vc-lvl">${svg(IC.mic, 15)}<span class="tr"><i id="vc-lvl"></i></span><span id="vc-lvlt">${okMic ? "скажите что-нибудь" : "микрофон не проверен"}</span></div>
-  </section>
-  <div style="display:flex;flex-direction:column;gap:14px">
-    ${err ? `<section class="panel"><div class="panel-head"><h2>Браузер не дал доступ</h2></div>
-      <p class="vc-note" style="margin:0 0 4px">1. Нажмите на значок замка слева от адреса сайта.</p>
-      <p class="vc-note" style="margin:0 0 4px">2. Разрешите камеру и микрофон.</p>
-      <p class="vc-note" style="margin:0 0 10px">3. Нажмите «Проверить снова».</p>
-      <button type="button" class="vc-b" data-vc-retry>Проверить снова</button></section>` : `<section class="panel"><div class="panel-head"><h2>Проверка</h2></div>
-      <div class="vc-chk">
-        <div class="r"><span>Камера</span><b style="color:${okCam ? "var(--good)" : "var(--warn)"}">${okCam ? "работает" : ONL.cam ? "подключается…" : "выключена вами"}</b></div>
-        <div class="r"><span>Микрофон</span><b id="vc-chkmic" style="color:${okMic ? "var(--good)" : "var(--warn)"}">${okMic ? "работает" : "проверяется…"}</b></div>
-        <div class="r"><span>Сеть</span><b style="color:${navigator.onLine ? "var(--good)" : "var(--bad)"}">${navigator.onLine ? "в порядке" : "нет соединения"}</b></div>
-      </div></section>`}
-    <section class="panel"><div class="panel-head"><h2>Правила урока</h2></div>
-      <div class="vc-chk">
-        <div class="r"><span>Микрофон при входе</span><b>${(v.opts || OPT_DEF).micOff ? "выключен" : "включён"}</b></div>
-        <div class="r"><span>Запись</span><b>${(v.opts || OPT_DEF).rec ? "ведётся" + ((v.opts || OPT_DEF).ai ? " · конспект ИИ" : "") : "не ведётся"}</b></div>
-        <div class="r"><span>Присутствие</span><b>${(v.opts || OPT_DEF).att ? "в журнал" : "не отмечается"}</b></div>
-      </div></section>
-    <button type="button" class="vc-b p" style="height:44px;justify-content:center" data-vc-enter>Войти в урок</button>
-    <p class="vc-note">Войти можно и с выключенной камерой.</p>
-  </div></div>`;
+    <div class="vc-lvl">${svg(IC.mic, 15)}<span class="tr"><i id="vc-lvl"></i></span><span id="vc-lvlt">${okMic ? "скажите что-нибудь" : "микрофон не проверен"}</span></div>`}
+    </section>
+    <button type="button" class="vc-b p" style="height:46px;justify-content:center;font-size:15px" data-vc-enter>Войти в урок</button>
+  </div>`;
 }
 function vcRoster(cls){
   try { const L = (JR_ROST && JR_ROST[cls]) || []; return L.map(x => ({ id: x[0], nm: x[1] })); } catch(e) { return []; }
@@ -17981,16 +17955,10 @@ function onlSumHtml(){
   const nAbs = ros.filter(p => (att[p.id] || "b") === "n").length, nLate = ros.filter(p => att[p.id] === "o").length;
   return vcHead(esc(v.cls || "") + " · " + esc(hhmm(v.time || "")), "Итоги урока · " + (v.subjName || ""),
     `<div class="vc-sub"><span class="vc-pill g">${ros.length - nAbs} из ${ros.length} на уроке</span>${nLate ? `<span class="vc-pill w">опоздали: ${nLate}</span>` : ""}${nAbs ? `<span class="vc-pill">не было: ${nAbs}</span>` : ""}</div>`) +
-  `<div class="vc-g2"><section class="panel vc-sum"><div class="panel-head"><h2>Присутствие</h2><span class="aside">нажмите, чтобы изменить</span></div>
+  `<div style="max-width:720px;display:flex;flex-direction:column;gap:12px"><section class="panel vc-sum"><div class="panel-head"><h2>Присутствие</h2><span class="aside">нажмите, чтобы изменить</span></div>
     ${ros.length ? ros.map(row).join("") : `<p class="muted">Список класса ещё не загружен с сервера.</p>`}</section>
-  <div style="display:flex;flex-direction:column;gap:14px">
-    <section class="panel"><div class="panel-head"><h2>Дальше</h2></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-      <button type="button" class="vc-b" data-vc-cpabs>Скопировать отсутствующих</button>
-      <button type="button" class="vc-b" data-go="journal">Открыть журнал</button>
-      <button type="button" class="vc-b p" data-vc-sumok>Готово</button></div>
-      <p class="vc-note" style="margin:10px 0 0">${(v.opts || OPT_DEF).rec ? "Запись и конспект появятся после подключения сервера связи." : "Запись на этом уроке не велась."}</p></section>
-  </div></div>`;
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="vc-b p" data-vc-sumok>Готово</button><button type="button" class="vc-b" data-vc-cpabs>Скопировать отсутствующих</button><button type="button" class="vc-b gh" data-go="journal">Журнал</button></div>
+  </div>`;
 }
 function onlEndHtml(){
   const v = ONL.cur || {};
@@ -18163,23 +18131,15 @@ function lbShelfHtml(){
   const shown = q ? books.filter(b => (b.title + " " + (b.subj || "")).toLowerCase().includes(q)) : books;
   const last = LBS.last && books.find(b => b.id === LBS.last.id);
   const prog = last ? LBS.prog[last.id] : null;
-  const cont = last ? (() => { const i = Math.max(0, LB_MAT.toc.findIndex(t => t[0] === (prog && prog.sec))); const pct = Math.round((i + 1) / LB_MAT.toc.length * 100);
-    return `<button type="button" class="panel lb-go" data-lb-open="${esc(last.id)}" style="border:1px solid var(--line)">${lbCover(last)}<span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><span class="vc-note">Продолжить чтение</span><b style="font-weight:500">${esc(last.title)}${prog ? " · " + esc((LB_MAT.toc[i] || [])[1] || "") : ""}</b><span class="lb-pr"><span class="tr"><i style="width:${pct}%"></i></span>${pct}%</span></span></button>`; })() : "";
-  const hw = HW.filter(h => !isDone(h)).sort((a, b) => a.dueD - b.dueD).slice(0, 3);
-  const bkBtn = b => `<button type="button" class="lb-bk" data-lb-open="${esc(b.id)}">${lbCover(b)}<span><span class="t">${esc(b.title)}</span><small>${esc(b.by || "")}</small><span class="lb-src">${b.kind === "link" ? "по ссылке" : b.kind === "file" ? "файл лицея" : "в Ядре"}</span></span></button>`;
+  const cont = last && last.id === LB_MAT.id ? (() => { const i = Math.max(0, LB_MAT.toc.findIndex(t => t[0] === (prog && prog.sec))); const pct = Math.round((i + 1) / LB_MAT.toc.length * 100);
+    return `<button type="button" class="panel lb-go" data-lb-open="${esc(last.id)}" style="border:1px solid var(--line);max-width:430px">${lbCover(last)}<span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><span class="vc-note">Продолжить чтение</span><b style="font-weight:500">${esc((LB_MAT.toc[i] || [])[1] || last.title)}</b><span class="lb-pr"><span class="tr"><i style="width:${pct}%"></i></span>${pct}%</span></span></button>`; })() : "";
+  const bkBtn = b => `<button type="button" class="lb-bk" data-lb-open="${esc(b.id)}">${lbCover(b)}<span><span class="t">${esc(b.title)}</span><small>${esc(b.by || "")}</small></span></button>`;
   return vcHead(myCls() + " · " + books.length + " " + plural(books.length, ["учебник", "учебника", "учебников"]), "Библиотека",
     `<div class="vc-sub"><label style="display:flex;align-items:center;gap:8px;height:38px;min-width:230px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;color:var(--muted)">${svg("M11 5a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM20 20l-4-4", 15, 2)}<input id="lb-q" aria-label="Поиск по учебникам" placeholder="Учебник или тема" autocomplete="off" value="${esc(LB.q)}" style="border:0;outline:0;background:transparent;color:var(--ink);font:inherit;width:100%"></label>${staff ? `<button type="button" class="vc-b p" data-lb-add>${svg(IC.plus, 16)}Добавить учебник</button>` : ""}</div>`) +
   `<div style="display:flex;flex-direction:column;gap:14px">
-  <div class="lb-top">
-    ${cont || `<section class="panel"><div class="panel-head"><h2>С чего начать</h2></div><p class="vc-note" style="margin:0">Откройте учебник с полки — место, где остановились, сохранится здесь.</p></section>`}
-    <section class="panel"><div class="panel-head"><h2>Задано по учебникам</h2><button class="link" data-go="homework">Вся домашка</button></div>
-      <div class="lb-hw">${hw.length ? hw.map(h => `<a role="button" tabindex="0" data-go="homework"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(subjName(h.s))} · ${esc(h.text)}</span><em>${esc(rel(h.dueD))}</em></a>`).join("") : `<p class="muted" style="margin:0">Все задания сделаны.</p>`}</div></section>
-  </div>
-  <section class="panel"><div class="panel-head"><h2>Учебники</h2>${staff ? "" : `<span class="aside">учебники добавляют учителя и методист</span>`}</div>
+  ${cont}
+  <section class="panel"><div class="panel-head"><h2>Учебники</h2></div>
     <div class="lb-grid">${shown.map(bkBtn).join("") || `<p class="muted">Ничего не найдено.</p>`}</div></section>
-  <section class="panel"><div class="panel-head"><h2>Откуда школа берёт учебники</h2></div>
-    <div class="lb-grid" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">${LB_EXT.map(([t, s, u]) => `<a class="lb-bk" style="flex-direction:row;align-items:center;gap:10px" href="${esc(u)}" target="_blank" rel="noopener"><span class="ic" style="flex:none;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);display:grid;place-items:center;color:var(--muted)">${svg(IC.link2, 17)}</span><span style="padding:0"><span class="t">${esc(t)}</span><small>${esc(s)}</small></span></a>`).join("")}</div>
-    <p class="vc-note" style="margin:10px 0 0">Эти сайты открываются в новой вкладке: встроить их в Ядро они не разрешают. Файлы, загруженные в библиотеку, открываются прямо здесь.</p></section>
   </div>`;
 }
 function lbReaderHtml(){
@@ -18195,28 +18155,20 @@ function lbReaderHtml(){
      <span class="vc-seg"><button type="button" aria-label="Мельче" title="Мельче" data-lb-fs="-10" style="width:38px">А−</button><span style="display:inline-flex;align-items:center;padding:0 8px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums">${LBS.fs}%</span><button type="button" aria-label="Крупнее" title="Крупнее" data-lb-fs="10" style="width:38px">А+</button></span>
      <span class="lb-th"><button type="button" class="th" style="background:#fff;color:#23211E;box-shadow:inset 0 0 0 1px #E2DDD4" aria-pressed="${LBS.theme === "light"}" data-lb-th="light">Аа</button><button type="button" class="th" style="background:#F3EAD8;color:#3B3226" aria-pressed="${LBS.theme === "sepia"}" data-lb-th="sepia">Аа</button><button type="button" class="th" style="background:#201F1C;color:#EDEBE6" aria-pressed="${LBS.theme === "dark"}" data-lb-th="dark">Аа</button></span>
      <button type="button" class="vc-b ${marked ? "" : "gh"}" data-lb-mark style="color:${marked ? "var(--pen)" : "var(--muted)"}" aria-pressed="${marked}">${svg(IC.mark, 16)}${marked ? "В закладках" : "Закладка"}</button></div>`) +
-  `<div class="lb-rd" data-th="${esc(LBS.theme)}">
+  `<div class="lb-rd" data-th="${esc(LBS.theme)}" style="grid-template-columns:236px minmax(0,1fr)">
     <nav class="panel lb-toc" aria-label="Оглавление" style="padding:10px 8px">
       <span class="vc-note" style="padding:2px 10px 8px">Глава III. Квадратные уравнения</span>
       ${LB_MAT.toc.map(([k, t]) => `<a href="#" class="${sec[0] === k ? "on" : ""}" data-lb-sec="${k}"><span>${esc(t)}</span></a>`).join("")}
     </nav>
-    <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+    <div style="min-width:0;display:flex;flex-direction:column;gap:10px;max-width:680px">
       <article class="lb-page" style="font-size:${15 * LBS.fs / 100}px"><h2>${esc(sec[1].replace(/^§ \d+\. /, ""))}</h2>${sec[2]}</article>
       <div style="display:flex;align-items:center;gap:12px">
         <button type="button" class="vc-b vc-ic" data-lb-nav="-1" aria-label="Назад" title="Предыдущий параграф" ${i <= 0 ? "disabled" : ""}>${svg(IC.left, 16)}</button>
         <span class="lb-pr" style="flex:1"><span class="tr"><i style="width:${Math.round((i + 1) / LB_MAT.toc.length * 100)}%"></i></span>${i + 1} из ${LB_MAT.toc.length}</span>
+        <button type="button" class="vc-b" data-askbot="Объясни тему «${esc(sec[1])}» из главы про квадратные уравнения (8 класс): кратко разбери суть, один пример с решением и дай 3 задания для тренировки без ответов.">${svg(IC.spark, 15)}Разобрать с помощником</button>
         <button type="button" class="vc-b vc-ic" data-lb-nav="1" aria-label="Вперёд" title="Следующий параграф" ${i >= LB_MAT.toc.length - 1 ? "disabled" : ""}>${svg("M9 6l6 6-6 6", 16)}</button>
       </div>
     </div>
-    <aside style="display:flex;flex-direction:column;gap:12px">
-      <section class="panel"><div class="panel-head"><h2>Задано</h2></div>
-        ${hw ? `<p style="margin:0 0 8px">${esc(hw.text)}</p><p class="vc-note" style="margin:0 0 10px">${esc(rel(hw.dueD))}</p><button type="button" class="vc-b" data-go="homework">Открыть в домашке</button>` : `<p class="muted" style="margin:0">По алгебре сейчас ничего не задано.</p>`}</section>
-      <section class="panel"><div class="panel-head"><h2>Закладки</h2></div>
-        ${marks || `<p class="vc-note" style="margin:0">Отмечайте параграфы кнопкой «Закладка» — они соберутся здесь.</p>`}</section>
-      <section class="panel"><div class="panel-head"><h2>Спросить по теме</h2></div>
-        <p class="vc-note" style="margin:0 0 10px">ИИ-помощник объяснит тему параграфа и даст похожие задания для тренировки.</p>
-        <button type="button" class="vc-b" data-askbot="Объясни тему «${esc(sec[1])}» из главы про квадратные уравнения (8 класс): кратко разбери суть, один пример с решением и дай 3 задания для тренировки без ответов.">${svg(IC.spark, 16)}Разобрать с помощником</button></section>
-    </aside>
   </div>`;
 }
 function renderLibrary(){
@@ -18361,20 +18313,7 @@ function mtWeekHtml(){
         ${Array.from({ length: maxN }, (_, r) => { const n = r + 1; return `<span class="nn">${n}-й<small>${esc(hhmm((times[n] || "").split("-")[0] || ""))}</small></span>` + days.map(d => cell(d, n)).join(""); }).join("")}
       </div>` : `<p class="muted">Расписание класса ${esc(cls)} ещё не загружено. Откройте вкладку «Загрузка» и добавьте неделю файлом — сетка появится здесь.</p>`}
     </section>
-    <aside style="display:flex;flex-direction:column;gap:12px">${selCard()}
-      <section class="panel"><div class="panel-head"><h2>Проверка недели</h2></div>${mtChecksHtml(cls, perDay)}</section>
-    </aside></div>`;
-}
-function mtChecksHtml(cls, perDay){
-  const out = [];
-  perDay.forEach((L, i) => {
-    const nums = L.map(x => +x.num).filter(Boolean).sort((a, b) => a - b);
-    for(let k = 1; k < nums.length; k++) if(nums[k] - nums[k - 1] > 1) out.push([WD[(i + 1) % 7] + ": окно между " + nums[k - 1] + "-м и " + nums[k] + "-м уроком", "w"]);
-    if(nums.length >= 7) out.push([WD[(i + 1) % 7] + ": " + nums.length + " уроков — больше нормы", "w"]);
-    L.forEach(x => { if(!x.room) out.push([WD[(i + 1) % 7] + ", " + x.num + "-й: " + x.name + " — кабинет не указан", "n"]); });
-  });
-  const seen = new Set(), u = out.filter(([t]) => !seen.has(t) && seen.add(t)).slice(0, 6);
-  return u.length ? u.map(([t, c]) => `<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px"><span class="vc-dot" style="margin-top:5px;background:${c === "w" ? "var(--warn)" : "var(--muted)"}"></span><span>${esc(t)}</span></div>`).join("") : `<p class="vc-note" style="margin:0">Окон и перегрузок не найдено.</p>`;
+    <aside style="display:flex;flex-direction:column;gap:12px">${selCard()}</aside></div>`;
 }
 function mtStaffList(){
   const out = [];
@@ -18407,32 +18346,18 @@ function mtSubsHtml(){
       <span style="margin-left:auto;display:flex;align-items:center;gap:8px"><span class="vc-pill ${done >= rows.length && rows.length ? "g" : "w"}">${done} из ${rows.length} закрыто</span><button type="button" class="vc-b gh vc-ic" data-mt-absdel="${ai}" aria-label="Убрать" title="Убрать из списка">${svg(IC.x, 15)}</button></span></div>
       ${rows.length ? rows.map(row).join("") : `<p class="vc-note" style="margin:0">Уроков этого учителя в загруженных расписаниях на этот день не найдено.</p>`}</section>`;
   };
-  return `<div class="vc-sub"><button type="button" class="vc-b p" data-mt-abs>${svg(IC.plus, 16)}Учитель отсутствует</button><span class="vc-note">Замены считаются по загруженным расписаниям классов.</span></div>
-    <div class="mt-lay"><div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-      ${MTS.abs.length ? MTS.abs.map(card).join("") : `<section class="panel"><p class="muted" style="margin:0">Отсутствующих нет. Нажмите «Учитель отсутствует», выберите учителя и день — уроки и свободные замены соберутся сами.</p></section>`}
-    </div>
-    <aside style="display:flex;flex-direction:column;gap:12px">
-      <section class="panel"><div class="panel-head"><h2>Агент замен</h2><span class="aside" style="display:flex;align-items:center;gap:6px"><span class="vc-dot"></span>на сервере</span></div>
-        <p class="vc-note" style="margin:0 0 6px">Каждые полчаса сверяет Google Таблицу расписания и переносит изменения.</p>
-        <div class="mt-log">${MTS.log.length ? MTS.log.slice(0, 6).map(r => `<div class="r"><time>${esc(r.t)}</time><span>${esc(r.x)}</span></div>`).join("") : `<div class="r"><span class="vc-note">Здесь появится журнал ваших замен.</span></div>`}</div></section>
-    </aside></div>`;
+  return `<div class="vc-sub"><button type="button" class="vc-b p" data-mt-abs>${svg(IC.plus, 16)}Учитель отсутствует</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:860px">
+      ${MTS.abs.length ? MTS.abs.map(card).join("") : `<section class="panel"><p class="muted" style="margin:0">Отсутствующих нет. Нажмите «Учитель отсутствует» — уроки и свободные замены соберутся сами.</p></section>`}
+    </div>`;
 }
 function mtImpHtml(){
-  const srcBtn = (k, t, s, ic) => `<button type="button" class="mt-srcb" aria-pressed="${MT.src === k}" data-mt-src="${k}"><span class="ic">${svg(ic, 18)}</span><span><span>${t}</span><small>${s}</small></span></button>`;
-  const right = MT.src === "sheet"
-    ? `<section class="panel"><div class="panel-head"><h2>Google Таблица</h2><span class="aside" style="display:flex;align-items:center;gap:6px"><span class="vc-dot"></span>подключена у администратора</span></div>
-        <div class="vc-chk"><div class="r"><span>Как читается</span><b>1 лист = 1 неделя, все классы</b></div><div class="r"><span>Сверка</span><b>каждые 30 минут, агент замен</b></div><div class="r"><span>Меняется</span><b>только то, что изменилось</b></div></div>
-        <p class="vc-note" style="margin:10px 0 0">Ключ сервисного аккаунта хранится на сервере. Настройки — у администратора в «Коннекторах».</p></section>`
-    : MT.src === "file"
-    ? `<section class="panel"><div class="panel-head"><h2>Файл Excel или CSV</h2></div>
-        <label class="mt-drop">${svg(IC.up, 22)}<span style="color:var(--ink)">Выберите файл с неделей класса</span><span class="vc-note">колонки: День · № · Время · Предмет · Учитель · Кабинет</span><input type="file" id="mt-f" accept=".xlsx,.xls,.csv" hidden></label>
-        <div id="mt-prev">${MT.prev ? mtPrevHtml() : ""}</div></section>`
-    : `<section class="panel"><div class="panel-head"><h2>Вручную</h2></div><p class="vc-note" style="margin:0">Откройте вкладку «Неделя», нажмите на урок — справа появятся действия: заменить учителя, сменить кабинет, отменить урок.</p></section>`;
-  return `<div class="mt-imp"><div class="panel" style="padding:8px;display:flex;flex-direction:column;gap:2px">
-      ${srcBtn("sheet", "Google Таблица", "Подключена · агент следит за ней", IC.sheet)}
-      ${srcBtn("file", "Файл Excel или CSV", "Разово загрузить неделю класса", IC.file)}
-      ${srcBtn("hand", "Вручную", "Поправить отдельные уроки в сетке", IC.pen2)}
-    </div>${right}</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:12px;max-width:720px">
+    <section class="panel"><div class="panel-head"><h2>Загрузить неделю класса</h2></div>
+      <label class="mt-drop">${svg(IC.up, 22)}<span style="color:var(--ink)">Выберите файл Excel или CSV</span><span class="vc-note">колонки: День · № · Время · Предмет · Учитель · Кабинет</span><input type="file" id="mt-f" accept=".xlsx,.xls,.csv" hidden></label>
+      <div id="mt-prev">${MT.prev ? mtPrevHtml() : ""}</div></section>
+    <p class="vc-note">Google Таблица расписания уже подключена — агент на сервере сверяет её каждые полчаса сам. Файл нужен только для разовой загрузки. Отдельные уроки правятся на вкладке «Неделя».</p>
+  </div>`;
 }
 function mtPrevHtml(){
   const p = MT.prev; if(!p) return "";
