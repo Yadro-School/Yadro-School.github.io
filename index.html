@@ -10032,32 +10032,32 @@ function _renderAdmin(){
 }
 
 /* ================= Пользователи, роли и доступ ================= */
-const RES = [["schedule","Расписание"],["grades","Оценки"],["journal","Журнал"],["homework","Домашка"],["tests","Контрольные"],["chats","Чаты"],["agents","Агенты"],["calendar","Календарь"],["profile","Профиль"],["users","Пользователи"],["access","Роли и права"],["connectors","Коннекторы и сервер"],["monitoring","Мониторинг"]];
+const RES = [["schedule","Расписание"],["grades","Оценки"],["journal","Журнал"],["homework","Домашка"],["tests","Контрольные"],["chats","Чаты"],["agents","Агенты"],["calendar","Календарь"],["profile","Профиль"],["users","Пользователи"],["access","Роли и права"],["connectors","Коннекторы и сервер"],["monitoring","Мониторинг"],["online","Онлайн-уроки"],["library","Библиотека"],["subs","Замены и загрузка расписания"]];
 const ACTS = [["setgrades","Ставить и менять оценки"],["sethw","Задавать домашние задания"],["editsched","Менять расписание и замены"],["writeparents","Писать родителям"],["export","Выгружать данные (Excel, PDF)"],["pii","Видеть контакты и личные данные"],["runagents","Запускать и настраивать агентов"],["invite","Добавлять и блокировать пользователей"],["viewas","Смотреть платформу глазами другой роли"],["modreports","Рассматривать рапорты модерации чатов"]];
 const LVC = { n: "Нет", v: "Смотрит", e: "Правит", f: "Управляет" }, LVNEXT = { n: "v", v: "e", e: "f", f: "n" };
 const SCOPES = { own: "Только своё", cls: "Свои классы", par: "Курируемые параллели", all: "Вся школа" };
 const PH = ["phone", "Рабочий телефон", "tel"];
 const ROLES_ALL = [
-  { id: "student", name: "Ученик", pl: "Ученики", c: "#E08A4A", d: "Видит свои оценки, расписание и домашку", lv: "vvnvvevvennn", acts: [], sc: "own",
+  { id: "student", name: "Ученик", pl: "Ученики", c: "#E08A4A", d: "Видит свои оценки, расписание и домашку", lv: "vvnvvevvennnvvvn", acts: [], sc: "own",
     f: [["cls", "Класс", "text"], ["phone", "Телефон", "tel"], ["grp", "Подгруппы", "text"], ["epos", "ID в ЭПОС", "text"], ["bd", "Дата рождения", "date"], ["par", "Родители (ФИО)", "text"]] },
-  { id: "parent", name: "Родитель", pl: "Родители", c: "#E0629A", d: "Следит за успеваемостью своих детей", lv: "vvnvvevvvnnn", acts: [], sc: "own",
+  { id: "parent", name: "Родитель", pl: "Родители", c: "#E0629A", d: "Следит за успеваемостью своих детей", lv: "vvnvvevvvnnnvnvn", acts: [], sc: "own",
     f: [["kids", "Дети (ФИО, класс)", "text"], ["rel", "Кем приходится", "sel", ["Мама", "Папа", "Опекун", "Другое"]], ["phone", "Телефон", "tel"], ["how", "Как связываться", "sel", ["Через платформу", "Telegram", "Почта", "Звонок"]]] },
-  { id: "teacher", name: "Преподаватель", pl: "Преподаватели", c: "#3FA7D6", d: "Ставит оценки и задаёт домашку своим классам", lv: "veeeeevvennn", acts: ["setgrades", "sethw", "writeparents"], sc: "cls",
+  { id: "teacher", name: "Преподаватель", pl: "Преподаватели", c: "#3FA7D6", d: "Ставит оценки и задаёт домашку своим классам", lv: "veeeeevvennneeev", acts: ["setgrades", "sethw", "writeparents"], sc: "cls",
     f: [["subj", "Предметы", "text"], ["cls", "Классы", "text"], ["head", "Куратор класса (классный руководитель)", "text"], ["room", "Кабинет", "text"], ["hours", "Нагрузка, часов в неделю", "number"], ["phone", "Рабочий телефон", "tel"]] },
-  { id: "methodist", name: "Методист", pl: "Методисты", c: "#8E7CF0", d: "Следит за программами, контрольными и качеством преподавания", lv: "vvvvevevennn", acts: ["export", "runagents"], sc: "par",
+  { id: "methodist", name: "Методист", pl: "Методисты", c: "#8E7CF0", d: "Следит за программами, контрольными и качеством преподавания", lv: "vvvvevevennnvvff", acts: ["editsched", "export", "runagents"], sc: "par",
     f: [["subj", "Кафедры и предметы", "text"], ["prog", "Программы и УМК", "text"], PH] },
-  { id: "zavuch", name: "Завуч", pl: "Завучи", c: "#3FBF8F", d: "Расписание, замены и успеваемость параллелей", lv: "fefveeefevnn", acts: ["editsched", "writeparents", "export", "pii", "runagents", "viewas"], sc: "par",
+  { id: "zavuch", name: "Завуч", pl: "Завучи", c: "#3FBF8F", d: "Расписание, замены и успеваемость параллелей", lv: "fefveeefevnnevef", acts: ["editsched", "writeparents", "export", "pii", "runagents", "viewas"], sc: "par",
     f: [["par", "Курирует параллели", "text"], ["dir", "Направление", "sel", ["Учебная работа", "Воспитательная работа", "Расписание и замены"]], PH] },
-  { id: "deputy", name: "Заместитель директора", pl: "Заместители директора", c: "#D6A63F", d: "Управляет направлением и пользователями школы", lv: "fefeeeefeevn", acts: ["setgrades", "editsched", "writeparents", "export", "runagents", "invite", "viewas"], sc: "all",
+  { id: "deputy", name: "Заместитель директора", pl: "Заместители директора", c: "#D6A63F", d: "Управляет направлением и пользователями школы", lv: "fefeeeefeevneeee", acts: ["setgrades", "editsched", "writeparents", "export", "runagents", "invite", "viewas"], sc: "all",
     f: [["dir", "Направление", "sel", ["Учебно-воспитательная работа", "Административно-хозяйственная часть", "Информатизация"]], ["par", "Кураторство", "text"], PH] },
-  { id: "director", name: "Директор", pl: "Директор", c: "#E0584F", d: "Видит всю школу, решает по доступам", lv: "vvvvvevvevvn", acts: ["export", "pii", "viewas"], sc: "all",
+  { id: "director", name: "Директор", pl: "Директор", c: "#E0584F", d: "Видит всю школу, решает по доступам", lv: "vvvvvevvevvnvvvv", acts: ["export", "pii", "viewas"], sc: "all",
     f: [["post", "Должность", "text"], ["hours", "Приёмные часы", "text"], PH] },
-  { id: "controller", name: "Контролёр", pl: "Контролёры", c: "#7F8A99", d: "Проверяет оценки, посещаемость и ДЗ. Только чтение", lv: "vvvvvnvvvvnn", acts: ["export"], sc: "all",
+  { id: "controller", name: "Контролёр", pl: "Контролёры", c: "#7F8A99", d: "Проверяет оценки, посещаемость и ДЗ. Только чтение", lv: "vvvvvnvvvvnnvvvv", acts: ["export"], sc: "all",
     f: [["what", "Что контролирует", "sel", ["Оценки и успеваемость", "Посещаемость", "Выполнение ДЗ", "Всё"]], ["scope", "Охват (классы, параллели)", "text"], PH] },
-  { id: "admin", name: "Администратор", pl: "Администраторы", c: "#5B7CFA", d: "Полный доступ, коннекторы и сервер", lv: "ffffffffffff", acts: ACTS.map(a => a[0]), sc: "all",
+  { id: "admin", name: "Администратор", pl: "Администраторы", c: "#5B7CFA", d: "Полный доступ, коннекторы и сервер", lv: "ffffffffffffffff", acts: ACTS.map(a => a[0]), sc: "all",
     f: [["level", "Уровень доступа", "sel", ["Полный", "Только пользователи", "Только коннекторы"]], PH] },
 ];
-const HIDE_ROLES = ["methodist", "deputy", "controller"];   // пока не используются: убраны из списков, данные сохранены
+const HIDE_ROLES = ["deputy", "controller"];   // пока не используются: убраны из списков, данные сохранены (методист включён в сборке 661)
 const ROLES = ROLES_ALL.filter(r => !HIDE_ROLES.includes(r.id));
 const CUST = (() => { try { const j = JSON.parse(localStorage.getItem("bai-adm-custom")); return { roles: Array.isArray(j && j.roles) ? j.roles : [], acts: Array.isArray(j && j.acts) ? j.acts : [] }; } catch(e) { return { roles: [], acts: [] }; } })();
 const custSave = () => { try { localStorage.setItem("bai-adm-custom", JSON.stringify(CUST)); } catch(e) {} };
@@ -14442,7 +14442,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "660";
+const BUILD = "661";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14459,6 +14459,8 @@ const REG_CHECKS = [
   ["Оценки: 4 вида итога и режим без цвета", () => Object.keys(FIN_NAMES).length === 4 && !!GCOLOR_NAMES.off],
   ["Контрольные: карточка с «Повторить» и счётчиком", () => { const t = String(renderTests) + (typeof testsInner === "function" ? String(testsInner) : ""); return t.indexOf("tk-rep") > 0 && t.indexOf("tk-w") > 0; }],
   ["Вход: первый вход по коду, вкладка «Вход» в настройках", () => !window.yadroAuth || (typeof auHtml === "function" && INV_R.length === 9 && invCls("10та") === "10 ТА" && invCls("8а") === "8 «А»")],
+  ["Онлайн-уроки, библиотека и замены подключены", () => !!document.getElementById("online") && !!document.getElementById("library") && !!document.getElementById("mtd") && typeof renderOnline === "function" && typeof renderLibrary === "function" && typeof renderMtd === "function"],
+  ["Роль «Методист» включена, права дополнены", () => ROLES.some(r => r.id === "methodist") && RES.length === 16 && ROLES_ALL.every(r => r.custom || r.lv.length === 16)],
   ["Нет ошибок скриптов", () => JS_ERRS.length === 0]
 ];
 function regRun(quiet){
@@ -17558,5 +17560,1015 @@ document.addEventListener("error", function(e){
     try { if(AUTH.user && AUTH.user.avatar){ AUTH.user.avatar = ""; localStorage.setItem("bai-auth", JSON.stringify(AUTH.user)); } } catch(_) {} return; }
   if(im.closest(".au-mk, .sec-fl")) im.style.display = "none";
 }, true);
+</script>
+<style id="vc661-css">
+/* ===== сборка 661: онлайн-уроки, библиотека, замены ===== */
+.vc-sub{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}
+.vc-note{font-size:12.5px;color:var(--muted);line-height:1.45}
+.vc-pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:99px;font-size:12.5px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted);white-space:nowrap}
+.vc-pill.g{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.vc-pill.w{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.vc-pill.a{background:color-mix(in srgb,var(--pen) 14%,transparent);color:var(--pen)}
+.vc-dot{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+.vc-live .vc-dot{animation:vcPulse 1.6s infinite}
+@keyframes vcPulse{0%,100%{opacity:1}50%{opacity:.35}}
+:root[data-motion="off"] .vc-live .vc-dot{animation:none}
+.vc-b{appearance:none;border:0;cursor:pointer;font:inherit;height:36px;padding:0 14px;border-radius:12px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.vc-b:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.vc-b:active{transform:scale(.97)}
+.vc-b.p{background:var(--pen);color:var(--on-pen,#fff)}
+.vc-b.gh{background:transparent;color:var(--muted)}
+.vc-b svg{flex:none}
+.vc-ic{width:36px;height:36px;padding:0;justify-content:center}
+.vc-seg{display:inline-flex;gap:3px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.vc-seg button{appearance:none;border:0;cursor:pointer;font:inherit;font-size:13.5px;height:30px;padding:0 12px;border-radius:9px;background:transparent;color:var(--muted)}
+.vc-seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--pen)}
+/* список онлайн-уроков */
+.vc-row{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
+.vc-row:first-child{border-top:0}
+.vc-row time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;display:flex;flex-direction:column}
+.vc-row time b{color:var(--ink);font-weight:500;font-size:14px}
+.vc-rt{min-width:0;display:flex;flex-direction:column;gap:1px}
+.vc-rt b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc-rt small{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc-g2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+/* проверка перед входом */
+.vc-cam{position:relative;border-radius:16px;overflow:hidden;background:color-mix(in srgb,var(--ink) 88%,transparent);aspect-ratio:16/9;display:grid;place-items:center}
+.vc-cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.vc-cam .vc-off{display:grid;justify-items:center;gap:8px;color:#EDEBE6;text-align:center;padding:12px;position:relative;z-index:1}
+.vc-cam .vc-ava{width:72px;height:72px;border-radius:22px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:24px;letter-spacing:.03em}
+.vc-ctl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.vc-k{appearance:none;border:0;cursor:pointer;width:52px;height:52px;border-radius:16px;background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink);display:grid;place-items:center}
+.vc-k:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.vc-k:active{transform:scale(.95)}
+.vc-k.off{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.vc-k.on{background:color-mix(in srgb,var(--pen) 16%,transparent);color:var(--pen)}
+.vc-k.leave{background:var(--bad);color:#fff}
+.vc-lvl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.vc-lvl .tr{flex:1;height:6px;border-radius:99px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.vc-lvl .tr i{display:block;height:100%;width:0;background:var(--good);transition:width .12s linear}
+.vc-chk{display:flex;flex-direction:column}
+.vc-chk .r{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:7px 0;border-top:1px solid var(--line)}
+.vc-chk .r:first-child{border-top:0}
+.vc-chk .r b{font-weight:500}
+/* комната */
+.vc-room{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:stretch}
+.vc-stage{display:flex;flex-direction:column;gap:10px;min-width:0}
+.vc-main{position:relative;border-radius:18px;overflow:hidden;background:color-mix(in srgb,var(--ink) 90%,transparent);aspect-ratio:16/9;display:grid;place-items:center;color:#EDEBE6}
+.vc-main .nm{position:absolute;left:10px;bottom:9px;font-size:13px;background:rgba(0,0,0,.35);padding:3px 9px;border-radius:99px}
+.vc-me{position:absolute;right:10px;bottom:10px;width:176px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#222;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.vc-me video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.vc-me .vc-off{position:absolute;inset:0;display:grid;place-items:center;color:#EDEBE6;font-size:13px;background:color-mix(in srgb,var(--ink) 88%,transparent)}
+.vc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.vc-t{position:relative;border-radius:14px;background:color-mix(in srgb,var(--ink) 86%,transparent);aspect-ratio:4/3;display:grid;place-items:center;color:#EDEBE6;overflow:hidden}
+.vc-t .vc-ava{width:52px;height:46px;border-radius:14px;background:rgba(255,255,255,.13);display:grid;place-items:center;font-size:15px;letter-spacing:.03em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.vc-t .nm{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vc-t .st{position:absolute;right:7px;top:7px;display:flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:99px;background:rgba(0,0,0,.4);color:#F2C3AE;font-size:11.5px}
+.vc-t.hand{box-shadow:inset 0 0 0 2px var(--warn)}
+.vc-t.speak{box-shadow:inset 0 0 0 2px var(--good)}
+.vc-side{display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);background:var(--surface);min-height:320px;max-height:560px}
+.vc-sh{display:flex;gap:3px;padding:8px;border-bottom:1px solid var(--line)}
+.vc-sb{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;padding:10px;display:flex;flex-direction:column;gap:8px}
+.vc-m{max-width:88%;padding:7px 11px;border-radius:14px;background:color-mix(in srgb,var(--ink) 6%,transparent);font-size:13.5px;line-height:1.4}
+.vc-m small{display:block;font-size:11px;color:var(--muted);margin-bottom:1px}
+.vc-m.my{align-self:flex-end;background:color-mix(in srgb,var(--pen) 14%,transparent)}
+.vc-sf{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
+.vc-sf input{flex:1;min-width:0;height:36px;border:0;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink);font:inherit;padding:0 12px;outline:0}
+.vc-sf input:focus{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.vc-pr{display:flex;align-items:center;gap:10px;padding:7px 4px;border-top:1px solid var(--line);font-size:13.5px}
+.vc-pr:first-child{border-top:0}
+.vc-pr .vc-ava2{width:30px;height:30px;border-radius:10px;background:color-mix(in srgb,var(--ink) 7%,transparent);display:grid;place-items:center;font-size:11px;color:var(--muted);flex:none}
+.vc-pr em{font-style:normal;margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.vc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+/* итоги урока */
+.vc-sum .r{display:grid;grid-template-columns:minmax(0,1.4fr) 128px minmax(0,1fr);gap:10px;align-items:center;padding:8px 4px;border-top:1px solid var(--line)}
+.vc-sum .r:first-child{border-top:0}
+.vc-end{display:flex;flex-direction:column;max-width:440px}
+.vc-end .r{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.vc-end .r span:first-child{color:var(--muted);white-space:nowrap}
+.vc-end .r span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+/* библиотека */
+.lb-top{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.lb-go{display:flex;gap:14px;align-items:center;cursor:pointer;text-align:left}
+.lb-go:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.lb-cv{flex:none;position:relative;width:64px;aspect-ratio:3/4;border-radius:9px;overflow:hidden}
+.lb-cv i{position:absolute;right:-16%;top:-10%;width:78%;aspect-ratio:1;border-radius:50%}
+.lb-cv b{position:absolute;left:8px;bottom:4px;font-weight:500;font-size:26px;line-height:1}
+.lb-cv small{position:absolute;left:8px;top:7px;font-size:10.5px}
+.lb-pr{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
+.lb-pr .tr{flex:1;height:4px;border-radius:99px;background:color-mix(in srgb,var(--ink) 8%,transparent);overflow:hidden}
+.lb-pr .tr i{display:block;height:100%;background:var(--pen)}
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:14px 12px}
+.lb-bk{appearance:none;border:0;background:transparent;cursor:pointer;font:inherit;color:var(--ink);text-align:left;border-radius:14px;padding:5px;display:flex;flex-direction:column;gap:6px}
+.lb-bk:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.lb-bk:active{transform:scale(.98)}
+.lb-bk .lb-cv{width:100%}
+.lb-bk .lb-cv b{font-size:34px}
+.lb-bk>span{display:flex;flex-direction:column;gap:1px;padding:0 3px;min-width:0}
+.lb-bk .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-bk small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-src{margin-top:3px;align-self:flex-start;padding:1px 8px;border-radius:99px;font-size:11px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted)}
+.lb-hw{display:flex;flex-direction:column}
+.lb-hw a{display:flex;justify-content:space-between;gap:10px;padding:8px 6px;border-radius:10px;color:var(--ink);text-decoration:none}
+.lb-hw a:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.lb-hw a em{font-style:normal;font-size:12.5px;color:var(--muted);white-space:nowrap}
+/* читалка */
+.lb-rd{display:grid;grid-template-columns:236px minmax(0,1fr) 280px;gap:14px;align-items:start}
+.lb-toc{display:flex;flex-direction:column;gap:1px}
+.lb-toc a{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:13.5px}
+.lb-toc a em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
+.lb-toc a:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
+.lb-toc a.on{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.lb-page{border-radius:16px;border:1px solid var(--line);background:var(--surface);padding:30px 36px;line-height:1.62;display:flex;flex-direction:column;gap:12px}
+.lb-page h2{margin:0;font-weight:500;font-size:1.45em}
+.lb-page .frm{padding:12px 16px;border-radius:12px;background:color-mix(in srgb,var(--ink) 5%,transparent);text-align:center;font-size:1.1em}
+.lb-page mark{background:color-mix(in srgb,var(--warn) 30%,transparent);color:inherit;border-radius:4px;padding:0 2px}
+.lb-page .ex{display:flex;gap:10px}
+.lb-page .ex i{flex:none;font-style:normal;padding:0 8px;border-radius:99px;background:color-mix(in srgb,var(--pen) 14%,transparent);color:var(--pen);font-size:.85em;height:fit-content;line-height:1.5}
+.lb-th{display:flex;align-items:center;gap:6px}
+.lb-th .th{appearance:none;cursor:pointer;border:0;width:40px;height:30px;border-radius:9px;font:inherit;font-size:12px}
+.lb-th .th[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--pen)}
+.lb-rd[data-th="sepia"] .lb-page{background:#F3EAD8;color:#3B3226;border-color:#E2D5BC}
+.lb-rd[data-th="dark"] .lb-page{background:#201F1C;color:#EDEBE6;border-color:#33312C}
+/* методист: сетка недели и замены */
+.mt-grid{display:grid;grid-template-columns:70px repeat(6,minmax(0,1fr));gap:6px}
+.mt-grid .hd{padding:2px 4px 4px;display:flex;align-items:baseline;gap:6px;font-size:14.5px}
+.mt-grid .hd small{font-size:12px;color:var(--muted)}
+.mt-grid .nn{display:flex;flex-direction:column;justify-content:center;font-size:13px;padding-left:2px}
+.mt-grid .nn small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mt-c{appearance:none;cursor:pointer;font:inherit;text-align:left;min-height:56px;border:0;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:6px 9px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;color:var(--ink)}
+.mt-c:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mt-c.emp{background:transparent;color:var(--muted)}
+.mt-c.sel{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mt-c>span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-c small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--muted)}
+.mt-c .tg{margin-top:3px;padding:1px 7px;border-radius:99px;font-size:10.5px}
+.mt-c .tg.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.mt-c .tg.b{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.mt-c .tg.g{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.mt-lay{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:14px;align-items:start}
+.mt-card .kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:13.5px}
+.mt-card .kv span:first-child{color:var(--muted)}
+.mt-a2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.mt-ab{display:flex;align-items:center;gap:12px;padding-bottom:8px}
+.mt-ab .vc-ava2{width:40px;height:40px;border-radius:12px;font-size:13px}
+.mt-sr{display:grid;grid-template-columns:104px 64px minmax(0,1fr);gap:10px;align-items:center;padding:9px 2px;border-top:1px solid var(--line)}
+.mt-sr .n{display:flex;flex-direction:column;font-size:13.5px}
+.mt-sr .n small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mt-cand{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.mt-ch{appearance:none;cursor:pointer;border:0;font:inherit;font-size:13px;height:28px;padding:0 11px;border-radius:99px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
+.mt-ch:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mt-ch.set{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
+.mt-log{display:flex;flex-direction:column}
+.mt-log .r{display:flex;gap:10px;padding:7px 4px;border-radius:9px;font-size:13px}
+.mt-log .r time{flex:none;width:42px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mt-imp{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:14px;align-items:start}
+.mt-srcb{width:100%;appearance:none;cursor:pointer;border:0;font:inherit;text-align:left;border-radius:13px;background:transparent;padding:10px;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
+.mt-srcb[aria-pressed="true"]{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mt-srcb:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1.5px var(--line)}
+.mt-srcb .ic{flex:none;width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);display:grid;place-items:center;color:var(--muted)}
+.mt-srcb>span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.mt-srcb small{font-size:12px;color:var(--muted)}
+.mt-drop{border-radius:13px;box-shadow:inset 0 0 0 1.5px var(--line);border:0;padding:22px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--muted);cursor:pointer;background:transparent;font:inherit;width:100%}
+.mt-drop:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
+.mt-diff .r{display:grid;grid-template-columns:62px 104px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 2px;border-top:1px solid var(--line);font-size:13.5px}
+.mt-diff .r small{color:var(--muted);font-size:12px}
+@media(max-width:900px){
+.vc-g2,.vc-room,.lb-top,.mt-lay,.mt-imp{grid-template-columns:minmax(0,1fr)}
+.lb-rd{grid-template-columns:minmax(0,1fr)}
+.lb-rd aside{order:3}
+.lb-page{padding:20px 18px}
+.vc-side{max-height:360px}
+.vc-me{width:112px}
+.mt-grid{grid-template-columns:56px repeat(6,minmax(120px,1fr));overflow-x:auto;padding-bottom:4px}
+}
+</style>
+<script>
+/* ===== сборка 661: онлайн-уроки, библиотека учебников, замены и загрузка расписания ===== */
+(function(){
+"use strict";
+if(window.__vc661) return; window.__vc661 = 1;
+const main = document.querySelector("main"); if(!main) return;
+
+/* ---------- общие мелочи ---------- */
+const $id = x => document.getElementById(x);
+const IC = {
+  cam: "M3.5 6.5h11a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM15.5 10.5l5-2.8v8.6l-5-2.8",
+  camOff: "M3.5 6.5h9l3 3v6l-1 2h-11a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM15.5 10.5l5-2.8v8.6M4 4l16 16",
+  mic: "M12 3.5a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0v-5a3 3 0 0 1 3-3zM5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3",
+  micOff: "M9 6.5a3 3 0 0 1 6 0v5M5.5 11.5a6.5 6.5 0 0 0 10.8 4.9M12 18v3M4 4l16 16",
+  hand: "M8 12V6a1.5 1.5 0 0 1 3 0v5m0-6a1.5 1.5 0 0 1 3 0v6m0-4.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2.3-4.2a1.4 1.4 0 0 1 2.3-1.5L8 13",
+  leave: "M16 8l4 4-4 4M20 12H9M12 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h6",
+  plus: "M12 5v14M5 12h14",
+  x: "M6 6l12 12M18 6L6 18",
+  left: "M15 6l-6 6 6 6",
+  book: "M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h9",
+  link2: "M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1",
+  file: "M7 3h7l5 5v13H7zM14 3v5h5",
+  up: "M12 16V4M7 9l5-5 5 5M5 20h14",
+  sheet: "M4 4h16v16H4zM4 10h16M4 15h16M10 4v16",
+  pen2: "M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z",
+  mark: "M7 4h10v16l-5-4-5 4z",
+  list2: "M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1",
+  swap: "M7 7h11l-3-3M17 17H6l3 3",
+  cal2: "M4 5h16v15H4zM4 10h16M8 3v4M16 3v4",
+  rec: "M12 19a7 7 0 1 0 0-14 7 7 0 0 0 0 14z",
+  spark: "M12 4l1.6 4.4L18 10l-4.4 1.6L12 16l-1.6-4.4L6 10l4.4-1.6z",
+  check2: "M5 12.5l4.5 4.5L19 7"
+};
+const svg = (d, s, w) => `<svg viewBox="0 0 24 24" width="${s || 18}" height="${s || 18}" fill="none" stroke="currentColor" stroke-width="${w || 1.7}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const ini2 = n => String(n || "?").trim().split(/\s+/).slice(0, 2).map(w => (w[0] || "").toUpperCase()).join("") || "?";
+const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const myCls = () => String(DATA.student || "8 «А» класс").replace(/\s*класс\s*$/, "").trim() || "8 «А»";
+const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const vcHead = (eb, h, extra) => `<div class="view-head"><div class="hello"><p class="eyebrow">${esc(eb)}</p><h1 class="headline">${esc(h)}</h1></div></div>${extra || ""}`;
+const store = (k, def) => { try { const j = JSON.parse(localStorage.getItem(k)); return j && typeof j === "object" ? j : def; } catch(e) { return def; } };
+const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
+
+/* ---------- разделы и вкладки ---------- */
+const SECS = [["online", "Онлайн-уроки", "M3.5 6.5h11a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM15.5 10.5l5-2.8v8.6l-5-2.8", "#2E9E6B"], ["library", "Библиотека", "M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h9", "#8E7CF0"], ["mtd", "Замены", "M7 7h11l-3-3M17 17H6l3 3", "#D6A63F"]];
+SECS.forEach(([id]) => { if($id(id)) return; const s = document.createElement("section"); s.id = id; s.hidden = true; s.setAttribute("role", "tabpanel"); s.setAttribute("aria-labelledby", "tab-" + id); main.appendChild(s); });
+const tabsIn = document.querySelector(".tabs-in");
+SECS.forEach(([id, label, d, c]) => {
+  if($id("tab-" + id) || !tabsIn) return;
+  const b = document.createElement("button");
+  b.className = "tab"; b.hidden = true; b.id = "tab-" + id; b.dataset.tab = id;
+  b.setAttribute("role", "tab"); b.setAttribute("aria-controls", id);
+  b.innerHTML = `<svg class="ti ti-a" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg><svg class="ti ti-b" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:${c}" aria-hidden="true"><path d="${d}"/></svg><span class="tl">${label}</span>`;
+  b.draggable = true;
+  tabsIn.appendChild(b);
+});
+const vcRole = () => (typeof VA !== "undefined" && VA.role) || (typeof CN !== "undefined" && CN.isAdmin ? "admin" : (typeof ME_ROLE === "string" && ME_ROLE) || "");
+const vcLv = id => { const r = vcRole(); if(!r) return (typeof CN !== "undefined" && CN.isAdmin) ? "f" : (id === "subs" ? "n" : "v"); try { const p = ADM.perm[r]; return (p && p.res && p.res[id]) || "n"; } catch(e) { return "n"; } };
+const vcStaffed = () => { const r = vcRole(); return ["teacher", "methodist", "zavuch", "deputy", "director", "admin"].includes(r); };
+function vcTabs(){
+  const m = { online: "online", library: "library", mtd: "subs" };
+  SECS.forEach(([id]) => { const b = $id("tab-" + id); if(b){ const show = vcLv(m[id]) !== "n"; if(b.hidden === show) b.hidden = !show; } });
+}
+vcTabs(); setInterval(vcTabs, 3000);
+
+/* при смене вкладки открытое в новых разделах сворачивается (идущий урок не прерывается) */
+if(typeof collapseAll === "function"){ const _ca = collapseAll; collapseAll = function(){ try { if(ONL.view !== "room" && ONL.view !== "sum"){ vcLeaveMedia(); ONL.view = "list"; } LB.view = "shelf"; MT.sel = null; } catch(e) {} return _ca.apply(this, arguments); }; }
+const _st661 = showTab;
+showTab = function(t){ const r = _st661.apply(this, arguments); try { if(t === "online") renderOnline(); if(t === "library") renderLibrary(); if(t === "mtd") renderMtd(); } catch(e) {} return r; };
+
+/* ============================================================
+   ОНЛАЙН-УРОКИ
+   ============================================================ */
+const VCS = store("yadro-vc-v1", { lessons: [], msgs: {}, att: {}, done: [] });
+const vcSave = () => put("yadro-vc-v1", VCS);
+const ONL = { view: "list", cur: null, stream: null, err: "", mic: false, cam: true, hand: false, tab: "chat", t0: 0, raf: 0, ana: null, actx: null, timer: 0 };
+const OPT_DEF = { wait: true, micOff: true, rec: true, ai: true, att: true, cams: true, chat: true, dm: true, poll: true, late: 5, open: 10, keep: 30, par: false };
+const OPT_ROWS = [
+  ["Вход", [["open", "Открыть вход", "за 10 минут", "n"], ["wait", "Зал ожидания", "учитель сам впускает"], ["late", "Опоздание после", "5 минут", "n"]]],
+  ["Ученики на уроке", [["micOff", "Микрофоны при входе выключены"], ["cams", "Камеры по желанию"], ["hand", "Поднятая рука и очередь", "", "x"]]],
+  ["Чат и опросы", [["chat", "Чат урока"], ["dm", "Личные сообщения учителю"], ["poll", "Опросы и реакции"]]],
+  ["Запись и журнал", [["rec", "Запись урока"], ["ai", "Конспект ИИ"], ["keep", "Хранить запись", "30 дней", "n"], ["att", "Присутствие в журнал"], ["par", "Запись видна родителям"]]]
+];
+function vcLessonsToday(d){
+  const date = d || TODAY, iso = isoDate(date);
+  let L = [];
+  try { L = (holidayOf(date) ? [] : lessonsFor(date)).filter(x => x.sub && x.num); } catch(e) {}
+  return L.map(x => {
+    const on = VCS.lessons.find(v => v.date === iso && v.cls === myCls() && (+v.num === +x.num || v.sid === x.sid));
+    return { ...x, vc: on || null };
+  });
+}
+const vcState = v => {
+  const iso = isoDate(TODAY);
+  if(v.date !== iso) return v.date < iso ? "past" : "future";
+  const a = tMin(v.t0v || v.time || "") , b = a != null ? a + (+v.dur || 40) : null, m = nowMin();
+  if(a == null) return "soon";
+  if(m < a - (+((v.opts || {}).open) || 10)) return "wait";
+  if(m < a) return "open";
+  if(b != null && m < b) return "live";
+  return "past";
+};
+function vcMyLesson(id){ return VCS.lessons.find(x => x.id === id) || null; }
+function vcLeaveMedia(){
+  try { if(ONL.stream){ ONL.stream.getTracks().forEach(t => t.stop()); } } catch(e) {}
+  try { if(ONL.actx){ ONL.actx.close(); } } catch(e) {}
+  cancelAnimationFrame(ONL.raf); clearInterval(ONL.timer);
+  ONL.stream = null; ONL.ana = null; ONL.actx = null; ONL.err = "";
+}
+window.addEventListener("pagehide", vcLeaveMedia);
+
+function onlListHtml(){
+  const staff = vcStaffed();
+  const rows = vcLessonsToday();
+  const iso = isoDate(TODAY);
+  const row = x => {
+    const v = x.vc, a = hhmm(x.time[0]), b = hhmm(x.time[1]);
+    let right = `<span class="vc-pill">Очно${roomShort(x.room) ? " · " + esc(roomShort(x.room)) : ""}</span>`;
+    if(v){
+      const st = vcState({ ...v, t0v: x.time[0] });
+      if(st === "live") right = `<span class="vc-pill g vc-live"><i class="vc-dot"></i>Идёт</span><button type="button" class="vc-b p vc-ra" data-vc-join="${esc(v.id)}">Войти</button>`;
+      else if(st === "open") right = `<span class="vc-pill g">Вход открыт</span><button type="button" class="vc-b p vc-ra" data-vc-join="${esc(v.id)}">Войти</button>`;
+      else if(st === "wait") right = `<span class="vc-pill a">Онлайн · вход за ${(v.opts || {}).open || 10} мин</span>`;
+      else if(st === "past") right = `<span class="vc-pill">Завершён</span>`;
+      else right = `<span class="vc-pill a">Онлайн</span>`;
+    }
+    return `<div class="vc-row"><time><b>${esc(a)}</b>${b ? esc(b) : ""}</time><span class="vc-rt"><b>${esc(x.sub.name)}</b><small>${esc([x.teacher, x.room].filter(Boolean).join(" · "))}</small></span>${right}</div>`;
+  };
+  const mineVc = VCS.lessons.filter(v => v.date >= iso).sort((p, q) => p.date === q.date ? String(p.time).localeCompare(String(q.time)) : p.date.localeCompare(q.date));
+  const vrow = v => {
+    const st = vcState(v);
+    const pill = st === "live" ? `<span class="vc-pill g vc-live"><i class="vc-dot"></i>Идёт</span>` : st === "past" ? `<span class="vc-pill">Завершён</span>` : `<span class="vc-pill a">${v.date === iso ? "Сегодня" : esc(v.date.slice(8, 10) + "." + v.date.slice(5, 7))}</span>`;
+    return `<div class="vc-row"><time><b>${esc(hhmm(v.time))}</b>${esc(v.cls)}</time><span class="vc-rt"><b>${esc(v.subjName)}</b><small>${[v.opts.rec ? "запись" + (v.opts.ai ? " и конспект" : "") : "без записи", v.opts.micOff ? "микрофоны выключены" : "", v.opts.wait ? "зал ожидания" : ""].filter(Boolean).join(" · ")}</small></span><span style="display:flex;gap:6px" class="vc-ra"><button type="button" class="vc-b p" data-vc-open="${esc(v.id)}">Открыть</button><button type="button" class="vc-b" data-vc-fin="${esc(v.id)}">Завершить</button><button type="button" class="vc-b gh vc-ic" data-vc-del="${esc(v.id)}" aria-label="Удалить урок" title="Удалить урок">${svg(IC.x, 15)}</button></span></div>`;
+  };
+  const doneRows = VCS.done.slice(-5).reverse().map(d => `<div class="vc-row"><time><b>${esc(hhmm(d.time))}</b>${esc(d.date.slice(8, 10) + "." + d.date.slice(5, 7))}</time><span class="vc-rt"><b>${esc(d.subjName)}</b><small>${esc(d.cls)} · было ${d.n} из ${d.total}</small></span><button type="button" class="vc-b vc-ra" data-vc-sum="${esc(d.id)}">Итоги</button></div>`).join("");
+  return vcHead("Видеосвязь класса", "Онлайн-уроки",
+    `<div class="vc-sub">${staff ? `<button type="button" class="vc-b p" data-vc-new>${svg(IC.plus, 16)}Новый онлайн-урок</button>` : ""}<span class="vc-pill">${esc(WDL[TODAY.getDay()])}, ${TODAY.getDate()} ${esc(MG[TODAY.getMonth()])}</span></div>`) +
+  `<div class="vc-g2"><div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+    <section class="panel"><div class="panel-head"><h2>Сегодня · ${esc(myCls())}</h2><button class="link" data-go="schedule">Расписание</button></div>
+      ${rows.length ? rows.map(row).join("") : `<p class="muted">Сегодня уроков нет.</p>`}</section>
+    ${staff ? `<section class="panel"><div class="panel-head"><h2>Мои онлайн-уроки</h2></div>
+      ${mineVc.length ? mineVc.map(vrow).join("") : `<p class="muted">Онлайн-уроков пока нет. Создайте первый кнопкой «Новый онлайн-урок» — он появится у класса в этом списке.</p>`}</section>` : ""}
+    ${doneRows ? `<section class="panel"><div class="panel-head"><h2>Прошедшие</h2></div>${doneRows}</section>` : ""}
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <section class="panel"><div class="panel-head"><h2>Как проходит урок</h2></div>
+      <p class="vc-note" style="margin:0 0 6px">Микрофон при входе выключен. Чтобы ответить, поднимите руку.</p>
+      <p class="vc-note" style="margin:0 0 6px">Присутствие отмечается и попадает к учителю в итоги урока.</p>
+      <p class="vc-note" style="margin:0">Перед входом сайт проверяет камеру, микрофон и связь.</p></section>
+    <section class="panel"><div class="panel-head"><h2>Подключение</h2></div>
+      <div class="vc-chk"><div class="r"><span>Камера и микрофон</span><b style="color:var(--good)">проверяются по-настоящему</b></div>
+      <div class="r"><span>Список уроков и итоги</span><b style="color:var(--good)">работают</b></div>
+      <div class="r"><span>Звук и видео между участниками</span><b style="color:var(--warn)">нужен сервер связи</b></div></div>
+      <p class="vc-note" style="margin:8px 0 0">Сервер связи подключается отдельным обновлением yadro-api.</p></section>
+  </div></div>`;
+}
+function onlLobbyHtml(){
+  const v = ONL.cur || {};
+  const nm = esc(DATA.studentName || "Вы");
+  const okCam = !!(ONL.stream && ONL.stream.getVideoTracks().some(t => t.enabled && t.readyState === "live"));
+  const okMic = !!(ONL.stream && ONL.stream.getAudioTracks().some(t => t.readyState === "live"));
+  const err = ONL.err;
+  return vcHead(esc(v.cls || myCls()) + " · " + esc(hhmm(v.time || "")), v.subjName || "Онлайн-урок",
+    `<div class="vc-sub"><button type="button" class="vc-b gh" data-vc-back>${svg(IC.left, 16)}К списку</button><span class="vc-pill a">Проверка перед входом</span></div>`) +
+  `<div class="vc-g2"><section class="panel" style="display:flex;flex-direction:column;gap:10px">
+    <div class="vc-cam ${ONL.camBlur ? "blur" : ""}" id="vc-cambox">${err ? "" : `<video id="vc-prev" autoplay playsinline muted></video>`}<div class="vc-off" ${okCam && !err ? "hidden" : ""}><span class="vc-ava">${esc(ini2(DATA.studentName || "Вы"))}</span><span>${err ? "Камера и микрофон закрыты" : "Камера выключена"}</span></div></div>
+    <div class="vc-ctl">
+      <button type="button" class="vc-k ${ONL.mic ? "" : "off"}" data-vc-mic aria-pressed="${ONL.mic}" aria-label="${ONL.mic ? "Выключить микрофон" : "Включить микрофон"}" title="${ONL.mic ? "Выключить микрофон" : "Включить микрофон"}">${svg(ONL.mic ? IC.mic : IC.micOff, 22)}</button>
+      <button type="button" class="vc-k ${ONL.cam ? "" : "off"}" data-vc-cam aria-pressed="${ONL.cam}" aria-label="${ONL.cam ? "Выключить камеру" : "Включить камеру"}" title="${ONL.cam ? "Выключить камеру" : "Включить камеру"}">${svg(ONL.cam ? IC.cam : IC.camOff, 22)}</button>
+    </div>
+    <div class="vc-lvl">${svg(IC.mic, 15)}<span class="tr"><i id="vc-lvl"></i></span><span id="vc-lvlt">${okMic ? "скажите что-нибудь" : "микрофон не проверен"}</span></div>
+  </section>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    ${err ? `<section class="panel"><div class="panel-head"><h2>Браузер не дал доступ</h2></div>
+      <p class="vc-note" style="margin:0 0 4px">1. Нажмите на значок замка слева от адреса сайта.</p>
+      <p class="vc-note" style="margin:0 0 4px">2. Разрешите камеру и микрофон.</p>
+      <p class="vc-note" style="margin:0 0 10px">3. Нажмите «Проверить снова».</p>
+      <button type="button" class="vc-b" data-vc-retry>Проверить снова</button></section>` : `<section class="panel"><div class="panel-head"><h2>Проверка</h2></div>
+      <div class="vc-chk">
+        <div class="r"><span>Камера</span><b style="color:${okCam ? "var(--good)" : "var(--warn)"}">${okCam ? "работает" : ONL.cam ? "подключается…" : "выключена вами"}</b></div>
+        <div class="r"><span>Микрофон</span><b id="vc-chkmic" style="color:${okMic ? "var(--good)" : "var(--warn)"}">${okMic ? "работает" : "проверяется…"}</b></div>
+        <div class="r"><span>Сеть</span><b style="color:${navigator.onLine ? "var(--good)" : "var(--bad)"}">${navigator.onLine ? "в порядке" : "нет соединения"}</b></div>
+      </div></section>`}
+    <section class="panel"><div class="panel-head"><h2>Правила урока</h2></div>
+      <div class="vc-chk">
+        <div class="r"><span>Микрофон при входе</span><b>${(v.opts || OPT_DEF).micOff ? "выключен" : "включён"}</b></div>
+        <div class="r"><span>Запись</span><b>${(v.opts || OPT_DEF).rec ? "ведётся" + ((v.opts || OPT_DEF).ai ? " · конспект ИИ" : "") : "не ведётся"}</b></div>
+        <div class="r"><span>Присутствие</span><b>${(v.opts || OPT_DEF).att ? "в журнал" : "не отмечается"}</b></div>
+      </div></section>
+    <button type="button" class="vc-b p" style="height:44px;justify-content:center" data-vc-enter>Войти в урок</button>
+    <p class="vc-note">Войти можно и с выключенной камерой.</p>
+  </div></div>`;
+}
+function vcRoster(cls){
+  try { const L = (JR_ROST && JR_ROST[cls]) || []; return L.map(x => ({ id: x[0], nm: x[1] })); } catch(e) { return []; }
+}
+function onlRoomHtml(){
+  const v = ONL.cur || {}, teacherView = vcStaffed() && v.mine;
+  const ros = vcRoster(v.cls || myCls());
+  const msgs = VCS.msgs[v.id] || [];
+  const chat = msgs.map(m => `<div class="vc-m ${m.my ? "my" : ""}"><small>${esc(m.who)} · ${esc(m.t)}</small>${esc(m.tx)}</div>`).join("") || `<p class="vc-note" style="margin:auto;text-align:center">Сообщения урока видны только классу и учителю.</p>`;
+  const people = `<div class="vc-pr"><span class="vc-ava2">${esc(ini2(v.teacher || "Учитель"))}</span><span>${esc(v.teacher || "Учитель")}</span><em>ведёт урок</em></div>` +
+    ros.map(p => `<div class="vc-pr"><span class="vc-ava2">${esc(ini2(p.nm))}</span><span>${esc(fioShort(p.nm))}</span></div>`).join("");
+  const side = `<aside class="vc-side"><div class="vc-sh"><div class="vc-seg" role="tablist" style="flex:1;display:flex">
+      <button type="button" role="tab" style="flex:1" aria-pressed="${ONL.tab === "chat"}" data-vc-tab="chat">Чат</button>
+      <button type="button" role="tab" style="flex:1" aria-pressed="${ONL.tab === "ppl"}" data-vc-tab="ppl">Участники · ${ros.length + 1}</button>
+    </div></div>
+    <div class="vc-sb" id="vc-sb">${ONL.tab === "chat" ? chat : people}</div>
+    ${ONL.tab === "chat" ? `<form class="vc-sf" data-vc-chatf><input id="vc-ci" maxlength="300" placeholder="Сообщение классу" autocomplete="off" aria-label="Сообщение"><button type="submit" class="vc-b p vc-ic" aria-label="Отправить">${svg(IC.left, 16).replace("M15 6l-6 6 6 6", "M9 6l6 6-6 6")}</button></form>` : ""}</aside>`;
+  const stage = teacherView
+    ? `<div class="vc-grid" style="flex:1">
+        <div class="vc-t speak" style="aspect-ratio:auto;min-height:120px"><video id="vc-prev" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)" ${ONL.cam ? "" : "hidden"}></video><span class="vc-ava" ${ONL.cam ? "hidden" : ""}>${esc(ini2(v.teacher || DATA.studentName || "Вы"))}</span><span class="nm">Вы · учитель</span></div>
+        ${ros.map(p => `<div class="vc-t"><span class="vc-ava">${esc(ini2(p.nm))}</span><span class="nm">${esc(fioShort(p.nm))}</span></div>`).join("")}
+      </div>`
+    : `<div class="vc-main"><span class="vc-ava" style="width:88px;height:88px;border-radius:26px;background:rgba(255,255,255,.13);display:grid;place-items:center;font-size:28px">${esc(ini2(v.teacher || "Учитель"))}</span>
+        <span class="nm">${esc(v.teacher || "Учитель")}${(v.opts || OPT_DEF).rec ? " · запись" : ""}</span>
+        <div class="vc-me"><video id="vc-prev" autoplay playsinline muted ${ONL.cam ? "" : "hidden"}></video><div class="vc-off" ${ONL.cam ? "hidden" : ""}>Вы</div></div></div>`;
+  return vcHead(esc(v.cls || myCls()) + (v.time ? " · " + esc(hhmm(v.time)) : ""), v.subjName || "Онлайн-урок",
+    `<div class="vc-sub"><span class="vc-pill g vc-live"><i class="vc-dot"></i><span id="vc-tmr">0:00</span></span>${(v.opts || OPT_DEF).rec ? `<span class="vc-pill w">● запись</span>` : ""}${ONL.hand ? `<span class="vc-pill w">${svg(IC.hand, 13)}рука поднята</span>` : ""}</div>`) +
+  `<div class="vc-room"><div class="vc-stage">${stage}
+    <div class="vc-bar"><div class="vc-ctl" style="justify-content:flex-start">
+      <button type="button" class="vc-k ${ONL.mic ? "" : "off"}" data-vc-mic aria-pressed="${ONL.mic}" aria-label="Микрофон" title="${ONL.mic ? "Выключить микрофон" : "Включить микрофон"}">${svg(ONL.mic ? IC.mic : IC.micOff, 22)}</button>
+      <button type="button" class="vc-k ${ONL.cam ? "" : "off"}" data-vc-cam aria-pressed="${ONL.cam}" aria-label="Камера" title="${ONL.cam ? "Выключить камеру" : "Включить камеру"}">${svg(ONL.cam ? IC.cam : IC.camOff, 22)}</button>
+      ${teacherView ? "" : `<button type="button" class="vc-k ${ONL.hand ? "on" : ""}" data-vc-hand aria-pressed="${ONL.hand}" aria-label="Поднять руку" title="${ONL.hand ? "Опустить руку" : "Поднять руку"}">${svg(IC.hand, 22)}</button>`}
+    </div>
+    <button type="button" class="vc-k leave" style="width:auto;padding:0 18px;display:inline-flex;align-items:center;gap:8px" data-vc-leave>${svg(IC.leave, 20)}${teacherView ? "Завершить урок" : "Выйти"}</button></div>
+  </div>${side}</div>`;
+}
+function onlSumHtml(){
+  const v = ONL.cur || {}, ros = vcRoster(v.cls || myCls());
+  const att = VCS.att[v.id] || {};
+  const ST3 = [["b", "Был"], ["o", "Опоздал"], ["n", "Не был"]];
+  const row = p => { const cur = att[p.id] || "b";
+    return `<div class="r"><span style="display:flex;align-items:center;gap:10px;min-width:0"><span class="vc-ava2">${esc(ini2(p.nm))}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(fioShort(p.nm))}</span></span>
+      <span class="vc-seg" role="group" aria-label="${esc(fioShort(p.nm))}">${ST3.map(([k, t]) => `<button type="button" aria-pressed="${cur === k}" data-vc-att="${esc(p.id)}|${k}" style="padding:0 9px;font-size:12.5px">${k === "n" ? "Н" : t}</button>`).join("")}</span>
+      <span class="vc-note">${cur === "n" ? "попадёт к классному руководителю" : cur === "o" ? "опоздание" : ""}</span></div>`; };
+  const nAbs = ros.filter(p => (att[p.id] || "b") === "n").length, nLate = ros.filter(p => att[p.id] === "o").length;
+  return vcHead(esc(v.cls || "") + " · " + esc(hhmm(v.time || "")), "Итоги урока · " + (v.subjName || ""),
+    `<div class="vc-sub"><span class="vc-pill g">${ros.length - nAbs} из ${ros.length} на уроке</span>${nLate ? `<span class="vc-pill w">опоздали: ${nLate}</span>` : ""}${nAbs ? `<span class="vc-pill">не было: ${nAbs}</span>` : ""}</div>`) +
+  `<div class="vc-g2"><section class="panel vc-sum"><div class="panel-head"><h2>Присутствие</h2><span class="aside">нажмите, чтобы изменить</span></div>
+    ${ros.length ? ros.map(row).join("") : `<p class="muted">Список класса ещё не загружен с сервера.</p>`}</section>
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <section class="panel"><div class="panel-head"><h2>Дальше</h2></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+      <button type="button" class="vc-b" data-vc-cpabs>Скопировать отсутствующих</button>
+      <button type="button" class="vc-b" data-go="journal">Открыть журнал</button>
+      <button type="button" class="vc-b p" data-vc-sumok>Готово</button></div>
+      <p class="vc-note" style="margin:10px 0 0">${(v.opts || OPT_DEF).rec ? "Запись и конспект появятся после подключения сервера связи." : "Запись на этом уроке не велась."}</p></section>
+  </div></div>`;
+}
+function onlEndHtml(){
+  const v = ONL.cur || {};
+  const was = ONL.t0 ? Math.round((Date.now() - ONL.t0) / 60000) : 0, dur = +v.dur || 40;
+  const hw = HW.filter(h => h.s === v.sid && !isDone(h)).sort((a, b) => a.dueD - b.dueD)[0];
+  return vcHead("Онлайн-урок завершён", v.subjName || "Урок",
+    `<div class="vc-sub"><button type="button" class="vc-b gh" data-vc-back>${svg(IC.left, 16)}К списку</button></div>`) +
+  `<section class="panel" style="max-width:520px"><div class="panel-head"><h2>Урок завершён</h2></div>
+    <div class="vc-end">
+      <div class="r"><span>Вы были</span><span>${was} из ${dur} минут</span></div>
+      <div class="r"><span>Домашка</span><span>${hw ? esc(rel(hw.dueD)) : "не задана"}</span></div>
+      <div class="r"><span>Запись</span><span>${(v.opts || OPT_DEF).rec ? "после подключения сервера связи" : "не велась"}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button type="button" class="vc-b p" data-go="homework">К домашке</button><button type="button" class="vc-b" data-go="schedule">Расписание</button></div></section>`;
+}
+function renderOnline(){
+  const el = $id("online"); if(!el) return;
+  el.innerHTML = ONL.view === "lobby" ? onlLobbyHtml() : ONL.view === "room" ? onlRoomHtml() : ONL.view === "sum" ? onlSumHtml() : ONL.view === "end" ? onlEndHtml() : onlListHtml();
+  if((ONL.view === "lobby" || ONL.view === "room") && ONL.stream){ const vv = $id("vc-prev"); if(vv && vv.srcObject !== ONL.stream) vv.srcObject = ONL.stream; }
+  if(ONL.view === "room"){ const sb = $id("vc-sb"); if(sb) sb.scrollTop = sb.scrollHeight; vcTick(); clearInterval(ONL.timer); ONL.timer = setInterval(vcTick, 1000); }
+}
+window.renderOnline = renderOnline;
+function vcTick(){ const t = $id("vc-tmr"); if(!t){ clearInterval(ONL.timer); return; } t.textContent = mmss((Date.now() - (ONL.t0 || Date.now())) / 1000); }
+async function vcMedia(){
+  vcLeaveMedia();
+  try {
+    ONL.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    ONL.err = ""; ONL.cam = true; ONL.mic = false;
+    ONL.stream.getAudioTracks().forEach(t => t.enabled = false);
+    try {
+      ONL.actx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ONL.actx.createMediaStreamSource(ONL.stream), an = ONL.actx.createAnalyser();
+      an.fftSize = 512; src.connect(an); ONL.ana = an;
+      const buf = new Uint8Array(an.frequencyBinCount);
+      const loop = () => { if(!ONL.ana) return; an.getByteFrequencyData(buf); let s = 0; for(let i = 0; i < buf.length; i++) s += buf[i]; const lvl = Math.min(100, Math.round(s / buf.length / 1.2));
+        const el = $id("vc-lvl"); if(el) el.style.width = lvl + "%";
+        const tt = $id("vc-lvlt"); if(tt && lvl > 12) tt.textContent = "слышно хорошо";
+        const cm = $id("vc-chkmic"); if(cm && lvl > 12){ cm.textContent = "работает"; cm.style.color = "var(--good)"; }
+        ONL.raf = requestAnimationFrame(loop); };
+      loop();
+    } catch(e) {}
+  } catch(e) { ONL.err = String(e && e.name || e); }
+  renderOnline();
+}
+function vcApplyTracks(){
+  if(!ONL.stream) return;
+  ONL.stream.getAudioTracks().forEach(t => t.enabled = ONL.mic);
+  ONL.stream.getVideoTracks().forEach(t => t.enabled = ONL.cam);
+}
+/* создание урока учителем */
+function vcNewModal(){
+  const iso = isoDate(TODAY);
+  const st = { cls: myCls(), day: iso, sel: null, opts: { ...OPT_DEF }, all: false };
+  const days = Array.from({ length: 7 }, (_, i) => addDays(TODAY, i)).filter(d => d.getDay() !== 0);
+  const draw = () => {
+    const o = $id("tgm"); if(!o) return;
+    const d = new Date(st.day + "T12:00:00");
+    let L = [];
+    try { L = (holidayOf(d) ? [] : lessonsFor(d)).filter(x => x.sub && x.num); } catch(e) {}
+    const lrow = x => `<button type="button" class="mt-ch ${st.sel && +st.sel.num === +x.num ? "set" : ""}" data-vcn-l="${x.num}">${x.num} · ${esc(hhmm(x.time[0]))} · ${esc(x.sub.name)}</button>`;
+    const sw = (k, t) => `<button type="button" class="pm-sw ${st.opts[k] ? "on" : ""}" role="switch" aria-checked="${!!st.opts[k]}" data-vcn-sw="${k}" style="width:100%;border:0;background:transparent;cursor:pointer;font:inherit;text-align:left"><span class="tr-t">${t}</span><span class="hws ${st.opts[k] ? "on" : ""}" style="position:relative;display:inline-block;width:40px;height:24px;border-radius:99px;background:${st.opts[k] ? "var(--pen)" : "color-mix(in srgb,var(--ink) 16%,transparent)"}"><i style="position:absolute;top:3px;left:${st.opts[k] ? "19px" : "3px"};width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s"></i></span></button>`;
+    o.querySelector("#vcn-b").innerHTML = `
+      <div class="adm-filter" style="margin-bottom:8px">${days.map(x => { const i2 = isoDate(x); return `<button type="button" class="chip" data-vcn-d="${i2}" aria-pressed="${st.day === i2}">${key(x) === key(TODAY) ? "Сегодня" : esc(WD[x.getDay()]) + " " + x.getDate()}</button>`; }).join("")}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${L.length ? L.map(lrow).join("") : `<span class="vc-note">В этот день уроков ${esc(st.cls)} в расписании нет.</span>`}</div>
+      ${sw("wait", "Зал ожидания")}${sw("micOff", "Микрофоны при входе выключены")}${sw("rec", "Запись урока")}${sw("ai", "Конспект ИИ")}${sw("att", "Присутствие в журнал")}
+      <button type="button" class="vc-b gh" data-vcn-all style="margin-top:4px">${st.all ? "Скрыть остальные настройки" : "Все настройки · ещё " + 7}</button>
+      <div ${st.all ? "" : "hidden"} style="margin-top:4px">${sw("cams", "Камеры по желанию")}${sw("chat", "Чат урока")}${sw("dm", "Личные сообщения учителю")}${sw("poll", "Опросы и реакции")}${sw("par", "Запись видна родителям")}
+        <div class="vc-chk" style="margin-top:4px"><div class="r"><span>Открыть вход</span><b>за ${st.opts.open} минут</b></div><div class="r"><span>Опоздание после</span><b>${st.opts.late} минут</b></div><div class="r"><span>Хранить запись</span><b>${st.opts.keep} дней</b></div></div></div>`;
+  };
+  const o = tgModal("Новый онлайн-урок", `<p class="muted" style="margin:0 0 8px">${esc(st.cls)} · выберите урок из расписания</p><div id="vcn-b"></div>`,
+    `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn pri" data-vcn-ok>Создать урок</button>`);
+  if(!o) return; draw();
+  o.addEventListener("click", e => {
+    const g = s => e.target.closest(s); let x;
+    if(g("[data-cf-no]")){ tgModalClose(); return; }
+    if((x = g("[data-vcn-d]"))){ st.day = x.dataset.vcnD; st.sel = null; draw(); return; }
+    if((x = g("[data-vcn-l]"))){ const d = new Date(st.day + "T12:00:00"); const L = lessonsFor(d).filter(y => y.sub && y.num); st.sel = L.find(y => +y.num === +x.dataset.vcnL) || null; draw(); return; }
+    if((x = g("[data-vcn-sw]"))){ st.opts[x.dataset.vcnSw] = !st.opts[x.dataset.vcnSw]; draw(); return; }
+    if(g("[data-vcn-all]")){ st.all = !st.all; draw(); return; }
+    if(g("[data-vcn-ok]")){
+      if(!st.sel){ tgToast("Выберите урок из расписания"); return; }
+      const v = { id: "v" + Date.now().toString(36), date: st.day, cls: st.cls, num: st.sel.num, sid: st.sel.sid, subjName: st.sel.sub.name, teacher: st.sel.teacher || (DATA.studentName || ""), time: st.sel.time[0] || "", dur: 40, opts: { ...st.opts }, mine: true, by: (typeof PROF !== "undefined" && PROF.me && PROF.me.name) || "" };
+      VCS.lessons.push(v); vcSave(); tgModalClose(); tgToast("Онлайн-урок создан: " + v.subjName + ", " + hhmm(v.time)); renderOnline();
+      try { actLog("other", "Создан онлайн-урок «" + v.subjName + "», " + v.cls); } catch(e) {}
+    }
+  });
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if(!g("#online") && !g("#tgm")) return;
+  if(g("[data-vc-new]")){ vcNewModal(); return; }
+  if((x = g("[data-vc-join]"))){ const v = vcMyLesson(x.dataset.vcJoin); if(v){ ONL.cur = { ...v, mine: false }; ONL.view = "lobby"; ONL.hand = false; renderOnline(); vcMedia(); } return; }
+  if((x = g("[data-vc-open]"))){ const v = vcMyLesson(x.dataset.vcOpen); if(v){ ONL.cur = { ...v, mine: true }; ONL.view = "room"; ONL.t0 = Date.now(); renderOnline(); vcMedia(); } return; }
+  if((x = g("[data-vc-fin]"))){ const v = vcMyLesson(x.dataset.vcFin); if(v){ ONL.cur = { ...v, mine: true }; ONL.view = "sum"; renderOnline(); } return; }
+  if((x = g("[data-vc-del]"))){ const v = vcMyLesson(x.dataset.vcDel); if(v){ VCS.lessons = VCS.lessons.filter(y => y.id !== v.id); vcSave(); tgToast("Урок убран из списка"); renderOnline(); } return; }
+  if((x = g("[data-vc-sum]"))){ const d = VCS.done.find(y => y.id === x.dataset.vcSum); if(d){ ONL.cur = { ...d, mine: true }; ONL.view = "sum"; renderOnline(); } return; }
+  if(g("[data-vc-back]")){ vcLeaveMedia(); ONL.view = "list"; renderOnline(); return; }
+  if(g("[data-vc-retry]")){ vcMedia(); return; }
+  if(g("[data-vc-mic]")){ ONL.mic = !ONL.mic; vcApplyTracks(); renderOnline(); return; }
+  if(g("[data-vc-cam]")){ ONL.cam = !ONL.cam; vcApplyTracks(); renderOnline(); return; }
+  if(g("[data-vc-hand]")){ ONL.hand = !ONL.hand; renderOnline(); tgToast(ONL.hand ? "Рука поднята — учитель увидит очередь" : "Рука опущена"); return; }
+  if(g("[data-vc-enter]")){ ONL.view = "room"; ONL.t0 = Date.now(); renderOnline(); return; }
+  if(g("[data-vc-leave]")){
+    if(ONL.cur && ONL.cur.mine){ ONL.view = "sum"; vcLeaveMedia(); renderOnline(); }
+    else { ONL.view = "end"; vcLeaveMedia(); renderOnline(); }
+    return;
+  }
+  if((x = g("[data-vc-tab]"))){ ONL.tab = x.dataset.vcTab; renderOnline(); return; }
+  if((x = g("[data-vc-att]"))){ const [id, st2] = x.dataset.vcAtt.split("|"); const v = ONL.cur; if(v){ (VCS.att[v.id] = VCS.att[v.id] || {})[id] = st2; vcSave(); renderOnline(); } return; }
+  if(g("[data-vc-cpabs]")){ const v = ONL.cur, att = (v && VCS.att[v.id]) || {}; const ros = vcRoster(v.cls || myCls()); const t = ros.filter(p => (att[p.id] || "b") === "n").map(p => p.nm).join(", ") || "Отсутствующих нет";
+    try { navigator.clipboard.writeText(v.subjName + ", " + v.cls + ", " + hhmm(v.time) + ". Не были: " + t); tgToast("Список скопирован"); } catch(e) { tgToast(t); } return; }
+  if(g("[data-vc-sumok]")){ const v = ONL.cur; if(v && !VCS.done.some(d => d.id === v.id)){
+      const ros = vcRoster(v.cls || myCls()), att = VCS.att[v.id] || {};
+      VCS.done.push({ ...v, n: ros.filter(p => (att[p.id] || "b") !== "n").length, total: ros.length });
+      VCS.lessons = VCS.lessons.filter(y => y.id !== v.id); vcSave();
+    } ONL.view = "list"; renderOnline(); return; }
+});
+document.addEventListener("submit", e => {
+  const f = e.target.closest("[data-vc-chatf]"); if(!f) return;
+  e.preventDefault();
+  const i = $id("vc-ci"), tx = (i && i.value || "").trim(); if(!tx) return;
+  const v = ONL.cur; if(!v) return;
+  (VCS.msgs[v.id] = VCS.msgs[v.id] || []).push({ who: "Вы", my: true, tx, t: new Date().toTimeString().slice(0, 5) });
+  vcSave(); renderOnline();
+});
+
+/* ============================================================
+   БИБЛИОТЕКА УЧЕБНИКОВ
+   ============================================================ */
+const LBS = store("yadro-lib-v1", { books: [], prog: {}, marks: {}, note: {}, theme: "light", fs: 100, last: null });
+const lbSave = () => put("yadro-lib-v1", LBS);
+const LB = { view: "shelf", book: null, sec: null, q: "" };
+const LB_PAL = [["#DCE6F3", "#C3D4EA", "#2F5E9E"], ["#D9ECEC", "#BEDEDE", "#1E6464"], ["#E8E1F2", "#D6CAEA", "#5B4594"], ["#DDEEE4", "#C4E2D1", "#17694A"], ["#F5E1D8", "#EDCAB9", "#8C3D1F"], ["#F1E8D6", "#E6D6B6", "#7A5A14"], ["#E9E6E0", "#DAD5CC", "#4E4A43"]];
+const lbPal = s => LB_PAL[Math.abs(String(s).split("").reduce((a, c) => a * 31 + c.charCodeAt(0) | 0, 7)) % LB_PAL.length];
+/* материал платформы: алгебра, глава III «Квадратные уравнения» */
+const LB_MAT = {
+  id: "mat-alg8", title: "Алгебра · Квадратные уравнения", subj: "Алгебра", by: "Материал платформы · глава III", grade: "8",
+  toc: [
+    ["s21", "§ 21. Определение", `<p>Квадратным называется уравнение вида ax² + bx + c = 0, где a ≠ 0. Числа a, b и c — коэффициенты: a — старший, b — второй, c — свободный член.</p><p>Если a = 1, уравнение называется <mark>приведённым</mark>: x² + px + q = 0. Любое квадратное уравнение можно сделать приведённым, разделив обе части на a.</p><div class="ex"><i>1</i><span>Назовите коэффициенты: а) 3x² − 5x + 2 = 0; б) x² + 7x = 0; в) −x² + 4 = 0.</span></div>`],
+    ["s22", "§ 22. Неполные уравнения", `<p>Квадратное уравнение называется неполным, если b = 0 или c = 0.</p><p class="frm">ax² + bx = 0 ⇒ x(ax + b) = 0 ⇒ x = 0 или x = −b/a</p><p class="frm">ax² + c = 0 ⇒ x² = −c/a</p><p>Во втором случае корни есть, только когда −c/a ≥ 0: тогда x = ±√(−c/a).</p><div class="ex"><i>2</i><span>Решите: а) x² − 9 = 0; б) 2x² + 5x = 0; в) x² + 4 = 0.</span></div>`],
+    ["s23", "§ 23. Формула корней", `<p>Дискриминант квадратного уравнения: D = b² − 4ac.</p><p class="frm">x = (−b ± √D) / 2a</p><p>Если D &gt; 0 — два корня, если D = 0 — один корень, если D &lt; 0 — корней нет.</p><div class="ex"><i>3</i><span>Решите по формуле: а) x² − 5x + 6 = 0; б) 2x² − 3x − 2 = 0; в) x² − 6x + 9 = 0.</span></div>`],
+    ["s24", "§ 24. Теорема Виета", `<p>Возьмём приведённое квадратное уравнение x² + px + q = 0. Если у него есть корни x₁ и x₂, их сумму и произведение можно найти, не решая уравнение.</p><p class="frm">x₁ + x₂ = −p, &#160;&#160; x₁ · x₂ = q</p><p><mark>Сумма корней равна второму коэффициенту с противоположным знаком</mark>, а произведение — свободному члену.</p><p>Проверим на уравнении x² − 7x + 10 = 0. Его корни 2 и 5: действительно, 2 + 5 = 7 и 2 · 5 = 10.</p><p>Верно и обратное: если m + n = −p и mn = q, то m и n — корни уравнения x² + px + q = 0.</p><div class="ex"><i>576</i><span>Найдите сумму и произведение корней: а) x² − 9x + 14 = 0; б) x² + 3x − 10 = 0.</span></div><div class="ex"><i>577</i><span>Не решая уравнение x² − 11x + 24 = 0, найдите сумму квадратов его корней.</span></div><div class="ex"><i>578</i><span>Составьте приведённое квадратное уравнение с корнями 3 и −4.</span></div>`],
+    ["s25", "§ 25. Задачи на уравнения", `<p>Многие текстовые задачи сводятся к квадратному уравнению: обозначьте неизвестное за x, составьте уравнение по условию, решите и отберите корни по смыслу задачи.</p><div class="ex"><i>4</i><span>Произведение двух последовательных натуральных чисел равно 156. Найдите эти числа.</span></div><div class="ex"><i>5</i><span>Периметр прямоугольника 28 см, площадь 48 см². Найдите стороны.</span></div>`],
+    ["chk", "Проверь себя", `<p>1. Чему равен дискриминант уравнения x² − 4x + 1 = 0?</p><p>2. При каком c уравнение x² − 6x + c = 0 имеет один корень?</p><p>3. Сумма корней приведённого уравнения равна 8, произведение 15. Запишите уравнение и найдите корни.</p><p>4. Решите: 3x² − 12 = 0.</p><p>5. x₁ и x₂ — корни x² − 5x + 3 = 0. Найдите x₁² + x₂².</p><p>Ответы разберите с ИИ-помощником в «Чатах» — он объяснит, но не решит за вас.</p>`]
+  ]
+};
+const LB_EXT = [
+  ["Моя школа", "Учебники и уроки · вход через Госуслуги", "https://myschool.edu.ru/"],
+  ["РЭШ", "Уроки с видео и тренажёрами · бесплатно", "https://resh.edu.ru/"],
+  ["Библиотека МЭШ", "Учебники, тесты и сценарии уроков", "https://uchebnik.mos.ru/"],
+  ["НЭБ", "Национальная электронная библиотека", "https://rusneb.ru/"]
+];
+/* файлы учебников лежат в IndexedDB этого браузера */
+let LB_DB = null;
+function lbDb(){ return new Promise((res, rej) => { if(LB_DB) return res(LB_DB);
+  const rq = indexedDB.open("yadro-lib", 1);
+  rq.onupgradeneeded = () => { rq.result.createObjectStore("files"); };
+  rq.onsuccess = () => { LB_DB = rq.result; res(LB_DB); };
+  rq.onerror = () => rej(rq.error); }); }
+function lbPutFile(id, blob){ return lbDb().then(db => new Promise((res, rej) => { const t = db.transaction("files", "readwrite"); t.objectStore("files").put(blob, id); t.oncomplete = res; t.onerror = () => rej(t.error); })); }
+function lbGetFile(id){ return lbDb().then(db => new Promise((res, rej) => { const t = db.transaction("files", "readonly"), r = t.objectStore("files").get(id); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); })); }
+function lbCover(b, big){
+  const p = lbPal(b.subj || b.title);
+  return `<span class="lb-cv" aria-hidden="true" style="background:${p[0]}"><i style="background:${p[1]}"></i><small style="color:${p[2]}">${esc(b.subj || "")}</small><b style="color:${p[2]}">${esc(b.grade || "8")}</b></span>`;
+}
+function lbShelfHtml(){
+  const staff = vcStaffed();
+  const books = [LB_MAT, ...LBS.books];
+  const q = LB.q.trim().toLowerCase();
+  const shown = q ? books.filter(b => (b.title + " " + (b.subj || "")).toLowerCase().includes(q)) : books;
+  const last = LBS.last && books.find(b => b.id === LBS.last.id);
+  const prog = last ? LBS.prog[last.id] : null;
+  const cont = last ? (() => { const i = Math.max(0, LB_MAT.toc.findIndex(t => t[0] === (prog && prog.sec))); const pct = Math.round((i + 1) / LB_MAT.toc.length * 100);
+    return `<button type="button" class="panel lb-go" data-lb-open="${esc(last.id)}" style="border:1px solid var(--line)">${lbCover(last)}<span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><span class="vc-note">Продолжить чтение</span><b style="font-weight:500">${esc(last.title)}${prog ? " · " + esc((LB_MAT.toc[i] || [])[1] || "") : ""}</b><span class="lb-pr"><span class="tr"><i style="width:${pct}%"></i></span>${pct}%</span></span></button>`; })() : "";
+  const hw = HW.filter(h => !isDone(h)).sort((a, b) => a.dueD - b.dueD).slice(0, 3);
+  const bkBtn = b => `<button type="button" class="lb-bk" data-lb-open="${esc(b.id)}">${lbCover(b)}<span><span class="t">${esc(b.title)}</span><small>${esc(b.by || "")}</small><span class="lb-src">${b.kind === "link" ? "по ссылке" : b.kind === "file" ? "файл лицея" : "в Ядре"}</span></span></button>`;
+  return vcHead(myCls() + " · " + books.length + " " + plural(books.length, ["учебник", "учебника", "учебников"]), "Библиотека",
+    `<div class="vc-sub"><label style="display:flex;align-items:center;gap:8px;height:38px;min-width:230px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);padding:0 12px;color:var(--muted)">${svg("M11 5a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM20 20l-4-4", 15, 2)}<input id="lb-q" aria-label="Поиск по учебникам" placeholder="Учебник или тема" autocomplete="off" value="${esc(LB.q)}" style="border:0;outline:0;background:transparent;color:var(--ink);font:inherit;width:100%"></label>${staff ? `<button type="button" class="vc-b p" data-lb-add>${svg(IC.plus, 16)}Добавить учебник</button>` : ""}</div>`) +
+  `<div style="display:flex;flex-direction:column;gap:14px">
+  <div class="lb-top">
+    ${cont || `<section class="panel"><div class="panel-head"><h2>С чего начать</h2></div><p class="vc-note" style="margin:0">Откройте учебник с полки — место, где остановились, сохранится здесь.</p></section>`}
+    <section class="panel"><div class="panel-head"><h2>Задано по учебникам</h2><button class="link" data-go="homework">Вся домашка</button></div>
+      <div class="lb-hw">${hw.length ? hw.map(h => `<a role="button" tabindex="0" data-go="homework"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(subjName(h.s))} · ${esc(h.text)}</span><em>${esc(rel(h.dueD))}</em></a>`).join("") : `<p class="muted" style="margin:0">Все задания сделаны.</p>`}</div></section>
+  </div>
+  <section class="panel"><div class="panel-head"><h2>Учебники</h2>${staff ? "" : `<span class="aside">учебники добавляют учителя и методист</span>`}</div>
+    <div class="lb-grid">${shown.map(bkBtn).join("") || `<p class="muted">Ничего не найдено.</p>`}</div></section>
+  <section class="panel"><div class="panel-head"><h2>Откуда школа берёт учебники</h2></div>
+    <div class="lb-grid" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">${LB_EXT.map(([t, s, u]) => `<a class="lb-bk" style="flex-direction:row;align-items:center;gap:10px" href="${esc(u)}" target="_blank" rel="noopener"><span class="ic" style="flex:none;width:36px;height:36px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);display:grid;place-items:center;color:var(--muted)">${svg(IC.link2, 17)}</span><span style="padding:0"><span class="t">${esc(t)}</span><small>${esc(s)}</small></span></a>`).join("")}</div>
+    <p class="vc-note" style="margin:10px 0 0">Эти сайты открываются в новой вкладке: встроить их в Ядро они не разрешают. Файлы, загруженные в библиотеку, открываются прямо здесь.</p></section>
+  </div>`;
+}
+function lbReaderHtml(){
+  const b = LB.book || LB_MAT;
+  if(b.kind === "link" || b.kind === "file") return "";   // такие открываются сразу, читалка для материалов платформы
+  const sec = LB_MAT.toc.find(t => t[0] === LB.sec) || LB_MAT.toc[0];
+  const i = LB_MAT.toc.indexOf(sec);
+  const marked = !!(LBS.marks[b.id] && LBS.marks[b.id][sec[0]]);
+  const hw = HW.filter(h => h.s === "alg" && !isDone(h)).sort((a, b2) => a.dueD - b2.dueD)[0];
+  const marks = Object.keys(LBS.marks[b.id] || {}).map(k => { const t = LB_MAT.toc.find(x => x[0] === k); return t ? `<a href="#" data-lb-sec="${k}" style="display:flex;gap:8px;align-items:center;padding:6px 6px;border-radius:9px;color:var(--ink);text-decoration:none"><span style="color:var(--pen)">${svg(IC.mark, 14)}</span>${esc(t[1])}</a>` : ""; }).join("");
+  return vcHead("Библиотека · " + esc(b.by || ""), b.title,
+    `<div class="vc-sub"><button type="button" class="vc-b gh" data-lb-back>${svg(IC.left, 16)}Полка</button>
+     <span class="vc-seg"><button type="button" aria-label="Мельче" title="Мельче" data-lb-fs="-10" style="width:38px">А−</button><span style="display:inline-flex;align-items:center;padding:0 8px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums">${LBS.fs}%</span><button type="button" aria-label="Крупнее" title="Крупнее" data-lb-fs="10" style="width:38px">А+</button></span>
+     <span class="lb-th"><button type="button" class="th" style="background:#fff;color:#23211E;box-shadow:inset 0 0 0 1px #E2DDD4" aria-pressed="${LBS.theme === "light"}" data-lb-th="light">Аа</button><button type="button" class="th" style="background:#F3EAD8;color:#3B3226" aria-pressed="${LBS.theme === "sepia"}" data-lb-th="sepia">Аа</button><button type="button" class="th" style="background:#201F1C;color:#EDEBE6" aria-pressed="${LBS.theme === "dark"}" data-lb-th="dark">Аа</button></span>
+     <button type="button" class="vc-b ${marked ? "" : "gh"}" data-lb-mark style="color:${marked ? "var(--pen)" : "var(--muted)"}" aria-pressed="${marked}">${svg(IC.mark, 16)}${marked ? "В закладках" : "Закладка"}</button></div>`) +
+  `<div class="lb-rd" data-th="${esc(LBS.theme)}">
+    <nav class="panel lb-toc" aria-label="Оглавление" style="padding:10px 8px">
+      <span class="vc-note" style="padding:2px 10px 8px">Глава III. Квадратные уравнения</span>
+      ${LB_MAT.toc.map(([k, t]) => `<a href="#" class="${sec[0] === k ? "on" : ""}" data-lb-sec="${k}"><span>${esc(t)}</span></a>`).join("")}
+    </nav>
+    <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+      <article class="lb-page" style="font-size:${15 * LBS.fs / 100}px"><h2>${esc(sec[1].replace(/^§ \d+\. /, ""))}</h2>${sec[2]}</article>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button type="button" class="vc-b vc-ic" data-lb-nav="-1" aria-label="Назад" title="Предыдущий параграф" ${i <= 0 ? "disabled" : ""}>${svg(IC.left, 16)}</button>
+        <span class="lb-pr" style="flex:1"><span class="tr"><i style="width:${Math.round((i + 1) / LB_MAT.toc.length * 100)}%"></i></span>${i + 1} из ${LB_MAT.toc.length}</span>
+        <button type="button" class="vc-b vc-ic" data-lb-nav="1" aria-label="Вперёд" title="Следующий параграф" ${i >= LB_MAT.toc.length - 1 ? "disabled" : ""}>${svg("M9 6l6 6-6 6", 16)}</button>
+      </div>
+    </div>
+    <aside style="display:flex;flex-direction:column;gap:12px">
+      <section class="panel"><div class="panel-head"><h2>Задано</h2></div>
+        ${hw ? `<p style="margin:0 0 8px">${esc(hw.text)}</p><p class="vc-note" style="margin:0 0 10px">${esc(rel(hw.dueD))}</p><button type="button" class="vc-b" data-go="homework">Открыть в домашке</button>` : `<p class="muted" style="margin:0">По алгебре сейчас ничего не задано.</p>`}</section>
+      <section class="panel"><div class="panel-head"><h2>Закладки</h2></div>
+        ${marks || `<p class="vc-note" style="margin:0">Отмечайте параграфы кнопкой «Закладка» — они соберутся здесь.</p>`}</section>
+      <section class="panel"><div class="panel-head"><h2>Спросить по теме</h2></div>
+        <p class="vc-note" style="margin:0 0 10px">ИИ-помощник объяснит тему параграфа и даст похожие задания для тренировки.</p>
+        <button type="button" class="vc-b" data-askbot="Объясни тему «${esc(sec[1])}» из главы про квадратные уравнения (8 класс): кратко разбери суть, один пример с решением и дай 3 задания для тренировки без ответов.">${svg(IC.spark, 16)}Разобрать с помощником</button></section>
+    </aside>
+  </div>`;
+}
+function renderLibrary(){
+  const el = $id("library"); if(!el) return;
+  el.innerHTML = LB.view === "reader" ? lbReaderHtml() : lbShelfHtml();
+}
+window.renderLibrary = renderLibrary;
+function lbAddModal(){
+  const st = { kind: "link", subj: "Алгебра", right: false, file: null };
+  const SUBJ = Object.values(DATA.subjects).filter(x => x.graded !== false).map(x => x.name);
+  const draw = () => {
+    const o = $id("tgm"); if(!o) return;
+    o.querySelector("#lb-b").innerHTML = `
+      <div class="vc-seg" style="margin-bottom:10px"><button type="button" aria-pressed="${st.kind === "link"}" data-lba-k="link">По ссылке</button><button type="button" aria-pressed="${st.kind === "file"}" data-lba-k="file">Файл PDF</button></div>
+      <label class="pe-f" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"><span class="vc-note">Название</span><input id="lba-t" class="tgm-in" maxlength="80" placeholder="Например: Алгебра. 8 класс" autocomplete="off" style="width:100%"></label>
+      ${st.kind === "link"
+        ? `<label class="pe-f" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px"><span class="vc-note">Ссылка на учебник</span><input id="lba-u" class="tgm-in" inputmode="url" placeholder="https://…" autocomplete="off" style="width:100%"></label><p class="vc-note" style="margin:0 0 8px">Подходят РЭШ, «Моя школа», Библиотека МЭШ, НЭБ и сайты издательств. Откроется в новой вкладке.</p>`
+        : `<label class="mt-drop" style="margin-bottom:8px">${svg(IC.up, 22)}<span style="color:var(--ink)" id="lba-fn">${st.file ? esc(st.file.name) : "Выберите файл PDF"}</span><span class="vc-note">до 100 МБ · хранится в этом браузере</span><input type="file" id="lba-f" accept="application/pdf,.pdf" hidden></label>
+          <button type="button" class="pm-sw ${st.right ? "on" : ""}" role="checkbox" aria-checked="${st.right}" data-lba-right style="width:100%;border:0;background:transparent;cursor:pointer;font:inherit;text-align:left"><span class="tr-t">У лицея есть право раздавать этот файл ученикам</span><span style="flex:none;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:${st.right ? "var(--pen)" : "transparent"};box-shadow:inset 0 0 0 1.5px ${st.right ? "var(--pen)" : "color-mix(in srgb,var(--ink) 30%,transparent)"};color:#fff">${st.right ? svg(IC.check2, 14, 2.4) : ""}</span></button>`}
+      <div class="adm-filter" style="margin-top:4px">${SUBJ.slice(0, 14).map(s => `<button type="button" class="chip" data-lba-s="${esc(s)}" aria-pressed="${st.subj === s}">${esc(s)}</button>`).join("")}</div>`;
+  };
+  const o = tgModal("Добавить учебник", `<p class="muted" style="margin:0 0 8px">Учебник появится на полке всего класса на этом устройстве; на сервер библиотека переедет вместе с сервером связи.</p><div id="lb-b"></div>`,
+    `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn pri" data-lba-ok>Добавить на полку</button>`);
+  if(!o) return; draw();
+  o.addEventListener("click", e => {
+    const g = s => e.target.closest(s); let x;
+    if(g("[data-cf-no]")){ tgModalClose(); return; }
+    if((x = g("[data-lba-k]"))){ st.kind = x.dataset.lbaK; draw(); return; }
+    if((x = g("[data-lba-s]"))){ st.subj = x.dataset.lbaS; o.querySelectorAll("[data-lba-s]").forEach(c => c.setAttribute("aria-pressed", String(c === x))); return; }
+    if(g("[data-lba-right]")){ st.right = !st.right; draw(); return; }
+    if(g("[data-lba-ok]")){
+      const t = (o.querySelector("#lba-t") || {}).value || "";
+      if(!t.trim()){ tgToast("Дайте учебнику название"); return; }
+      if(st.kind === "link"){
+        const u = ((o.querySelector("#lba-u") || {}).value || "").trim();
+        if(!/^https:\/\/.+/.test(u)){ tgToast("Нужна ссылка, начинающаяся с https://"); return; }
+        LBS.books.push({ id: "b" + Date.now().toString(36), kind: "link", title: t.trim(), subj: st.subj, by: new URL(u).host, url: u, grade: "8" });
+        lbSave(); tgModalClose(); tgToast("Учебник добавлен на полку"); renderLibrary();
+      } else {
+        if(!st.file){ tgToast("Выберите файл PDF"); return; }
+        if(!st.right){ tgToast("Подтвердите право лицея раздавать файл"); return; }
+        if(st.file.size > 100 * 1024 * 1024){ tgToast("Файл больше 100 МБ"); return; }
+        const id = "b" + Date.now().toString(36);
+        lbPutFile(id, st.file).then(() => {
+          LBS.books.push({ id, kind: "file", title: t.trim(), subj: st.subj, by: "Файл лицея · PDF", grade: "8" });
+          lbSave(); tgModalClose(); tgToast("Файл сохранён в библиотеке"); renderLibrary();
+        }).catch(() => tgToast("Не получилось сохранить файл в этом браузере"));
+      }
+    }
+  });
+  o.addEventListener("change", e => { if(e.target && e.target.id === "lba-f"){ st.file = e.target.files && e.target.files[0] || null; const n = o.querySelector("#lba-fn"); if(n && st.file) n.textContent = st.file.name; } });
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if(!g("#library") && !g("#tgm")) return;
+  if(g("[data-lb-add]")){ lbAddModal(); return; }
+  if((x = g("[data-lb-open]"))){
+    const id = x.dataset.lbOpen;
+    const b = id === LB_MAT.id ? LB_MAT : LBS.books.find(y => y.id === id);
+    if(!b) return;
+    LBS.last = { id }; lbSave();
+    if(b.kind === "link"){ window.open(b.url, "_blank", "noopener"); return; }
+    if(b.kind === "file"){ lbGetFile(id).then(f => { if(!f){ tgToast("Файл не найден в этом браузере"); return; } const u = URL.createObjectURL(f); window.open(u, "_blank", "noopener"); setTimeout(() => URL.revokeObjectURL(u), 60000); }); return; }
+    LB.view = "reader"; LB.book = b; LB.sec = (LBS.prog[id] || {}).sec || "s21"; renderLibrary(); return;
+  }
+  if(g("[data-lb-back]")){ LB.view = "shelf"; renderLibrary(); return; }
+  if((x = g("[data-lb-sec]"))){ e.preventDefault(); LB.sec = x.dataset.lbSec; LBS.prog[(LB.book || LB_MAT).id] = { sec: LB.sec }; lbSave(); renderLibrary(); return; }
+  if((x = g("[data-lb-nav]"))){ const i = LB_MAT.toc.findIndex(t => t[0] === LB.sec) + (+x.dataset.lbNav); const s = LB_MAT.toc[i]; if(s){ LB.sec = s[0]; LBS.prog[(LB.book || LB_MAT).id] = { sec: LB.sec }; lbSave(); renderLibrary(); } return; }
+  if((x = g("[data-lb-fs]"))){ LBS.fs = Math.max(80, Math.min(150, LBS.fs + (+x.dataset.lbFs))); lbSave(); renderLibrary(); return; }
+  if((x = g("[data-lb-th]"))){ LBS.theme = x.dataset.lbTh; lbSave(); renderLibrary(); return; }
+  if(g("[data-lb-mark]")){ const b = LB.book || LB_MAT; const m = LBS.marks[b.id] = LBS.marks[b.id] || {}; if(m[LB.sec || "s21"]) delete m[LB.sec || "s21"]; else m[LB.sec || "s21"] = 1; lbSave(); renderLibrary(); return; }
+});
+document.addEventListener("input", e => { if(e.target && e.target.id === "lb-q"){ LB.q = e.target.value; const el = $id("library"); const grid = el && el.querySelector(".lb-grid"); if(el){ const pos = e.target.selectionStart; renderLibrary(); const i = $id("lb-q"); if(i){ i.focus(); try { i.setSelectionRange(pos, pos); } catch(_) {} } } } });
+
+/* ============================================================
+   МЕТОДИСТ: ЗАМЕНЫ, НЕДЕЛЯ, ЗАГРУЗКА
+   ============================================================ */
+const MTS = store("yadro-mtd-v1", { ov: {}, abs: [], log: [], full: {} });
+const mtSave = () => put("yadro-mtd-v1", MTS);
+const MT = { tab: "week", cls: null, wk: 0, sel: null, srv: {}, src: "sheet", prev: null };
+const mtLog = t => { MTS.log.unshift({ t: new Date().toTimeString().slice(0, 5), x: t }); MTS.log = MTS.log.slice(0, 30); mtSave(); };
+const mtCls = () => MT.cls || myCls();
+function mtLessons(cls, d){
+  if(cls === myCls()){ try { return (holidayOf(d) ? [] : lessonsFor(d)).filter(x => x.sub && x.num).map(x => ({ num: x.num, t: (x.time || []).join("-"), name: x.sub.name, teacher: x.teacher || "", room: roomShort(x.room || "") })); } catch(e) { return []; } }
+  const full = MTS.full[cls], srv = MT.srv[cls];
+  const day = (d.getDay() + 6) % 7 + 1;
+  const src = full || (srv && srv.timetable) || null;
+  const L = src && (src[day] || src[String(day)]) || [];
+  return L.filter(x => x && x.n).map(x => ({ num: x.n, t: x.t || "", name: (DATA.subjects[x.s] || { name: x.s }).name || String(x.s || ""), teacher: x.teacher || "", room: roomShort(x.room || "") }));
+}
+function mtSrvLoad(cls){
+  if(cls === myCls() || MT.srv[cls] !== undefined) return;
+  MT.srv[cls] = null;
+  if(typeof DB === "undefined" || !DB){ MT.srv[cls] = false; return; }
+  DB.doc(schKey(cls)).get().then(s => { MT.srv[cls] = s && s.exists ? s.data() : false; if(MT.tab === "week" && mtCls() === cls) renderMtd(); })
+    .catch(() => { MT.srv[cls] = false; if(mtCls() === cls) renderMtd(); });
+}
+const mtOvKey = (cls, iso, num) => cls + "|" + iso + "|" + num;
+function mtWeekHtml(){
+  const cls = mtCls(), mon = addDays(mondayOf(TODAY), MT.wk * 7);
+  mtSrvLoad(cls);
+  const days = Array.from({ length: 6 }, (_, i) => addDays(mon, i));
+  const perDay = days.map(d => mtLessons(cls, d));
+  const haveData = perDay.some(L => L.length);
+  const maxN = Math.max(0, ...perDay.flatMap(L => L.map(x => +x.num || 0)));
+  const times = {}; perDay.forEach(L => L.forEach(x => { if(x.num && x.t && !times[x.num]) times[x.num] = x.t; }));
+  const ovN = Object.keys(MTS.ov).filter(k => k.startsWith(cls + "|")).length;
+  const cell = (d, n) => {
+    const iso = isoDate(d), L = perDay[(d.getDay() + 6) % 7].find(x => +x.num === n);
+    const ov = MTS.ov[mtOvKey(cls, iso, n)];
+    const sel = MT.sel && MT.sel.iso === iso && MT.sel.num === n;
+    if(!L && !ov) return `<button type="button" class="mt-c emp ${sel ? "sel" : ""}" data-mt-c="${iso}|${n}"><span>Окно</span></button>`;
+    const name = L ? L.name : "—", teacher = ov && ov.teacher || (L && L.teacher) || "", room = ov && ov.room || (L && L.room) || "";
+    const tag = ov ? (ov.off ? `<span class="tg b">отменён</span>` : ov.teacher ? `<span class="tg w">замена</span>` : ov.room ? `<span class="tg g">кабинет</span>` : "") : "";
+    return `<button type="button" class="mt-c ${sel ? "sel" : ""}" data-mt-c="${iso}|${n}" ${ov && ov.off ? 'style="opacity:.55"' : ""}><span>${esc(name)}</span><small>${esc([teacher, room].filter(Boolean).join(" · ") || "—")}</small>${tag}</button>`;
+  };
+  const selCard = () => {
+    if(!MT.sel) return `<section class="panel mt-card"><div class="panel-head"><h2>Урок</h2></div><p class="vc-note" style="margin:0">Нажмите на урок в сетке — здесь откроется карточка с действиями: замена, кабинет, отмена.</p></section>`;
+    const { iso, num } = MT.sel, d = new Date(iso + "T12:00:00");
+    const L = mtLessons(cls, d).find(x => +x.num === +num), ov = MTS.ov[mtOvKey(cls, iso, num)] || {};
+    return `<section class="panel mt-card"><div class="panel-head"><h2>${esc(L ? L.name : "Окно")}</h2><span class="aside">${esc(WD[d.getDay()])} ${d.getDate()} · ${num}-й урок</span></div>
+      <div class="kv"><span>Время</span><span>${esc(hhmm((L && L.t || times[num] || "").split("-")[0] || "")) || "—"}</span></div>
+      <div class="kv"><span>Учитель</span><span>${esc(ov.teacher || (L && L.teacher) || "—")}${ov.teacher ? " · замена" : ""}</span></div>
+      <div class="kv"><span>Кабинет</span><span>${esc(ov.room || (L && L.room) || "—")}</span></div>
+      ${ov.off ? `<p class="vc-note" style="margin:6px 0 0;color:var(--bad)">Урок отменён для класса.</p>` : ""}
+      <div class="mt-a2">
+        <button type="button" class="vc-b" data-mt-rep>Заменить учителя</button>
+        <button type="button" class="vc-b" data-mt-room>Кабинет</button>
+        <button type="button" class="vc-b" data-mt-off>${ov.off ? "Вернуть урок" : "Отменить урок"}</button>
+        <button type="button" class="vc-b" data-mt-undo ${Object.keys(ov).length ? "" : "disabled"}>Сбросить правки</button>
+      </div></section>`;
+  };
+  return `<div class="vc-sub">
+      <span class="vc-seg"><button type="button" aria-label="Прошлая неделя" title="Прошлая неделя" data-mt-wk="-1" style="width:36px">‹</button><button type="button" data-mt-wk="0" aria-pressed="${MT.wk === 0}">Эта неделя</button><button type="button" aria-label="Следующая неделя" title="Следующая неделя" data-mt-wk="1" style="width:36px">›</button></span>
+      <span class="vc-seg">${JR_CLS.slice(0, 5).map(c => `<button type="button" data-mt-cls="${esc(c)}" aria-pressed="${cls === c}">${esc(c)}</button>`).join("")}<button type="button" data-mt-clsall aria-pressed="${!JR_CLS.slice(0, 5).includes(cls)}">${JR_CLS.slice(0, 5).includes(cls) ? "Ещё…" : esc(cls) + " ▾"}</button></span>
+      ${ovN ? `<span class="vc-pill w">правок: ${ovN}</span><button type="button" class="vc-b p" data-mt-pub>Опубликовать</button>` : ""}
+    </div>
+    <div class="mt-lay"><section class="panel" style="min-width:0">
+      <div class="panel-head"><h2>${esc(cls)} · ${mon.getDate()} ${esc(MG[mon.getMonth()])} – ${days[5].getDate()} ${esc(MG[days[5].getMonth()])}</h2></div>
+      ${haveData ? `<div class="mt-grid">
+        <span></span>${days.map(d => `<span class="hd ${key(d) === key(TODAY) ? "" : ""}" style="${key(d) === key(TODAY) ? "color:var(--pen)" : ""}">${esc(WD[d.getDay()])}<small>${d.getDate()}</small></span>`).join("")}
+        ${Array.from({ length: maxN }, (_, r) => { const n = r + 1; return `<span class="nn">${n}-й<small>${esc(hhmm((times[n] || "").split("-")[0] || ""))}</small></span>` + days.map(d => cell(d, n)).join(""); }).join("")}
+      </div>` : `<p class="muted">Расписание класса ${esc(cls)} ещё не загружено. Откройте вкладку «Загрузка» и добавьте неделю файлом — сетка появится здесь.</p>`}
+    </section>
+    <aside style="display:flex;flex-direction:column;gap:12px">${selCard()}
+      <section class="panel"><div class="panel-head"><h2>Проверка недели</h2></div>${mtChecksHtml(cls, perDay)}</section>
+    </aside></div>`;
+}
+function mtChecksHtml(cls, perDay){
+  const out = [];
+  perDay.forEach((L, i) => {
+    const nums = L.map(x => +x.num).filter(Boolean).sort((a, b) => a - b);
+    for(let k = 1; k < nums.length; k++) if(nums[k] - nums[k - 1] > 1) out.push([WD[(i + 1) % 7] + ": окно между " + nums[k - 1] + "-м и " + nums[k] + "-м уроком", "w"]);
+    if(nums.length >= 7) out.push([WD[(i + 1) % 7] + ": " + nums.length + " уроков — больше нормы", "w"]);
+    L.forEach(x => { if(!x.room) out.push([WD[(i + 1) % 7] + ", " + x.num + "-й: " + x.name + " — кабинет не указан", "n"]); });
+  });
+  const seen = new Set(), u = out.filter(([t]) => !seen.has(t) && seen.add(t)).slice(0, 6);
+  return u.length ? u.map(([t, c]) => `<div style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13px"><span class="vc-dot" style="margin-top:5px;background:${c === "w" ? "var(--warn)" : "var(--muted)"}"></span><span>${esc(t)}</span></div>`).join("") : `<p class="vc-note" style="margin:0">Окон и перегрузок не найдено.</p>`;
+}
+function mtStaffList(){
+  const out = [];
+  try { (STAFF || []).forEach(s => { if(s && s.name && (s.role === "teacher" || !s.role)) out.push({ name: s.name, subj: (s.v && s.v.subj) || s.subj || "" }); }); } catch(e) {}
+  if(!out.length){ const seen = new Set(); Object.values(DATA.weeks || {}).forEach(w => Object.values(w).forEach(L => L.forEach(x => String(x.teacher || "").split("/").forEach(t => { t = t.trim(); if(t && !seen.has(t)){ seen.add(t); out.push({ name: t, subj: (DATA.subjects[x.s] || {}).name || "" }); } })))); }
+  return out;
+}
+function mtBusy(iso, num){
+  const busy = new Set(), d = new Date(iso + "T12:00:00");
+  JR_CLS.forEach(c => { mtLessons(c, d).forEach(x => { if(+x.num === +num) String(x.teacher).split("/").forEach(t => busy.add(t.trim().split(" ")[0])); }); });
+  return busy;
+}
+function mtSubsHtml(){
+  const cls = mtCls();
+  const card = (a, ai) => {
+    const d = new Date(a.iso + "T12:00:00");
+    const rows = [];
+    JR_CLS.forEach(c => { mtLessons(c, d).forEach(x => { if(String(x.teacher || "").split("/").some(t => t.trim() && a.who.startsWith(t.trim().split(" ")[0]))) rows.push({ ...x, cls: c }); }); });
+    const row = r => {
+      const k = mtOvKey(r.cls, a.iso, r.num), ov = MTS.ov[k];
+      const busy = mtBusy(a.iso, r.num);
+      const cand = mtStaffList().filter(s => s.name !== a.who && !busy.has(s.name.split(" ")[0])).slice(0, 3);
+      return `<div class="mt-sr"><span class="n">${r.num}-й урок<small>${esc(hhmm((r.t || "").split("-")[0] || ""))}</small></span><a href="#" class="link" data-mt-gocls="${esc(r.cls)}|${esc(a.iso)}|${r.num}">${esc(r.cls)}</a>
+        <div class="mt-cand"><span style="margin-right:4px">${esc(r.name)}</span>
+        ${ov && ov.teacher ? `<span class="mt-ch set">${svg(IC.check2, 13, 2.2)} ${esc(fioShort(ov.teacher))}</span><button type="button" class="mt-ch" data-mt-unset="${esc(k)}">Изменить</button>`
+          : `<span class="vc-note">свободны:</span>${cand.map(cd => `<button type="button" class="mt-ch" title="${esc(cd.subj || cd.name)}" data-mt-set="${esc(k)}|${esc(cd.name)}">${esc(fioShort(cd.name))}</button>`).join("") || `<span class="vc-note">подходящих нет</span>`}<button type="button" class="mt-ch" data-mt-cancel="${esc(k)}" style="color:var(--bad)">Отменить урок</button>`}</div></div>`;
+    };
+    const done = rows.filter(r => { const ov = MTS.ov[mtOvKey(r.cls, a.iso, r.num)]; return ov && (ov.teacher || ov.off); }).length;
+    return `<section class="panel"><div class="mt-ab"><span class="vc-ava2">${esc(ini2(a.who))}</span><span style="display:flex;flex-direction:column;min-width:0"><b style="font-weight:500">${esc(a.who)}</b><span class="vc-note">${esc(a.why || "отсутствует")} · ${esc(WD[d.getDay()])}, ${d.getDate()} ${esc(MG[d.getMonth()])}</span></span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px"><span class="vc-pill ${done >= rows.length && rows.length ? "g" : "w"}">${done} из ${rows.length} закрыто</span><button type="button" class="vc-b gh vc-ic" data-mt-absdel="${ai}" aria-label="Убрать" title="Убрать из списка">${svg(IC.x, 15)}</button></span></div>
+      ${rows.length ? rows.map(row).join("") : `<p class="vc-note" style="margin:0">Уроков этого учителя в загруженных расписаниях на этот день не найдено.</p>`}</section>`;
+  };
+  return `<div class="vc-sub"><button type="button" class="vc-b p" data-mt-abs>${svg(IC.plus, 16)}Учитель отсутствует</button><span class="vc-note">Замены считаются по загруженным расписаниям классов.</span></div>
+    <div class="mt-lay"><div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      ${MTS.abs.length ? MTS.abs.map(card).join("") : `<section class="panel"><p class="muted" style="margin:0">Отсутствующих нет. Нажмите «Учитель отсутствует», выберите учителя и день — уроки и свободные замены соберутся сами.</p></section>`}
+    </div>
+    <aside style="display:flex;flex-direction:column;gap:12px">
+      <section class="panel"><div class="panel-head"><h2>Агент замен</h2><span class="aside" style="display:flex;align-items:center;gap:6px"><span class="vc-dot"></span>на сервере</span></div>
+        <p class="vc-note" style="margin:0 0 6px">Каждые полчаса сверяет Google Таблицу расписания и переносит изменения.</p>
+        <div class="mt-log">${MTS.log.length ? MTS.log.slice(0, 6).map(r => `<div class="r"><time>${esc(r.t)}</time><span>${esc(r.x)}</span></div>`).join("") : `<div class="r"><span class="vc-note">Здесь появится журнал ваших замен.</span></div>`}</div></section>
+    </aside></div>`;
+}
+function mtImpHtml(){
+  const srcBtn = (k, t, s, ic) => `<button type="button" class="mt-srcb" aria-pressed="${MT.src === k}" data-mt-src="${k}"><span class="ic">${svg(ic, 18)}</span><span><span>${t}</span><small>${s}</small></span></button>`;
+  const right = MT.src === "sheet"
+    ? `<section class="panel"><div class="panel-head"><h2>Google Таблица</h2><span class="aside" style="display:flex;align-items:center;gap:6px"><span class="vc-dot"></span>подключена у администратора</span></div>
+        <div class="vc-chk"><div class="r"><span>Как читается</span><b>1 лист = 1 неделя, все классы</b></div><div class="r"><span>Сверка</span><b>каждые 30 минут, агент замен</b></div><div class="r"><span>Меняется</span><b>только то, что изменилось</b></div></div>
+        <p class="vc-note" style="margin:10px 0 0">Ключ сервисного аккаунта хранится на сервере. Настройки — у администратора в «Коннекторах».</p></section>`
+    : MT.src === "file"
+    ? `<section class="panel"><div class="panel-head"><h2>Файл Excel или CSV</h2></div>
+        <label class="mt-drop">${svg(IC.up, 22)}<span style="color:var(--ink)">Выберите файл с неделей класса</span><span class="vc-note">колонки: День · № · Время · Предмет · Учитель · Кабинет</span><input type="file" id="mt-f" accept=".xlsx,.xls,.csv" hidden></label>
+        <div id="mt-prev">${MT.prev ? mtPrevHtml() : ""}</div></section>`
+    : `<section class="panel"><div class="panel-head"><h2>Вручную</h2></div><p class="vc-note" style="margin:0">Откройте вкладку «Неделя», нажмите на урок — справа появятся действия: заменить учителя, сменить кабинет, отменить урок.</p></section>`;
+  return `<div class="mt-imp"><div class="panel" style="padding:8px;display:flex;flex-direction:column;gap:2px">
+      ${srcBtn("sheet", "Google Таблица", "Подключена · агент следит за ней", IC.sheet)}
+      ${srcBtn("file", "Файл Excel или CSV", "Разово загрузить неделю класса", IC.file)}
+      ${srcBtn("hand", "Вручную", "Поправить отдельные уроки в сетке", IC.pen2)}
+    </div>${right}</div>`;
+}
+function mtPrevHtml(){
+  const p = MT.prev; if(!p) return "";
+  return `<div style="margin-top:10px"><div class="vc-sub" style="margin-bottom:8px"><span class="vc-pill g">строк: ${p.rows.length}</span>
+      <span class="vc-seg">${JR_CLS.slice(0, 6).map(c => `<button type="button" data-mt-pcls="${esc(c)}" aria-pressed="${p.cls === c}">${esc(c)}</button>`).join("")}</span>
+      <button type="button" class="vc-b p" data-mt-apply>Применить к ${esc(p.cls)}</button></div>
+    <div class="mt-diff">${p.rows.slice(0, 12).map(r => `<div class="r"><span>${esc(r.day)}</span><small>${r.n}-й · ${esc(r.t)}</small><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.subj)}<small> · ${esc([r.teacher, r.room].filter(Boolean).join(" · "))}</small></span><span></span></div>`).join("")}${p.rows.length > 12 ? `<p class="vc-note" style="margin:6px 0 0">…и ещё ${p.rows.length - 12}</p>` : ""}</div></div>`;
+}
+function renderMtd(){
+  const el = $id("mtd"); if(!el) return;
+  const tabs = [["week", "Неделя"], ["subs", "Замены"], ["imp", "Загрузка"]];
+  el.innerHTML = vcHead("Расписание школы", "Замены и загрузка",
+    `<div class="vc-sub"><span class="vc-seg" role="tablist">${tabs.map(([k, t]) => `<button type="button" role="tab" aria-pressed="${MT.tab === k}" data-mt-tab="${k}">${t}</button>`).join("")}</span></div>`) +
+    (MT.tab === "subs" ? mtSubsHtml() : MT.tab === "imp" ? mtImpHtml() : mtWeekHtml());
+}
+window.renderMtd = renderMtd;
+function mtAbsModal(){
+  const st = { who: null, iso: isoDate(TODAY), why: "болеет" };
+  const days = Array.from({ length: 7 }, (_, i) => addDays(TODAY, i)).filter(d => d.getDay() !== 0);
+  const staff = mtStaffList();
+  const draw = () => { const o = $id("tgm"); if(!o) return;
+    o.querySelector("#mta-b").innerHTML = `
+      <div class="adm-filter" style="margin-bottom:8px;max-height:150px;overflow:auto">${staff.map(s => `<button type="button" class="chip" data-mta-w="${esc(s.name)}" aria-pressed="${st.who === s.name}" title="${esc(s.subj || "")}">${esc(fioShort(s.name))}</button>`).join("") || `<span class="vc-note">Список педагогов ещё не загружен с сервера.</span>`}</div>
+      <div class="adm-filter" style="margin-bottom:8px">${days.map(d => { const i2 = isoDate(d); return `<button type="button" class="chip" data-mta-d="${i2}" aria-pressed="${st.iso === i2}">${key(d) === key(TODAY) ? "Сегодня" : esc(WD[d.getDay()]) + " " + d.getDate()}</button>`; }).join("")}</div>
+      <div class="adm-filter">${["болеет", "курсы", "командировка", "по семейным"].map(w => `<button type="button" class="chip" data-mta-y="${esc(w)}" aria-pressed="${st.why === w}">${esc(w)}</button>`).join("")}</div>`; };
+  const o = tgModal("Учитель отсутствует", `<div id="mta-b"></div>`, `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn pri" data-mta-ok>Добавить</button>`);
+  if(!o) return; draw();
+  o.addEventListener("click", e => {
+    const g = s => e.target.closest(s); let x;
+    if(g("[data-cf-no]")){ tgModalClose(); return; }
+    if((x = g("[data-mta-w]"))){ st.who = x.dataset.mtaW; draw(); return; }
+    if((x = g("[data-mta-d]"))){ st.iso = x.dataset.mtaD; draw(); return; }
+    if((x = g("[data-mta-y]"))){ st.why = x.dataset.mtaY; draw(); return; }
+    if(g("[data-mta-ok]")){ if(!st.who){ tgToast("Выберите учителя"); return; }
+      MTS.abs.unshift({ who: st.who, iso: st.iso, why: st.why }); mtLog(fioShort(st.who) + " отмечен отсутствующим (" + st.why + ")"); mtSave(); tgModalClose(); renderMtd(); }
+  });
+}
+function mtReplaceModal(){
+  if(!MT.sel) return;
+  const cls = mtCls(), { iso, num } = MT.sel, k = mtOvKey(cls, iso, num);
+  const busy = mtBusy(iso, num), staff = mtStaffList();
+  const o = tgModal("Заменить учителя", `<p class="muted" style="margin:0 0 8px">${esc(cls)} · ${num}-й урок. Занятые в это время скрыты.</p>
+    <div class="adm-filter" style="max-height:200px;overflow:auto">${staff.filter(s => !busy.has(s.name.split(" ")[0])).map(s => `<button type="button" class="chip" data-mtr-w="${esc(s.name)}" title="${esc(s.subj || "")}">${esc(fioShort(s.name))}</button>`).join("") || `<span class="vc-note">Свободных не нашлось.</span>`}</div>`,
+    `<button type="button" class="tgm-btn" data-cf-no>Отмена</button>`);
+  if(!o) return;
+  o.addEventListener("click", e => {
+    if(e.target.closest("[data-cf-no]")){ tgModalClose(); return; }
+    const x = e.target.closest("[data-mtr-w]"); if(!x) return;
+    MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: x.dataset.mtrW, off: false };
+    mtLog(cls + ", " + num + "-й урок: замена — " + fioShort(x.dataset.mtrW)); mtSave(); tgModalClose(); renderMtd();
+  });
+}
+function mtRoomModal(){
+  if(!MT.sel) return;
+  const cls = mtCls(), { iso, num } = MT.sel, k = mtOvKey(cls, iso, num);
+  const o = tgModal("Сменить кабинет", `<input class="tgm-in" id="mtr-room" maxlength="12" placeholder="Например: 214" autocomplete="off" style="width:100%">`,
+    `<button type="button" class="tgm-btn" data-cf-no>Отмена</button><button type="button" class="tgm-btn pri" data-mtr-ok>Сохранить</button>`);
+  if(!o) return; setTimeout(() => { const i = $id("mtr-room"); if(i) i.focus(); }, 200);
+  o.addEventListener("click", e => {
+    if(e.target.closest("[data-cf-no]")){ tgModalClose(); return; }
+    if(e.target.closest("[data-mtr-ok]")){ const v = (($id("mtr-room") || {}).value || "").trim(); if(!v) return;
+      MTS.ov[k] = { ...(MTS.ov[k] || {}), room: v }; mtLog(cls + ", " + num + "-й урок: кабинет " + v); mtSave(); tgModalClose(); renderMtd(); }
+  });
+}
+async function mtParseFile(f){
+  try {
+    let rows = [];
+    if(/\.csv$/i.test(f.name)){
+      const tx = await f.text();
+      rows = tx.split(/\r?\n/).map(l => l.split(/[;,\t]/));
+    } else {
+      if(!window.XLSX){ await new Promise((res, rej) => { const s = document.createElement("script"); s.src = LIBS.xlsx; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+      const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false });
+    }
+    const DN = { "пн": 1, "понедельник": 1, "вт": 2, "вторник": 2, "ср": 3, "среда": 3, "чт": 4, "четверг": 4, "пт": 5, "пятница": 5, "сб": 6, "суббота": 6 };
+    const out = []; let curDay = 0;
+    rows.forEach(r => {
+      if(!r || !r.length) return;
+      const c0 = String(r[0] || "").trim().toLowerCase();
+      let rest = r;
+      if(DN[c0]){ curDay = DN[c0]; rest = r.slice(1); }
+      else if(!/^\d+$/.test(c0)) rest = r.slice(1);   // первая колонка «День» пустая или текстовая
+      const day = curDay;
+      const n = parseInt(String(rest[0] || "").trim(), 10);
+      const t = String(rest[1] || "").trim(), subj = String(rest[2] || "").trim(), teacher = String(rest[3] || "").trim(), room = String(rest[4] || "").trim();
+      if(day && n && subj && !/предмет/i.test(subj)) out.push({ day, n, t, subj, teacher, room, dayName: ["", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"][day] });
+    });
+    if(!out.length){ tgToast("Не удалось разобрать файл: нужны колонки День, №, Время, Предмет, Учитель, Кабинет"); return; }
+    MT.prev = { cls: mtCls() === myCls() ? (JR_CLS.find(c => c !== myCls()) || mtCls()) : mtCls(), rows: out.map(x => ({ ...x, day: x.dayName })) , raw: out };
+    renderMtd();
+  } catch(e) { tgToast("Файл не прочитался: " + String(e && e.message || e).slice(0, 80)); }
+}
+document.addEventListener("click", e => {
+  const g = s => e.target.closest(s); let x;
+  if(!g("#mtd") && !g("#tgm")) return;
+  if((x = g("[data-mt-tab]"))){ MT.tab = x.dataset.mtTab; MT.sel = null; renderMtd(); return; }
+  if((x = g("[data-mt-wk]"))){ const v = +x.dataset.mtWk; MT.wk = v === 0 ? 0 : MT.wk + v; MT.sel = null; renderMtd(); return; }
+  if((x = g("[data-mt-cls]"))){ MT.cls = x.dataset.mtCls; MT.sel = null; renderMtd(); return; }
+  if(g("[data-mt-clsall]")){
+    const o = tgModal("Класс", `<div class="adm-filter">${JR_CLS.map(c => `<button type="button" class="chip" data-mtc="${esc(c)}" aria-pressed="${mtCls() === c}">${esc(c)}</button>`).join("")}</div>`, `<button type="button" class="tgm-btn" data-cf-no>Закрыть</button>`);
+    if(o) o.addEventListener("click", ev => { const y = ev.target.closest("[data-mtc]"); if(y){ MT.cls = y.dataset.mtc; MT.sel = null; tgModalClose(); renderMtd(); } if(ev.target.closest("[data-cf-no]")) tgModalClose(); });
+    return;
+  }
+  if((x = g("[data-mt-c]"))){ const [iso, num] = x.dataset.mtC.split("|"); MT.sel = MT.sel && MT.sel.iso === iso && +MT.sel.num === +num ? null : { iso, num: +num }; renderMtd(); return; }
+  if(g("[data-mt-rep]")){ mtReplaceModal(); return; }
+  if(g("[data-mt-room]")){ mtRoomModal(); return; }
+  if(g("[data-mt-off]")){ if(!MT.sel) return; const k = mtOvKey(mtCls(), MT.sel.iso, MT.sel.num); const ov = MTS.ov[k] || {}; ov.off = !ov.off; MTS.ov[k] = ov; mtLog(mtCls() + ", " + MT.sel.num + "-й урок: " + (ov.off ? "отменён" : "возвращён")); mtSave(); renderMtd(); return; }
+  if(g("[data-mt-undo]")){ if(!MT.sel) return; delete MTS.ov[mtOvKey(mtCls(), MT.sel.iso, MT.sel.num)]; mtSave(); renderMtd(); return; }
+  if(g("[data-mt-pub]")){
+    const cls = mtCls(), ov = Object.fromEntries(Object.entries(MTS.ov).filter(([k]) => k.startsWith(cls + "|")));
+    const fin = ok => { tgToast(ok ? "Изменения отправлены на сервер: класс увидит их после обновления" : "Изменения сохранены на этом устройстве; на сервер отправит администратор"); mtLog("Публикация правок " + cls + ": " + Object.keys(ov).length + " шт." + (ok ? " · на сервере" : " · локально")); };
+    if(typeof DB !== "undefined" && DB && typeof CN !== "undefined" && CN.isAdmin){ DB.doc("subs/" + schB64(cls)).set({ cls, ov, at: new Date().toISOString() }).then(() => fin(true), () => fin(false)); } else fin(false);
+    return;
+  }
+  if(g("[data-mt-abs]")){ mtAbsModal(); return; }
+  if((x = g("[data-mt-absdel]"))){ MTS.abs.splice(+x.dataset.mtAbsdel, 1); mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-set]"))){ const [k, who] = x.dataset.mtSet.split("|"); MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: who, off: false }; mtLog(k.split("|")[0] + ": замена — " + fioShort(who)); mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-unset]"))){ const k = x.dataset.mtUnset; const ov = MTS.ov[k]; if(ov){ delete ov.teacher; if(!Object.keys(ov).length) delete MTS.ov[k]; } mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-cancel]"))){ const k = x.dataset.mtCancel; MTS.ov[k] = { ...(MTS.ov[k] || {}), off: true }; mtLog(k.split("|")[0] + ", " + k.split("|")[2] + "-й урок: отменён"); mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-gocls]"))){ e.preventDefault(); const [c, iso, num] = x.dataset.mtGocls.split("|"); MT.cls = c; MT.tab = "week"; MT.wk = Math.round((mondayOf(new Date(iso + "T12:00:00")) - mondayOf(TODAY)) / (7 * DAY)); MT.sel = { iso, num: +num }; renderMtd(); return; }
+  if((x = g("[data-mt-src]"))){ MT.src = x.dataset.mtSrc; renderMtd(); return; }
+  if((x = g("[data-mt-pcls]"))){ if(MT.prev){ MT.prev.cls = x.dataset.mtPcls; renderMtd(); } return; }
+  if(g("[data-mt-apply]")){
+    const p = MT.prev; if(!p) return;
+    const tt = {}; p.raw.forEach(r => { (tt[r.day] = tt[r.day] || []).push({ n: r.n, t: r.t, s: r.subj, teacher: r.teacher, room: r.room }); });
+    Object.values(tt).forEach(L => L.sort((a, b) => a.n - b.n));
+    MTS.full[p.cls] = tt; mtSave(); mtLog("Загружено расписание " + p.cls + " из файла: " + p.raw.length + " уроков");
+    tgToast("Расписание " + p.cls + " загружено — откройте вкладку «Неделя»");
+    MT.prev = null; MT.cls = p.cls; MT.tab = "week"; renderMtd(); return;
+  }
+});
+document.addEventListener("change", e => { if(e.target && e.target.id === "mt-f" && e.target.files && e.target.files[0]) mtParseFile(e.target.files[0]); });
+
+/* первый рендер, если раздел уже открыт по хэшу */
+try { if(state.tab === "online") renderOnline(); if(state.tab === "library") renderLibrary(); if(state.tab === "mtd") renderMtd(); } catch(e) {}
+})();
 </script>
 </body></html>
