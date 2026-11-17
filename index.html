@@ -6394,9 +6394,9 @@ const dv = v => SCALE === "s5" ? (v <= 3 ? 2 : v <= 5 ? 3 : v <= 7 ? 4 : 5) : SC
 const da = a => {
   if(SCALE === "s100") return num(a * 10, 1);
   if(SCALE === "s5"){
-    const P = [[1.5,2],[4.5,3],[6.5,4],[9,5]];
-    if(a <= P[0][0]) return num(2); if(a >= P[3][0]) return num(5);
-    const i = P.findIndex((q, k) => k < 3 && a <= P[k+1][0]);
+    const P = [[0,2],[3.5,2.5],[5.5,3.5],[7.5,4.5],[8,5]];
+    if(a <= 0) return num(2); if(a >= 8) return num(5);
+    const i = P.findIndex((q, k) => k < 4 && a <= P[k+1][0]);
     return num(P[i][1] + (a - P[i][0]) / (P[i+1][0] - P[i][0]) * (P[i+1][1] - P[i][1]));
   }
   return num(a);
@@ -6457,7 +6457,7 @@ const HOLIDAYS = (DATA.holidays || []).map(([a,b,name]) => ({ a: dd(a), b: dd(b)
 const holidayOf = d => HOLIDAYS.find(h => d >= h.a && d <= h.b);
 /* уроки на конкретную дату: особая неделя из DATA.weeks, иначе обычное расписание; до начала года уроков нет */
 function ttFor(d){
-  if(PERIODS.length && d < PERIODS[0].s) return [];
+  if(PERIODS.length){ const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate()); if(!PERIODS.some(p => d0 >= p.s && d0 <= p.e)) return []; }
   const m = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
   const wk = (DATA.weeks || {})[String(m.getDate()).padStart(2, "0") + "." + String(m.getMonth() + 1).padStart(2, "0")];
   if(wk && wk[d.getDay()] !== undefined) return wk[d.getDay()] || [];
@@ -6614,7 +6614,7 @@ const MON_TASKS = { "8HLm-2610": MON_TASKS_6, "8HLp1-2609": [{"t": "Сумма �
 /* шкала мониторингов: баллы из 30 → оценка по 10-балльной → по 5-балльной */
 const MON_CRIT = [1, 7, 10, 12, 14, 16, 17, 19, 22, 27];
 const MON_T10 = [[1,6,"1"],[7,9,"2"],[10,11,"3"],[12,13,"4"],[14,15,"5"],[16,16,"6"],[17,18,"7"],[19,21,"8"],[22,26,"9"],[27,30,"10"]];
-const mon5 = v => v <= 2 ? 2 : v <= 5 ? 3 : v <= 7 ? 4 : 5;
+const mon5 = v => v <= 3 ? 2 : v <= 5 ? 3 : v <= 7 ? 4 : 5;
 const mon10 = b => { const r = MON_T10.find(([a, z]) => b >= a && b <= z); return r ? +r[2] : (b < 1 ? 1 : 10); };
 const monDet = (c, title, ans, extra) => ({ title, crit: MON_CRIT, opts: 5, ...(extra || {}), q: ans.map(([a, ok], i) => ({ n: i + 1, a, ok: !!ok, p: 1, t: MON_TASKS[c][i].t, o: MON_TASKS[c][i].o, r: MON_TASKS[c][i].r, sol: MON_TASKS[c][i].s })) });
 const MON_DET = { "8HLm-2610": monDet("8HLm-2610", "Итоговый тест, вариант 246", [[4, 1], [2, 1], [1, 1], [4, 1], [4, 1], [3, 1], [2, 0], [2, 1], [2, 1], [3, 1], [3, 1], [1, 1], [4, 1], [4, 1], [1, 1], [2, 1], [2, 0], [3, 1], [5, 1], [5, 1], [2, 1], [2, 1], [1, 1], [2, 1], [5, 0], [3, 0], [2, 0], [3, 0], [2, 0], [2, 1]], {variant: "246"}), "8HLp1-2609": monDet("8HLp1-2609", "8-й класс, преобразования 1", [[1, 1], [2, 1], [2, 1], [3, 1], [2, 1], [1, 1], [1, 1], [2, 1], [4, 1], [4, 1], [2, 1], [2, 1], [5, 1], [4, 0], [1, 1], [3, 1], [3, 0], [4, 1], [5, 0], [4, 1], [3, 1], [0, 0], [4, 1], [1, 1], [1, 1], [4, 1], [2, 1], [4, 1], [4, 1], [1, 1]]), "8HLp2-2609": monDet("8HLp2-2609", "8-й класс, преобразования 2", [[5, 1], [3, 1], [4, 1], [3, 0], [5, 1], [2, 0], [4, 1], [3, 1], [2, 1], [4, 1], [5, 1], [4, 0], [3, 1], [2, 1], [4, 1], [5, 1], [3, 1], [1, 0], [3, 1], [2, 1], [1, 0], [3, 1], [3, 1], [2, 1], [5, 1], [3, 0], [4, 0], [5, 0], [2, 0], [1, 1]]), "8HLp3-2609": monDet("8HLp3-2609", "8-й класс, преобразования 3", [[1, 1], [3, 1], [5, 1], [1, 1], [2, 1], [2, 1], [2, 0], [4, 1], [5, 0], [1, 1], [2, 1], [1, 1], [1, 1], [1, 1], [5, 1], [2, 1], [5, 1], [3, 0], [1, 1], [4, 1], [4, 1], [2, 1], [5, 1], [5, 1], [5, 0], [1, 1], [3, 1], [3, 1], [3, 0], [1, 1]]), "8HLp4-2610": monDet("8HLp4-2610", "8-й класс, преобразования 4", [[4, 1], [4, 1], [1, 1], [3, 1], [1, 1], [2, 1], [3, 1], [5, 1], [5, 0], [4, 1], [3, 1], [1, 1], [1, 1], [2, 1], [3, 1], [5, 1], [1, 1], [5, 1], [1, 0], [5, 1], [5, 1], [5, 1], [5, 0], [1, 0], [2, 1], [2, 0], [2, 0], [2, 1], [3, 1], [4, 1]]), "8HLp5-2610": monDet("8HLp5-2610", "8-й класс, преобразования 5", [[2,1],[4,1],[5,1],[2,1],[1,1],[4,1],[4,1],[2,1],[2,1],[3,1],[2,1],[1,1],[2,1],[4,0],[1,1],[1,1],[2,1],[4,0],[4,1],[5,1],[3,1],[2,1],[3,0],[5,1],[4,1],[2,0],[1,0],[5,1],[3,1],[2,0]], { variant: 36 }) };
@@ -8605,7 +8605,7 @@ const BOT_HELLO = "Привет! Я бот платформы. Вижу ваше
 const AI_HELLO = "Привет! Я помощник по учёбе. Спрашивай что угодно по предметам: объясню тему, отвечу на вопрос, разберу пример. Готовые решения домашки не даю, но покажу, как их сделать.";
 const FRESH = new WeakSet(), SWAP = new WeakSet(), DELIV = new WeakSet();
 const CHAT = { q: "", open: "ai", view: "list", busy: false, draft: "", ctl: null, msgs: {}, sel: null, reply: null, edit: null, pk: -1, hold: false, att: [], an: null };
-try { CHAT.msgs = JSON.parse(localStorage.getItem(CHAT_KEY) || "{}"); } catch(e) { CHAT.msgs = {}; }
+try { CHAT.msgs = JSON.parse(localStorage.getItem(CHAT_KEY) || "{}") || {}; } catch(e) { CHAT.msgs = {}; }
 if(!Array.isArray(CHAT.msgs.ai) || !CHAT.msgs.ai.length) CHAT.msgs.ai = [{ f: "bot", x: AI_HELLO, t: new Date().toISOString() }];
 if(!Array.isArray(CHAT.msgs.bot) || !CHAT.msgs.bot.length) CHAT.msgs.bot = [{ f: "bot", x: BOT_HELLO, t: new Date().toISOString() }];
 function chatSave(){ try { const o = {}; Object.keys(CHAT.msgs).forEach(k => { if(Array.isArray(CHAT.msgs[k])) o[k] = CHAT.msgs[k].slice(-80); }); localStorage.setItem(CHAT_KEY, JSON.stringify(o, (k, v) => k === "url" && typeof v === "string" && v.startsWith("blob:") ? undefined : v)); } catch(e) {} }
@@ -8718,9 +8718,8 @@ async function aiChatSend(q){
     AIC.prov = aiAuto(q);
     const hist = CHAT.msgs.ai.slice(0, idx).filter(m => m.x && !m.err).slice(-10).map(m => ({ role: m.f === "me" ? "user" : "assistant", content: (m.r ? "(в ответ на: «" + String(m.r.x).slice(0, 200) + "») " : "") + m.x }));
     while(hist.length && hist[0].role === "assistant") hist.shift();
-    CHAT.ctl = new AbortController(); const tm = setTimeout(() => CHAT.ctl.abort(), 40000);
-    const r = await aiFetch({ provider: AIC.prov, messages: aiGuardMsgs(hist) }, CHAT.ctl.signal);
-    clearTimeout(tm);
+    const ctl = CHAT.ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 40000);
+    let r; try { r = await aiFetch({ provider: AIC.prov, messages: aiGuardMsgs(hist) }, ctl.signal); } finally { clearTimeout(tm); }
     const j = await r.json().catch(() => ({})); if(!r.ok || !j.text) throw new Error(j.error || "сервер не ответил вовремя (код " + r.status + ")");
     CHAT.msgs.ai[idx].x = aiSafe(j.text, q); CHAT.msgs.ai[idx].mdl = AIC.prov; SWAP.add(CHAT.msgs.ai[idx]);
   }catch(e){
@@ -8748,10 +8747,11 @@ ${hist ? "\nПРЕДЫДУЩИЕ СООБЩЕНИЯ:\n" + hist : ""}
 \nВОПРОС УЧЕНИКА: ${q}`;
   const bm = { f: "bot", x: "", t: new Date().toISOString() }; FRESH.add(bm); const idx = CHAT.msgs.bot.push(bm) - 1; renderChats(true);
   try {
-    CHAT.ctl = new AbortController();
+    const bctl = CHAT.ctl = new AbortController(); const btm = setTimeout(() => bctl.abort(), 60000);
     let out;
+    try {
     if(SAMPLE){ ({ text: out } = await SAMPLE(prompt, { modelTier: "default", cache: false, signal: CHAT.ctl.signal,
-      onText: ({ text: tx }) => { CHAT.msgs.bot[idx].x = tx; const b = document.getElementById("tg-last"); if(b) b.innerHTML = mdLite(tx); chatScroll(); } })); }
+      onText: ({ text: tx }) => { CHAT.msgs.bot[idx].x = tx; const b = CHAT.open === "bot" && document.getElementById("tg-last"); if(b){ b.innerHTML = mdLite(tx); chatScroll(); } } })); }
     else {   /* без Claude — через ИИ-прокси Ядра (YandexGPT, при сбое GigaChat) */
       let last = "";
       for(const prov of [AIC.prov || "yandex", AIC.prov === "gigachat" ? "yandex" : "gigachat"]){
@@ -8760,6 +8760,7 @@ ${hist ? "\nПРЕДЫДУЩИЕ СООБЩЕНИЯ:\n" + hist : ""}
       }
       if(!out){ const e = new Error(last); e.code = "proxy"; throw e; }
     }
+    } finally { clearTimeout(btm); }
     CHAT.msgs.bot[idx].x = out; logAdd("ok", "Чат-бот", "Ответ отправлен");
   } catch(e) {
     const c = e && e.code;
@@ -9102,7 +9103,7 @@ async function vrStart(){
   if(VR) return;
   if(!navigator.mediaDevices || !window.MediaRecorder){ tgToast("Запись голоса здесь недоступна"); return; }
   let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e) { tgToast("Нет доступа к микрофону"); return; }
-  const rec = new MediaRecorder(stream), v = { rec, stream, chunks: [], amps: [], t0: Date.now(), cancel: false };
+  const rec = new MediaRecorder(stream), v = { rec, stream, chunks: [], amps: [], t0: Date.now(), cancel: false, cid: CHAT.open };
   try { v.ac = new (window.AudioContext || window.webkitAudioContext)(); const src = v.ac.createMediaStreamSource(stream); v.an = v.ac.createAnalyser(); v.an.fftSize = 256; src.connect(v.an); v.buf = new Uint8Array(v.an.fftSize); } catch(e) {}
   rec.ondataavailable = e => { if(e.data && e.data.size) v.chunks.push(e.data); };
   rec.onstop = () => vrDone(v);
@@ -9129,7 +9130,7 @@ function vrDone(v){
   const blob = new Blob(v.chunks, { type: v.rec.mimeType || "audio/webm" });
   const N = 30, am = v.amps, bars = Array.from({ length: N }, (_, k) => { const a = Math.floor(k * am.length / N), b = Math.max(a + 1, Math.floor((k + 1) * am.length / N)); let m = 0; for(let q = a; q < b && q < am.length; q++) m = Math.max(m, am[q]); return Math.round(14 + m * 86); });
   const att = { k: "vo", dur, bars, mime: blob.type, url: URL.createObjectURL(blob) };
-  const fin = () => { if(tgCur().id === CHAT.open) tgPush("", [att]); };
+  const fin = () => { if(CHAT.open === v.cid) tgPush("", [att]); else tgToast("Голосовое не отправлено: вы перешли в другой чат"); };
   if(blob.size <= 350000){ const fr = new FileReader(); fr.onload = () => { att.url = fr.result; fin(); }; fr.onerror = fin; fr.readAsDataURL(blob); } else fin();
 }
 function voPaint(key){
@@ -9925,7 +9926,7 @@ const CN = { list: [], loaded: false, open: null, form: false, edit: null, err: 
   try { if(CN.isAdmin) renderSettings(); } catch(e) {}
   if(CN.isAdmin && typeof rsBuild === "function") rsBuild();
   if(CN.isAdmin && user && typeof window.yadroTg === "function"){ remindStart(user); jrSyncStart(); }
-  try { vaApply(); setTimeout(vaApply, 300); setTimeout(vaApply, 1200); const restoreH = () => { const h = (location.hash || "").slice(1), b = h && document.getElementById("tab-" + h); if(h && b && !b.hidden && state.tab !== h){ try { showTab(h, false); } catch(e) {} } }; [0, 400, 1000, 2000, 3500].forEach(t => setTimeout(restoreH, t)); let __vn = 0; const __vt = setInterval(() => { try { vaApply(); restoreH(); } catch(e) {} if(++__vn > 60) clearInterval(__vt); }, 250); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
+  try { vaApply(); setTimeout(vaApply, 300); setTimeout(vaApply, 1200); const restoreH = () => { const h = (location.hash || "").slice(1), b = h && document.getElementById("tab-" + h); if(h && b && !b.hidden && state.tab !== h){ try { showTab(h, false); } catch(e) {} } }; [0, 400, 1000, 2000, 3500].forEach(t => setTimeout(restoreH, t)); let __vn = 0, __vu = false; addEventListener("pointerdown", () => { __vu = true; }, { once: true, capture: true }); const __vt = setInterval(() => { try { vaApply(); if(!__vu) restoreH(); } catch(e) {} if(++__vn > 60) clearInterval(__vt); }, 250); } catch(e) {}   // вкладки, зависящие от прав (журнал), появляются после проверки доступа
   /* после обновления страницы остаёмся в выбранном режиме просмотра («от лица…») и на той же вкладке */
   if(CN.isAdmin){ try { const sv = JSON.parse(localStorage.getItem("bai-va") || "null"); if(sv && sv.role && ADM.perm[sv.role]){ vaStart(sv.role, sv.uid); const h = (location.hash || "").slice(1); if(h) showTab(h, false); } } catch(e) {} }
   if(!CN.isAdmin){ CN.loaded = true; return; }
@@ -10076,8 +10077,9 @@ const jrSetCls = c => { const L = JR_ROST[c] || JR_ROST["8 «А»"] || []; JR_ST
 /* списки с сервера: только сотрудникам и администратору; в памяти, без записи на устройство */
 async function rosterLoad(force){
   if(ROSTER.busy || ((ROSTER.at || ROSTER.none || ROSTER.err) && !force)) return; let n = 0;
+  ROSTER.busy = true;
   while(!DB && n++ < 40) await new Promise(r => setTimeout(r, 500));
-  if(!DB) return; ROSTER.busy = true;
+  if(!DB){ ROSTER.busy = false; ROSTER.err = "Нет связи с сервером"; return; }
   try {
     const snap = await DB.doc("roster/all").get(), d = snap && snap.exists ? snap.data() : null;
     if(d && d.classes && typeof d.classes === "object"){
@@ -10104,7 +10106,7 @@ const U_SEED = [   /* примеры для пустой админки: име�
   { id: "u12", role: "admin", name: "Администратор платформы", email: "", st: "on", v: { level: "Полный" } },
 ];
 const ADM = { rv: (() => { try { const v = localStorage.getItem("bai-adm-rv"); return ["v1", "v2", "v3"].includes(v) ? v : "v1"; } catch(e) { return "v1"; } })(), pr: "teacher", dir: "", tab: "panel", role: "all", us: "az", grp: new Set(), q: "", form: null, confirmDel: null, anim: false, users: [], perm: {} };
-const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Object.fromEntries(RES.map((x, i) => [x[0], r.lv[i] || (x[0] === "monitoring" ? r.lv[1] : "n")])), acts: Object.fromEntries(ACTS.map(a => [a[0], r.acts.includes(a[0])])), sc: r.sc }]));
+const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Object.fromEntries(RES.map((x, i) => [x[0], r.lv[i] || "n"])), acts: Object.fromEntries(ACTS.map(a => [a[0], r.acts.includes(a[0])])), sc: r.sc }]));
 (function(){
   let u = null, p = null;
   try { u = JSON.parse(localStorage.getItem("bai-adm-users")); p = JSON.parse(localStorage.getItem("bai-adm-perm")); } catch(e) {}
@@ -10133,7 +10135,12 @@ const permBase = () => Object.fromEntries(ROLES_ALL.map(r => [r.id, { res: Objec
     }
   } catch(e) {}
   const base = permBase();
-  ADM.perm = p && typeof p === "object" ? Object.fromEntries(Object.keys(base).map(k => [k, { ...base[k], ...(p[k] || {}), res: { ...base[k].res, ...((p[k] || {}).res || {}) }, acts: { ...base[k].acts, ...((p[k] || {}).acts || {}) } }])) : base;
+  /* схема прав v16 (сборка 661): роль «Методист» была скрыта — её старые сохранённые права сбрасываются на новые стандартные */
+  try { if(p && typeof p === "object" && localStorage.getItem("bai-adm-perm-v") !== "16"){ delete p.methodist; localStorage.setItem("bai-adm-perm-v", "16"); } } catch(e) {}
+  const okRes = o => Object.fromEntries(Object.entries(o || {}).filter(([k, v]) => v in LVC));
+  const okActs = o => Object.fromEntries(Object.entries(o || {}).filter(([k, v]) => typeof v === "boolean"));
+  ADM.perm = p && typeof p === "object" ? Object.fromEntries(Object.keys(base).map(k => { const q = p[k] || {};
+    return [k, { ...base[k], sc: q.sc in SCOPES ? q.sc : base[k].sc, res: { ...base[k].res, ...okRes(q.res) }, acts: { ...base[k].acts, ...okActs(q.acts) } }]; })) : base;
 })();
 
 /* ===== Расписание класса: админ редактирует, ученик видит расписание своего класса (документ schedule/<код класса>) ===== */
@@ -11092,8 +11099,8 @@ document.addEventListener("click", e => {
   if((x = g("[data-adm-delask]"))){ const u = ADM.users.find(v => v.id === x.dataset.admDelask); if(!u) return;
     const ex = u.role === "student" ? "Оценки в журнале класса не изменятся." : u.role === "parent" ? "Доступ к данным детей будет закрыт." : u.role === "teacher" ? "Он потеряет доступ к журналу и своим классам." : "Он потеряет все права своей роли.";
     admConfirm("Удалить пользователя?", `<p><b>${esc(u.name)}</b> будет удалён из платформы без возможности восстановления.</p><ul><li>Вход в платформу закроется.</li><li>Профиль и настройки пользователя удалятся.</li><li>${ex}</li></ul><p class="adm-cfn">Если нужно лишь закрыть доступ — лучше заблокировать.</p>`, "Удалить", () => { ADM.users = ADM.users.filter(v => v.id !== u.id); admSave(); admRerender(); tgToast("Удалён: " + u.name); }, true); return; }
-  if((x = g("[data-px]"))){ const [r, k] = x.dataset.px.split("|"); const c = ADM.perm[r].res; c[k] = LVNEXT[c[k]]; admSave(); if(VA.role) vaApply(); admRerender(); return; }
-  if((x = g("[data-pa]"))){ const [r, k] = x.dataset.pa.split("|"); ADM.perm[r].acts[k] = !ADM.perm[r].acts[k]; admSave(); admRerender(); return; }
+  if((x = g("[data-px]"))){ if(!ADM.edit) return; const [r, k] = x.dataset.px.split("|"); const c = ADM.perm[r].res; c[k] = LVNEXT[c[k]]; admSave(); if(VA.role) vaApply(); admRerender(); return; }
+  if((x = g("[data-pa]"))){ if(!ADM.edit) return; const [r, k] = x.dataset.pa.split("|"); ADM.perm[r].acts[k] = !ADM.perm[r].acts[k]; admSave(); if(VA.role) vaApply(); admRerender(); return; }
   if((x = g("[data-ps]"))){ const ks = Object.keys(SCOPES), r = x.dataset.ps; ADM.perm[r].sc = ks[(ks.indexOf(ADM.perm[r].sc) + 1) % ks.length]; admSave(); if(VA.role) vaApply(); admRerender(); return; }
   if(g("[data-doc-new]")){ docForm(null); return; }
   if((x = g("[data-doc-edit]"))){ docForm(x.dataset.docEdit); return; }
@@ -11215,7 +11222,7 @@ document.addEventListener("click", e => {
   const fv = e.target.closest("[data-pe-fav]"); if(fv){ fv.setAttribute("aria-pressed", String(fv.getAttribute("aria-pressed") !== "true")); return; }
   const cl = e.target.closest("[data-pe-c]"); if(cl){ document.querySelectorAll("[data-pe-c]").forEach(b => b.setAttribute("aria-pressed", String(b === cl))); }
 });
-const canPII = () => VA.role ? !!(ADM.perm[VA.role] && ADM.perm[VA.role].acts.pii) : !!(CN.isAdmin);
+const canPII = () => { const r = VA.role || (typeof jrMeR === "function" ? jrMeR() : null); return r ? !!(ADM.perm[r] && ADM.perm[r].acts.pii) : !!CN.isAdmin; };
 const fmtPhone = v => { const d = String(v).replace(/\D/g, ""); const m = /^[78]?(\d{3})(\d{3})(\d{2})(\d{2})$/.exec(d); return m ? `+7 ${m[1]} ${m[2]}-${m[3]}-${m[4]}` : String(v); };
 function renderProfile(){
   const el = document.getElementById("profile"); if(!el) return;
@@ -12317,7 +12324,7 @@ function jroHome(){
 }
 function jroClass(){
   const C = jroCls(JRO.cls), sid = JRO.subj, sub = sid !== "all" ? C.subj[sid] : null;
-  const ed = VA.role ? ["e", "f"].includes(lvOf("journal")) : !!CN.isAdmin;
+  const ed = jrEdit();
   const kp = (k, v, l, cl) => `<button type="button" class="jro-kp" data-jro-kp="${k}"><b class="${cl || ""}">${v}</b><span>${l} ›</span></button>`;
   const tr = C.trend == null || Math.abs(C.trend) < 0.01 ? "" : `<i class="${C.trend >= 0 ? "jro-up" : "jro-dn"}">${C.trend >= 0 ? "↑" : "↓"}${da(Math.abs(C.trend))}</i>`;
   const subs = Object.entries(C.subj).filter(([, x]) => x.avg != null);
@@ -13059,7 +13066,7 @@ function showTab(t, push){
   if(t === "journal" && typeof jrCan === "function" && jrCan()) renderJournal();
   if(t === "agents"){ if(CN.isAdmin){ ADM.tab = "agents"; t = "admin"; renderAdmin(); if(!SYS.at) sysRun(); } else t = "grades"; }
   const btn = document.getElementById("tab-" + t);
-  if(!document.getElementById(t) || !btn || btn.hidden) t = "grades";   // «Контрольные» закрыты, «Администратор» только для редакторов
+  if(!document.getElementById(t) || !btn || btn.hidden){ const fb = [...document.querySelectorAll(".tab[data-tab]:not([hidden])")].find(b => document.getElementById(b.dataset.tab)); t = fb ? fb.dataset.tab : "overview"; }   // «Контрольные» закрыты, «Администратор» только для редакторов
   const prevT = state.tab;
   state.tab = t; document.documentElement.dataset.view = t;
   if(t === "schedule" && prevT !== "schedule" && (state.weekOffset !== 0 || state.schedIdx != null)){ state.weekOffset = 0; state.schedIdx = null; try{ renderSchedule(); }catch(e){} }
@@ -13340,7 +13347,7 @@ document.addEventListener("change", e => {
 });
 document.querySelector("[role=tablist]").addEventListener("keydown", e => {
   if(e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-  const tabs = [...document.querySelectorAll(".tab:not([disabled]):not([hidden])")];
+  const tabs = [...document.querySelectorAll(".tab[data-tab]:not([disabled]):not([hidden])")];
   const i = tabs.findIndex(b => b.dataset.tab === state.tab);
   const n = tabs[(i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length];
   showTab(n.dataset.tab, true); n.focus();
@@ -13568,7 +13575,7 @@ function calAsk(iso){
     sel = subs[+b.dataset.caS]; const t = root.querySelector("#ca-t"); if(t) t.textContent = sel.teacher ? "Учитель: " + sel.teacher : "Учитель не указан";
   }));
   const go = root.querySelector("#ca-go");
-  if(go) go.addEventListener("click", () => { const q = root.querySelector("#ca-q").value.trim(); if(!q){ root.querySelector("#ca-q").focus(); return; } tgModalClose(); tgToast("Вопрос отправлен: " + sel.sub.name); });
+  if(go) go.addEventListener("click", () => { const q = root.querySelector("#ca-q").value.trim(); if(!q){ root.querySelector("#ca-q").focus(); return; } tgModalClose(); try { tgReset(); } catch(err) {} CHAT.open = "ai"; CHAT.view = "chat"; CHAT.draft = "К уроку «" + sel.sub.name + "»: " + q; location.hash = "chats"; showTab("chats", true); try { renderChats(); } catch(err) {} tgToast("Вопрос в чате — нажмите «Отправить»"); });
 }
 
 /* Главное: виджет времени, расписание на сегодня, напоминание о контрольных */
@@ -13624,11 +13631,11 @@ const NEWS_SRC = [
 const NEWS_CAT = { all: "Все", hse: "ВШЭ", tech: "Технологии", sci: "Наука", inv: "Изобретения", school: "Школа" };
 let NEWS_F = "all";
 const NEWS = { items: null, at: 0, busy: false, err: "" };
-try { const j = JSON.parse(localStorage.getItem("bai-news") || "null"); if(j && Array.isArray(j.items)){ NEWS.items = j.items.filter(i => i && newsOk(i)); NEWS.at = j.t || 0; } } catch(e) {}
 /* новости только подходящие школьникам: без медицины, тела, смерти, войны и т. п. */
 const NEWS_BAD = new RegExp("(?:^|[^а-яё])(?:" + ["ожирен","грыж","пациент","болезн","заболев","диагноз","хирург","опухол","онколог","рак(?:а|ом|е|у|ов)?(?![а-яё])","метастаз","инфекц","эпидем","паразит","кишеч","гениталь","полов","секс","эрекц","беремен","роды(?![а-яё])","родах","аборт","менструац","сперм","контрацеп","труп","смерт","умер","погиб","гибел","убий","убит","суицид","самоубий","насили","наркот","алкогол","пьян","курени","курил","табак","никотин","вейп","казино","войн","военн","оруж","взрыв","теракт","обстрел","пыт(?:к|ал)","кровотеч","деформац","уродств","вскрыт","эвтаназ","похорон","катастроф","авари","жертв","преступ","тюрьм","депресс","психиатр","психическ","лекарств","препарат","терапи","клиническ","больн","смертельн"].join("|") + ")", "i");
 const NEWS_BADCAT = /медицин|здоровь|health|medic/i;
 const newsOk = i => !NEWS_BAD.test((i.title || "") + " " + (i.text || "")) && !NEWS_BADCAT.test(i.tags || "");
+try { const j = JSON.parse(localStorage.getItem("bai-news") || "null"); if(j && Array.isArray(j.items)){ NEWS.items = j.items.filter(i => i && newsOk(i)); NEWS.at = j.t || 0; } } catch(e) {}
 async function newsLoad(force){
   if(!NEWS_URL || NEWS.busy || (!force && NEWS.items && Date.now() - NEWS.at < 3600000)) return;
   if(!force && NEWS.err && Date.now() - (NEWS.failAt || 0) < 120000) return;
@@ -13778,7 +13785,7 @@ const SEC_FIX = {
   https: () => { secOpenRow("https"); }, scripts: () => {}, store: () => { showTab("settings", true); }, speed: () => {}
 };
 function secFlash(sel){ const el = document.querySelector(sel); if(!el) return; el.scrollIntoView({ block: "center", behavior: "smooth" }); el.classList.remove("sec-hl"); void el.offsetWidth; el.classList.add("sec-hl"); setTimeout(() => el.classList.remove("sec-hl"), 2400); }
-function secOpenRow(id){ const b = document.querySelector('[data-sec-o="' + id + '"]'); if(!b) return; if(!b.parentElement.classList.contains("open")) b.click(); secFlash('[data-sec-o="' + id + '"]'); }
+function secOpenRow(id){ const c = document.querySelector('.pt[data-i="' + id + '"]'); if(c){ if(!c.classList.contains("open")){ const h = c.querySelector(".pt-h"); if(h) h.click(); } secFlash('.pt[data-i="' + id + '"]'); return; } const b = document.querySelector('[data-sec-o="' + id + '"]'); if(!b) return; if(!b.parentElement.classList.contains("open")) b.click(); secFlash('[data-sec-o="' + id + '"]'); }
 function secPaint(){ try { if(document.getElementById("sj-sa")){ sjRedraw("sj-sa", sjSa()); sjRedraw("sj-ck", sjChecks()); } } catch(e) {} }
 function secRun(){
   if(SEC.busy) return; SEC.busy = true; SEC.step = 0; SEC.res = []; SEC.cur = SEC_STEPS[0][1];
@@ -14442,7 +14449,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "662";
+const BUILD = "663";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
@@ -14450,10 +14457,10 @@ const REG_CHECKS = [
   ["Метки КР, ПР, Тест, Дикт, ДЗ по центру", p => { const c = getComputedStyle(p("cdc k")); return /flex/.test(c.display) && c.justifyContent === "center" && c.alignItems === "center"; }],
   ["В выбранном дне календаря метка ДЗ видна", p => { const w = p("calx-g"), b = document.createElement("button"); b.className = "on"; b.innerHTML = '<u class="cdc h dn">ДЗ</u>'; w.appendChild(b); const c = getComputedStyle(b.firstChild); return c.color !== c.backgroundColor && c.backgroundColor !== "rgba(0, 0, 0, 0)" && +c.opacity === 1; }],
   ["Чаты: место под полосу прокрутки зарезервировано", p => getComputedStyle(p("tg-body")).scrollbarGutter.indexOf("stable") >= 0],
-  ["Плашка настроек двигается и без анимаций", p => /transform/.test(getComputedStyle(p("set-pill")).transitionProperty)],
+  ["Плашка настроек двигается и без анимаций", p => document.documentElement.dataset.motion === "off" || /transform/.test(getComputedStyle(p("set-pill")).transitionProperty)],
   ["Выключенные анимации отключают и скрипты", () => { const r = document.documentElement, was = r.getAttribute("data-motion"); r.setAttribute("data-motion", "off"); let ok = false; try { const d = document.createElement("div"); document.body.appendChild(d); const a = d.animate([{ opacity: 0 }, { opacity: 1 }], 500); ok = a.effect.getTiming().duration === 0; a.cancel(); d.remove(); } catch(e) {} if(was === null) r.removeAttribute("data-motion"); else r.setAttribute("data-motion", was); return ok; }],
   ["Новости: ВШЭ идут первыми", () => Object.keys(NEWS_CAT)[1] === "hse"],
-  ["Агент новостей подключён", () => !!NEWS_URL && (!!NEWS.items?.length || !NEWS.err)],
+  ["Агент новостей подключён", () => !!NEWS_URL && !NEWS.err],
   ["Выбор вкладки: серая плашка + контур", () => !!TABS_NAMES.plateo],
   ["Оценки: статистика рядом с четвертью, виджеты под таблицей", () => typeof gStatsHtml === "function" && String(gradesSide).indexOf("Последние оценки") < 0],
   ["Оценки: 4 вида итога и режим без цвета", () => Object.keys(FIN_NAMES).length === 4 && !!GCOLOR_NAMES.off],
@@ -14472,7 +14479,7 @@ function regRun(quiet){
   if(!quiet && typeof tgToast === "function" && (prev !== BUILD || bad.length)) tgToast(bad.length ? `Проверка обновления: не прошло ${bad.length} из ${res.length}` : `Обновление проверено: ${res.length} из ${res.length} в порядке`);
   return res;
 }
-setTimeout(() => regRun(false), 4000);
+setTimeout(() => regRun(!(typeof CN !== "undefined" && CN.isAdmin)), 4000);
 
 /* ===== листание свайпом: расписание, домашка, календарь, оценки ===== */
 (function(){
@@ -14619,7 +14626,7 @@ document.addEventListener("input", e => { if(e.target.id === "act-q"){ ACT.q = e
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
   if((x = g("[data-act-dd]"))){ ACT.dd = ACT.dd === x.dataset.actDd ? null : x.dataset.actDd; renderAdmActLog(document.getElementById("admin")); const q = document.getElementById("act-q"); return; }
-  if(ACT.dd && !g(".sjd")){ ACT.dd = null; if(document.querySelector(".act-f2")) renderAdmActLog(document.getElementById("admin")); }
+  if(ACT.dd && !g(".sjd") && document.querySelector(".act-f2")){ ACT.dd = null; renderAdmActLog(document.getElementById("admin")); }
   if((x = g("[data-act-per]"))){ ACT.dd = null; ACT.per = x.dataset.actPer; renderAdmActLog(document.getElementById("admin")); return; }
   if((x = g("[data-act-f]"))){ ACT.dd = null; ACT.f = x.dataset.actF; renderAdmActLog(document.getElementById("admin")); return; }
   if((x = g("[data-act-who]"))){ ACT.dd = null; ACT.who = x.dataset.actWho; renderAdmActLog(document.getElementById("admin")); return; }
@@ -17561,6 +17568,16 @@ document.addEventListener("error", function(e){
   if(im.closest(".au-mk, .sec-fl")) im.style.display = "none";
 }, true);
 </script>
+<style id="fix663-css">
+/* ===== сборка 663: правки по полной проверке ===== */
+/* мониторинг на телефоне: блок заданий не шире экрана */
+.ms-tasks,.ms-th{grid-template-columns:minmax(0,1fr)}
+.ms-tasks>*,.ms-th>*{min-width:0}
+.mv-sum button,.mv-grid>*{min-width:0}
+@media(max-width:480px){.mv-sum button{padding:6px 8px}.mv-sum button b{font-size:16px}}
+/* календарь: метки КР/ПР читаемые */
+.cd-dots .cdc{font-size:10px!important;line-height:1.1!important}
+</style>
 <style id="vc661-css">
 /* ===== сборка 661: онлайн-уроки, библиотека, замены ===== */
 .vc-sub{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}
@@ -17586,12 +17603,12 @@ document.addEventListener("error", function(e){
 /* список онлайн-уроков */
 .vc-row{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 4px;border-top:1px solid var(--line)}
 .vc-row:first-child{border-top:0}
+.vc-row.off{opacity:.55}
 .vc-row time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;display:flex;flex-direction:column}
 .vc-row time b{color:var(--ink);font-weight:500;font-size:14px}
 .vc-rt{min-width:0;display:flex;flex-direction:column;gap:1px}
 .vc-rt b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vc-rt small{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vc-g2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
 /* проверка перед входом */
 .vc-cam{position:relative;border-radius:16px;overflow:hidden;background:color-mix(in srgb,var(--ink) 88%,transparent);aspect-ratio:16/9;display:grid;place-items:center}
 .vc-cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
@@ -17625,6 +17642,8 @@ document.addEventListener("error", function(e){
 .vc-t .nm{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vc-t .st{position:absolute;right:7px;top:7px;display:flex;align-items:center;gap:4px;height:24px;padding:0 8px;border-radius:99px;background:rgba(0,0,0,.4);color:#F2C3AE;font-size:11.5px}
 .vc-t.hand{box-shadow:inset 0 0 0 2px var(--warn)}
+.vc-off[hidden],.vc-ava[hidden],.vc-cam video[hidden],.vc-me video[hidden],.vc-t video[hidden]{display:none!important}
+#mtd.mt-ro .mt-a2,#mtd.mt-ro [data-mt-pub],#mtd.mt-ro [data-mt-abs],#mtd.mt-ro [data-mt-absdel],#mtd.mt-ro .mt-cand .mt-ch,#mtd.mt-ro [data-mt-tab="imp"]{display:none}
 .vc-t.speak{box-shadow:inset 0 0 0 2px var(--good)}
 .vc-side{display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);background:var(--surface);min-height:320px;max-height:560px}
 .vc-sh{display:flex;gap:3px;padding:8px;border-bottom:1px solid var(--line)}
@@ -17648,7 +17667,6 @@ document.addEventListener("error", function(e){
 .vc-end .r span:first-child{color:var(--muted);white-space:nowrap}
 .vc-end .r span:last-child{text-align:right;font-variant-numeric:tabular-nums}
 /* библиотека */
-.lb-top{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;align-items:stretch}
 .lb-go{display:flex;gap:14px;align-items:center;cursor:pointer;text-align:left}
 .lb-go:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
 .lb-cv{flex:none;position:relative;width:64px;aspect-ratio:3/4;border-radius:9px;overflow:hidden}
@@ -17668,12 +17686,9 @@ document.addEventListener("error", function(e){
 .lb-bk .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lb-bk small{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lb-src{margin-top:3px;align-self:flex-start;padding:1px 8px;border-radius:99px;font-size:11px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--muted)}
-.lb-hw{display:flex;flex-direction:column}
-.lb-hw a{display:flex;justify-content:space-between;gap:10px;padding:8px 6px;border-radius:10px;color:var(--ink);text-decoration:none}
-.lb-hw a:hover{background:color-mix(in srgb,var(--ink) 5%,transparent)}
-.lb-hw a em{font-style:normal;font-size:12.5px;color:var(--muted);white-space:nowrap}
 /* читалка */
 .lb-rd{display:grid;grid-template-columns:236px minmax(0,1fr) 280px;gap:14px;align-items:start}
+.lb-rd.two{grid-template-columns:236px minmax(0,1fr)}
 .lb-toc{display:flex;flex-direction:column;gap:1px}
 .lb-toc a{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:13.5px}
 .lb-toc a em{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -17719,28 +17734,23 @@ document.addEventListener("error", function(e){
 .mt-ch{appearance:none;cursor:pointer;border:0;font:inherit;font-size:13px;height:28px;padding:0 11px;border-radius:99px;background:color-mix(in srgb,var(--ink) 6%,transparent);color:var(--ink)}
 .mt-ch:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
 .mt-ch.set{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good)}
-.mt-log{display:flex;flex-direction:column}
-.mt-log .r{display:flex;gap:10px;padding:7px 4px;border-radius:9px;font-size:13px}
-.mt-log .r time{flex:none;width:42px;color:var(--muted);font-variant-numeric:tabular-nums}
-.mt-imp{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:14px;align-items:start}
-.mt-srcb{width:100%;appearance:none;cursor:pointer;border:0;font:inherit;text-align:left;border-radius:13px;background:transparent;padding:10px;display:flex;gap:10px;align-items:flex-start;color:var(--ink)}
-.mt-srcb[aria-pressed="true"]{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--pen)}
-.mt-srcb:not([aria-pressed="true"]):hover{box-shadow:inset 0 0 0 1.5px var(--line)}
-.mt-srcb .ic{flex:none;width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);display:grid;place-items:center;color:var(--muted)}
-.mt-srcb>span{display:flex;flex-direction:column;gap:1px;min-width:0}
-.mt-srcb small{font-size:12px;color:var(--muted)}
 .mt-drop{border-radius:13px;box-shadow:inset 0 0 0 1.5px var(--line);border:0;padding:22px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;color:var(--muted);cursor:pointer;background:transparent;font:inherit;width:100%}
 .mt-drop:hover{box-shadow:inset 0 0 0 1.5px var(--pen)}
 .mt-diff .r{display:grid;grid-template-columns:62px 104px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 2px;border-top:1px solid var(--line);font-size:13.5px}
 .mt-diff .r small{color:var(--muted);font-size:12px}
 @media(max-width:900px){
-.vc-g2,.vc-room,.lb-top,.mt-lay,.mt-imp{grid-template-columns:minmax(0,1fr)}
-.lb-rd{grid-template-columns:minmax(0,1fr)}
+.vc-room,.mt-lay{grid-template-columns:minmax(0,1fr)}
+.lb-rd,.lb-rd.two{grid-template-columns:minmax(0,1fr)}
 .lb-rd aside{order:3}
+.lb-toc{flex-direction:row;overflow-x:auto;scrollbar-width:none;padding:6px!important;gap:4px}
+.lb-toc::-webkit-scrollbar{display:none}
+.lb-toc>span{display:none}
+.lb-toc a{flex:none;white-space:nowrap}
 .lb-page{padding:20px 18px}
 .vc-side{max-height:360px}
 .vc-me{width:112px}
 .mt-grid{grid-template-columns:56px repeat(6,minmax(120px,1fr));overflow-x:auto;padding-bottom:4px}
+.vc-row{grid-template-columns:58px minmax(0,1fr) auto;gap:10px}
 }
 </style>
 <script>
@@ -17782,7 +17792,7 @@ const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + 
 const myCls = () => String(DATA.student || "8 «А» класс").replace(/\s*класс\s*$/, "").trim() || "8 «А»";
 const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
 const vcHead = (eb, h, extra) => `<div class="view-head"><div class="hello"><p class="eyebrow">${esc(eb)}</p><h1 class="headline">${esc(h)}</h1></div></div>${extra || ""}`;
-const store = (k, def) => { try { const j = JSON.parse(localStorage.getItem(k)); return j && typeof j === "object" ? j : def; } catch(e) { return def; } };
+const store = (k, def) => { try { const j = JSON.parse(localStorage.getItem(k)); return j && typeof j === "object" && !Array.isArray(j) ? { ...def, ...j } : def; } catch(e) { return def; } };
 const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} };
 
 /* ---------- разделы и вкладки ---------- */
@@ -17805,12 +17815,14 @@ function vcTabs(){
   const m = { online: "online", library: "library", mtd: "subs" };
   SECS.forEach(([id]) => { const b = $id("tab-" + id); if(b){ const show = vcLv(m[id]) !== "n"; if(b.hidden === show) b.hidden = !show; } });
 }
-vcTabs(); setInterval(vcTabs, 3000);
+try { const sv = JSON.parse(localStorage.getItem("bai-tab-order") || "null"); if(Array.isArray(sv) && tabsIn){ const by = Object.fromEntries([...tabsIn.querySelectorAll(":scope > .tab")].map(b => [b.id, b])); sv.filter(i => by[i]).forEach(i => tabsIn.appendChild(by[i])); Object.values(by).filter(b => !sv.includes(b.id)).forEach(b => tabsIn.appendChild(b)); } } catch(e) {}
+vcTabs();
+if(typeof vaApply === "function"){ const _va661 = vaApply; vaApply = function(){ const r = _va661.apply(this, arguments); try { vcTabs(); const p = $id("mtd"); if(p){ if(VA.role && vcLv("subs") === "v") p.setAttribute("data-ro", ""); else p.removeAttribute("data-ro"); } } catch(e) {} return r; }; }
 
 /* при смене вкладки открытое в новых разделах сворачивается (идущий урок не прерывается) */
 if(typeof collapseAll === "function"){ const _ca = collapseAll; collapseAll = function(){ try { if(ONL.view !== "room" && ONL.view !== "sum"){ vcLeaveMedia(); ONL.view = "list"; } LB.view = "shelf"; MT.sel = null; } catch(e) {} return _ca.apply(this, arguments); }; }
 const _st661 = showTab;
-showTab = function(t){ const r = _st661.apply(this, arguments); try { if(t === "online") renderOnline(); if(t === "library") renderLibrary(); if(t === "mtd") renderMtd(); } catch(e) {} return r; };
+showTab = function(t){ const r = _st661.apply(this, arguments); try { const c = state.tab; if(c === "online") renderOnline(); if(c === "library") renderLibrary(); if(c === "mtd") renderMtd(); } catch(e) {} return r; };
 
 /* ============================================================
    ОНЛАЙН-УРОКИ
@@ -17819,25 +17831,19 @@ const VCS = store("yadro-vc-v1", { lessons: [], msgs: {}, att: {}, done: [] });
 const vcSave = () => put("yadro-vc-v1", VCS);
 const ONL = { view: "list", cur: null, stream: null, err: "", mic: false, cam: true, hand: false, tab: "chat", t0: 0, raf: 0, ana: null, actx: null, timer: 0 };
 const OPT_DEF = { wait: true, micOff: true, rec: true, ai: true, att: true, cams: true, chat: true, dm: true, poll: true, late: 5, open: 10, keep: 30, par: false };
-const OPT_ROWS = [
-  ["Вход", [["open", "Открыть вход", "за 10 минут", "n"], ["wait", "Зал ожидания", "учитель сам впускает"], ["late", "Опоздание после", "5 минут", "n"]]],
-  ["Ученики на уроке", [["micOff", "Микрофоны при входе выключены"], ["cams", "Камеры по желанию"], ["hand", "Поднятая рука и очередь", "", "x"]]],
-  ["Чат и опросы", [["chat", "Чат урока"], ["dm", "Личные сообщения учителю"], ["poll", "Опросы и реакции"]]],
-  ["Запись и журнал", [["rec", "Запись урока"], ["ai", "Конспект ИИ"], ["keep", "Хранить запись", "30 дней", "n"], ["att", "Присутствие в журнал"], ["par", "Запись видна родителям"]]]
-];
 function vcLessonsToday(d){
   const date = d || TODAY, iso = isoDate(date);
   let L = [];
   try { L = (holidayOf(date) ? [] : lessonsFor(date)).filter(x => x.sub && x.num); } catch(e) {}
   return L.map(x => {
-    const on = VCS.lessons.find(v => v.date === iso && v.cls === myCls() && (+v.num === +x.num || v.sid === x.sid));
+    const on = VCS.lessons.find(v => v.date === iso && v.cls === myCls() && +v.num === +x.num);
     return { ...x, vc: on || null };
   });
 }
 const vcState = v => {
   const iso = isoDate(TODAY);
   if(v.date !== iso) return v.date < iso ? "past" : "future";
-  const a = tMin(v.t0v || v.time || "") , b = a != null ? a + (+v.dur || 40) : null, m = nowMin();
+  const a = tMin(String(v.t0v || v.time || "").trim()) , b = a != null ? a + (+v.dur || 40) : null, m = nowMin();
   if(a == null) return "soon";
   if(m < a - (+((v.opts || {}).open) || 10)) return "wait";
   if(m < a) return "open";
@@ -17846,7 +17852,8 @@ const vcState = v => {
 };
 function vcMyLesson(id){ return VCS.lessons.find(x => x.id === id) || null; }
 function vcLeaveMedia(){
-  try { if(ONL.stream){ ONL.stream.getTracks().forEach(t => t.stop()); } } catch(e) {}
+  try { if(ONL.stream){ ONL.stream.getTracks().forEach(t => t.stop()); } if(ONL.probe) ONL.probe.stop(); } catch(e) {}
+  ONL.probe = null;
   try { if(ONL.actx){ ONL.actx.close(); } } catch(e) {}
   cancelAnimationFrame(ONL.raf); clearInterval(ONL.timer);
   ONL.stream = null; ONL.ana = null; ONL.actx = null; ONL.err = "";
@@ -17859,7 +17866,7 @@ function onlListHtml(){
   const iso = isoDate(TODAY);
   const row = x => {
     const v = x.vc, a = hhmm(x.time[0]), b = hhmm(x.time[1]);
-    let right = `<span class="vc-pill">Очно${roomShort(x.room) ? " · " + esc(roomShort(x.room)) : ""}</span>`;
+    let right = "";
     if(v){
       const st = vcState({ ...v, t0v: x.time[0] });
       if(st === "live") right = `<span class="vc-pill g vc-live"><i class="vc-dot"></i>Идёт</span><button type="button" class="vc-b p vc-ra" data-vc-join="${esc(v.id)}">Войти</button>`;
@@ -17868,7 +17875,7 @@ function onlListHtml(){
       else if(st === "past") right = `<span class="vc-pill">Завершён</span>`;
       else right = `<span class="vc-pill a">Онлайн</span>`;
     }
-    return `<div class="vc-row"><time><b>${esc(a)}</b>${b ? esc(b) : ""}</time><span class="vc-rt"><b>${esc(x.sub.name)}</b><small>${esc([x.teacher, x.room].filter(Boolean).join(" · "))}</small></span>${right}</div>`;
+    return `<div class="vc-row${v ? "" : " off"}"><time><b>${esc(a)}</b>${b ? esc(b) : ""}</time><span class="vc-rt"><b>${esc(x.sub.name)}</b><small>${esc([x.teacher, v ? "" : "очно"].filter(Boolean).join(" · "))}</small></span>${right}</div>`;
   };
   const mineVc = VCS.lessons.filter(v => v.date >= iso).sort((p, q) => p.date === q.date ? String(p.time).localeCompare(String(q.time)) : p.date.localeCompare(q.date));
   const vrow = v => {
@@ -17894,7 +17901,7 @@ function onlLobbyHtml(){
   const okCam = !!(ONL.stream && ONL.stream.getVideoTracks().some(t => t.enabled && t.readyState === "live"));
   const okMic = !!(ONL.stream && ONL.stream.getAudioTracks().some(t => t.readyState === "live"));
   const err = ONL.err;
-  return vcHead(esc(v.cls || myCls()) + " · " + esc(hhmm(v.time || "")), v.subjName || "Онлайн-урок",
+  return vcHead((v.cls || myCls()) + " · " + hhmm(v.time || ""), v.subjName || "Онлайн-урок",
     `<div class="vc-sub"><button type="button" class="vc-b gh" data-vc-back>${svg(IC.left, 16)}К списку</button></div>`) +
   `<div style="max-width:620px;display:flex;flex-direction:column;gap:12px">
     <section class="panel" style="display:flex;flex-direction:column;gap:10px">
@@ -17933,7 +17940,7 @@ function onlRoomHtml(){
     : `<div class="vc-main"><span class="vc-ava" style="width:88px;height:88px;border-radius:26px;background:rgba(255,255,255,.13);display:grid;place-items:center;font-size:28px">${esc(ini2(v.teacher || "Учитель"))}</span>
         <span class="nm">${esc(v.teacher || "Учитель")}${(v.opts || OPT_DEF).rec ? " · запись" : ""}</span>
         <div class="vc-me"><video id="vc-prev" autoplay playsinline muted ${ONL.cam ? "" : "hidden"}></video><div class="vc-off" ${ONL.cam ? "hidden" : ""}>Вы</div></div></div>`;
-  return vcHead(esc(v.cls || myCls()) + (v.time ? " · " + esc(hhmm(v.time)) : ""), v.subjName || "Онлайн-урок",
+  return vcHead((v.cls || myCls()) + (v.time ? " · " + hhmm(v.time) : ""), v.subjName || "Онлайн-урок",
     `<div class="vc-sub"><span class="vc-pill g vc-live"><i class="vc-dot"></i><span id="vc-tmr">0:00</span></span>${(v.opts || OPT_DEF).rec ? `<span class="vc-pill w">● запись</span>` : ""}${ONL.hand ? `<span class="vc-pill w">${svg(IC.hand, 13)}рука поднята</span>` : ""}</div>`) +
   `<div class="vc-room"><div class="vc-stage">${stage}
     <div class="vc-bar"><div class="vc-ctl" style="justify-content:flex-start">
@@ -17953,7 +17960,7 @@ function onlSumHtml(){
       <span class="vc-seg" role="group" aria-label="${esc(fioShort(p.nm))}">${ST3.map(([k, t]) => `<button type="button" aria-pressed="${cur === k}" data-vc-att="${esc(p.id)}|${k}" style="padding:0 9px;font-size:12.5px">${k === "n" ? "Н" : t}</button>`).join("")}</span>
       <span class="vc-note">${cur === "n" ? "попадёт к классному руководителю" : cur === "o" ? "опоздание" : ""}</span></div>`; };
   const nAbs = ros.filter(p => (att[p.id] || "b") === "n").length, nLate = ros.filter(p => att[p.id] === "o").length;
-  return vcHead(esc(v.cls || "") + " · " + esc(hhmm(v.time || "")), "Итоги урока · " + (v.subjName || ""),
+  return vcHead((v.cls || "") + " · " + hhmm(v.time || ""), "Итоги урока · " + (v.subjName || ""),
     `<div class="vc-sub"><span class="vc-pill g">${ros.length - nAbs} из ${ros.length} на уроке</span>${nLate ? `<span class="vc-pill w">опоздали: ${nLate}</span>` : ""}${nAbs ? `<span class="vc-pill">не было: ${nAbs}</span>` : ""}</div>`) +
   `<div style="max-width:720px;display:flex;flex-direction:column;gap:12px"><section class="panel vc-sum"><div class="panel-head"><h2>Присутствие</h2><span class="aside">нажмите, чтобы изменить</span></div>
     ${ros.length ? ros.map(row).join("") : `<p class="muted">Список класса ещё не загружен с сервера.</p>`}</section>
@@ -17984,23 +17991,26 @@ window.renderOnline = renderOnline;
 function vcTick(){ const t = $id("vc-tmr"); if(!t){ clearInterval(ONL.timer); return; } t.textContent = mmss((Date.now() - (ONL.t0 || Date.now())) / 1000); }
 async function vcMedia(){
   vcLeaveMedia();
+  const gen = ONL.gen = (ONL.gen || 0) + 1;
   try {
-    ONL.stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    ONL.err = ""; ONL.cam = true; ONL.mic = false;
+    const st = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if(gen !== ONL.gen || (ONL.view !== "lobby" && ONL.view !== "room")){ st.getTracks().forEach(t => t.stop()); return; }   // пока ждали разрешения, ушли с экрана
+    ONL.stream = st; ONL.err = ""; ONL.cam = true; ONL.mic = false;
+    const probe = st.getAudioTracks()[0] && st.getAudioTracks()[0].clone();   // копия для шкалы громкости: слышит и при выключенном микрофоне
     ONL.stream.getAudioTracks().forEach(t => t.enabled = false);
+    if(probe){ probe.enabled = true; ONL.probe = probe; }
     try {
       ONL.actx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = ONL.actx.createMediaStreamSource(ONL.stream), an = ONL.actx.createAnalyser();
+      const src = ONL.actx.createMediaStreamSource(probe ? new MediaStream([probe]) : ONL.stream), an = ONL.actx.createAnalyser();
       an.fftSize = 512; src.connect(an); ONL.ana = an;
       const buf = new Uint8Array(an.frequencyBinCount);
-      const loop = () => { if(!ONL.ana) return; an.getByteFrequencyData(buf); let s = 0; for(let i = 0; i < buf.length; i++) s += buf[i]; const lvl = Math.min(100, Math.round(s / buf.length / 1.2));
+      const loop = () => { if(!ONL.ana || ONL.view !== "lobby") return; an.getByteFrequencyData(buf); let s = 0; for(let i = 0; i < buf.length; i++) s += buf[i]; const lvl = Math.min(100, Math.round(s / buf.length / 1.2));
         const el = $id("vc-lvl"); if(el) el.style.width = lvl + "%";
         const tt = $id("vc-lvlt"); if(tt && lvl > 12) tt.textContent = "слышно хорошо";
-        const cm = $id("vc-chkmic"); if(cm && lvl > 12){ cm.textContent = "работает"; cm.style.color = "var(--good)"; }
         ONL.raf = requestAnimationFrame(loop); };
       loop();
     } catch(e) {}
-  } catch(e) { ONL.err = String(e && e.name || e); }
+  } catch(e) { if(gen !== ONL.gen) return; ONL.err = String(e && e.name || e); }
   renderOnline();
 }
 function vcApplyTracks(){
@@ -18015,7 +18025,7 @@ function vcNewModal(){
   const days = Array.from({ length: 7 }, (_, i) => addDays(TODAY, i)).filter(d => d.getDay() !== 0);
   const draw = () => {
     const o = $id("tgm"); if(!o) return;
-    const d = new Date(st.day + "T12:00:00");
+    const d = new Date(st.day + "T00:00:00");
     let L = [];
     try { L = (holidayOf(d) ? [] : lessonsFor(d)).filter(x => x.sub && x.num); } catch(e) {}
     const lrow = x => `<button type="button" class="mt-ch ${st.sel && +st.sel.num === +x.num ? "set" : ""}" data-vcn-l="${x.num}">${x.num} · ${esc(hhmm(x.time[0]))} · ${esc(x.sub.name)}</button>`;
@@ -18024,7 +18034,7 @@ function vcNewModal(){
       <div class="adm-filter" style="margin-bottom:8px">${days.map(x => { const i2 = isoDate(x); return `<button type="button" class="chip" data-vcn-d="${i2}" aria-pressed="${st.day === i2}">${key(x) === key(TODAY) ? "Сегодня" : esc(WD[x.getDay()]) + " " + x.getDate()}</button>`; }).join("")}</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${L.length ? L.map(lrow).join("") : `<span class="vc-note">В этот день уроков ${esc(st.cls)} в расписании нет.</span>`}</div>
       ${sw("wait", "Зал ожидания")}${sw("micOff", "Микрофоны при входе выключены")}${sw("rec", "Запись урока")}${sw("ai", "Конспект ИИ")}${sw("att", "Присутствие в журнал")}
-      <button type="button" class="vc-b gh" data-vcn-all style="margin-top:4px">${st.all ? "Скрыть остальные настройки" : "Все настройки · ещё " + 7}</button>
+      <button type="button" class="vc-b gh" data-vcn-all style="margin-top:4px">${st.all ? "Скрыть остальные настройки" : "Все настройки · ещё 5"}</button>
       <div ${st.all ? "" : "hidden"} style="margin-top:4px">${sw("cams", "Камеры по желанию")}${sw("chat", "Чат урока")}${sw("dm", "Личные сообщения учителю")}${sw("poll", "Опросы и реакции")}${sw("par", "Запись видна родителям")}
         <div class="vc-chk" style="margin-top:4px"><div class="r"><span>Открыть вход</span><b>за ${st.opts.open} минут</b></div><div class="r"><span>Опоздание после</span><b>${st.opts.late} минут</b></div><div class="r"><span>Хранить запись</span><b>${st.opts.keep} дней</b></div></div></div>`;
   };
@@ -18035,7 +18045,7 @@ function vcNewModal(){
     const g = s => e.target.closest(s); let x;
     if(g("[data-cf-no]")){ tgModalClose(); return; }
     if((x = g("[data-vcn-d]"))){ st.day = x.dataset.vcnD; st.sel = null; draw(); return; }
-    if((x = g("[data-vcn-l]"))){ const d = new Date(st.day + "T12:00:00"); const L = lessonsFor(d).filter(y => y.sub && y.num); st.sel = L.find(y => +y.num === +x.dataset.vcnL) || null; draw(); return; }
+    if((x = g("[data-vcn-l]"))){ const d = new Date(st.day + "T00:00:00"); const L = lessonsFor(d).filter(y => y.sub && y.num); st.sel = L.find(y => +y.num === +x.dataset.vcnL) || null; draw(); return; }
     if((x = g("[data-vcn-sw]"))){ st.opts[x.dataset.vcnSw] = !st.opts[x.dataset.vcnSw]; draw(); return; }
     if(g("[data-vcn-all]")){ st.all = !st.all; draw(); return; }
     if(g("[data-vcn-ok]")){
@@ -18068,8 +18078,9 @@ document.addEventListener("click", e => {
   }
   if((x = g("[data-vc-tab]"))){ ONL.tab = x.dataset.vcTab; renderOnline(); return; }
   if((x = g("[data-vc-att]"))){ const [id, st2] = x.dataset.vcAtt.split("|"); const v = ONL.cur; if(v){ (VCS.att[v.id] = VCS.att[v.id] || {})[id] = st2; vcSave(); renderOnline(); } return; }
-  if(g("[data-vc-cpabs]")){ const v = ONL.cur, att = (v && VCS.att[v.id]) || {}; const ros = vcRoster(v.cls || myCls()); const t = ros.filter(p => (att[p.id] || "b") === "n").map(p => p.nm).join(", ") || "Отсутствующих нет";
-    try { navigator.clipboard.writeText(v.subjName + ", " + v.cls + ", " + hhmm(v.time) + ". Не были: " + t); tgToast("Список скопирован"); } catch(e) { tgToast(t); } return; }
+  if(g("[data-vc-cpabs]")){ const v = ONL.cur; if(!v) return; const att = VCS.att[v.id] || {}; const ros = vcRoster(v.cls || myCls()); const t = ros.filter(p => (att[p.id] || "b") === "n").map(p => p.nm).join(", ") || "Отсутствующих нет";
+    const txt = v.subjName + ", " + v.cls + ", " + hhmm(v.time) + ". Не были: " + t;
+    try { navigator.clipboard.writeText(txt).then(() => tgToast("Список скопирован"), () => tgToast(t)); } catch(e) { tgToast(t); } return; }
   if(g("[data-vc-sumok]")){ const v = ONL.cur; if(v && !VCS.done.some(d => d.id === v.id)){
       const ros = vcRoster(v.cls || myCls()), att = VCS.att[v.id] || {};
       VCS.done.push({ ...v, n: ros.filter(p => (att[p.id] || "b") !== "n").length, total: ros.length });
@@ -18081,8 +18092,11 @@ document.addEventListener("submit", e => {
   e.preventDefault();
   const i = $id("vc-ci"), tx = (i && i.value || "").trim(); if(!tx) return;
   const v = ONL.cur; if(!v) return;
-  (VCS.msgs[v.id] = VCS.msgs[v.id] || []).push({ who: "Вы", my: true, tx, t: new Date().toTimeString().slice(0, 5) });
-  vcSave(); renderOnline();
+  const m = { who: "Вы", my: true, tx, t: new Date().toTimeString().slice(0, 5) };
+  (VCS.msgs[v.id] = VCS.msgs[v.id] || []).push(m); vcSave();
+  const sb = $id("vc-sb");
+  if(sb){ if(VCS.msgs[v.id].length === 1) sb.innerHTML = ""; sb.insertAdjacentHTML("beforeend", `<div class="vc-m my"><small>${esc(m.who)} · ${esc(m.t)}</small>${esc(m.tx)}</div>`); sb.scrollTop = sb.scrollHeight; i.value = ""; i.focus(); }
+  else renderOnline();
 });
 
 /* ============================================================
@@ -18105,12 +18119,6 @@ const LB_MAT = {
     ["chk", "Проверь себя", `<p>1. Чему равен дискриминант уравнения x² − 4x + 1 = 0?</p><p>2. При каком c уравнение x² − 6x + c = 0 имеет один корень?</p><p>3. Сумма корней приведённого уравнения равна 8, произведение 15. Запишите уравнение и найдите корни.</p><p>4. Решите: 3x² − 12 = 0.</p><p>5. x₁ и x₂ — корни x² − 5x + 3 = 0. Найдите x₁² + x₂².</p><p>Ответы разберите с ИИ-помощником в «Чатах» — он объяснит, но не решит за вас.</p>`]
   ]
 };
-const LB_EXT = [
-  ["Моя школа", "Учебники и уроки · вход через Госуслуги", "https://myschool.edu.ru/"],
-  ["РЭШ", "Уроки с видео и тренажёрами · бесплатно", "https://resh.edu.ru/"],
-  ["Библиотека МЭШ", "Учебники, тесты и сценарии уроков", "https://uchebnik.mos.ru/"],
-  ["НЭБ", "Национальная электронная библиотека", "https://rusneb.ru/"]
-];
 /* файлы учебников лежат в IndexedDB этого браузера */
 let LB_DB = null;
 function lbDb(){ return new Promise((res, rej) => { if(LB_DB) return res(LB_DB);
@@ -18150,12 +18158,12 @@ function lbReaderHtml(){
   const marked = !!(LBS.marks[b.id] && LBS.marks[b.id][sec[0]]);
   const hw = HW.filter(h => h.s === "alg" && !isDone(h)).sort((a, b2) => a.dueD - b2.dueD)[0];
   const marks = Object.keys(LBS.marks[b.id] || {}).map(k => { const t = LB_MAT.toc.find(x => x[0] === k); return t ? `<a href="#" data-lb-sec="${k}" style="display:flex;gap:8px;align-items:center;padding:6px 6px;border-radius:9px;color:var(--ink);text-decoration:none"><span style="color:var(--pen)">${svg(IC.mark, 14)}</span>${esc(t[1])}</a>` : ""; }).join("");
-  return vcHead("Библиотека · " + esc(b.by || ""), b.title,
+  return vcHead("Библиотека · " + (b.by || ""), b.title,
     `<div class="vc-sub"><button type="button" class="vc-b gh" data-lb-back>${svg(IC.left, 16)}Полка</button>
      <span class="vc-seg"><button type="button" aria-label="Мельче" title="Мельче" data-lb-fs="-10" style="width:38px">А−</button><span style="display:inline-flex;align-items:center;padding:0 8px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums">${LBS.fs}%</span><button type="button" aria-label="Крупнее" title="Крупнее" data-lb-fs="10" style="width:38px">А+</button></span>
      <span class="lb-th"><button type="button" class="th" style="background:#fff;color:#23211E;box-shadow:inset 0 0 0 1px #E2DDD4" aria-pressed="${LBS.theme === "light"}" data-lb-th="light">Аа</button><button type="button" class="th" style="background:#F3EAD8;color:#3B3226" aria-pressed="${LBS.theme === "sepia"}" data-lb-th="sepia">Аа</button><button type="button" class="th" style="background:#201F1C;color:#EDEBE6" aria-pressed="${LBS.theme === "dark"}" data-lb-th="dark">Аа</button></span>
      <button type="button" class="vc-b ${marked ? "" : "gh"}" data-lb-mark style="color:${marked ? "var(--pen)" : "var(--muted)"}" aria-pressed="${marked}">${svg(IC.mark, 16)}${marked ? "В закладках" : "Закладка"}</button></div>`) +
-  `<div class="lb-rd" data-th="${esc(LBS.theme)}" style="grid-template-columns:236px minmax(0,1fr)">
+  `<div class="lb-rd two" data-th="${esc(LBS.theme)}">
     <nav class="panel lb-toc" aria-label="Оглавление" style="padding:10px 8px">
       <span class="vc-note" style="padding:2px 10px 8px">Глава III. Квадратные уравнения</span>
       ${LB_MAT.toc.map(([k, t]) => `<a href="#" class="${sec[0] === k ? "on" : ""}" data-lb-sec="${k}"><span>${esc(t)}</span></a>`).join("")}
@@ -18205,7 +18213,8 @@ function lbAddModal(){
       if(st.kind === "link"){
         const u = ((o.querySelector("#lba-u") || {}).value || "").trim();
         if(!/^https:\/\/.+/.test(u)){ tgToast("Нужна ссылка, начинающаяся с https://"); return; }
-        LBS.books.push({ id: "b" + Date.now().toString(36), kind: "link", title: t.trim(), subj: st.subj, by: new URL(u).host, url: u, grade: "8" });
+        let host = ""; try { host = new URL(u).host; } catch(e) { tgToast("Ссылка не похожа на адрес сайта"); return; }
+        LBS.books.push({ id: "b" + Date.now().toString(36), kind: "link", title: t.trim(), subj: st.subj, by: host, url: u, grade: "8" });
         lbSave(); tgModalClose(); tgToast("Учебник добавлен на полку"); renderLibrary();
       } else {
         if(!st.file){ tgToast("Выберите файл PDF"); return; }
@@ -18248,11 +18257,11 @@ document.addEventListener("input", e => { if(e.target && e.target.id === "lb-q")
    ============================================================ */
 const MTS = store("yadro-mtd-v1", { ov: {}, abs: [], log: [], full: {} });
 const mtSave = () => put("yadro-mtd-v1", MTS);
-const MT = { tab: "week", cls: null, wk: 0, sel: null, srv: {}, src: "sheet", prev: null };
+const MT = { tab: "week", cls: null, wk: 0, sel: null, srv: {}, prev: null };
 const mtLog = t => { MTS.log.unshift({ t: new Date().toTimeString().slice(0, 5), x: t }); MTS.log = MTS.log.slice(0, 30); mtSave(); };
 const mtCls = () => MT.cls || myCls();
 function mtLessons(cls, d){
-  if(cls === myCls()){ try { return (holidayOf(d) ? [] : lessonsFor(d)).filter(x => x.sub && x.num).map(x => ({ num: x.num, t: (x.time || []).join("-"), name: x.sub.name, teacher: x.teacher || "", room: roomShort(x.room || "") })); } catch(e) { return []; } }
+  if(cls === myCls() && !MTS.full[cls]){ try { return (holidayOf(d) ? [] : lessonsFor(d)).filter(x => x.sub && x.num).map(x => ({ num: x.num, t: (x.time || []).join("-"), name: x.sub.name, teacher: x.teacher || "", room: roomShort(x.room || "") })); } catch(e) { return []; } }
   const full = MTS.full[cls], srv = MT.srv[cls];
   const day = (d.getDay() + 6) % 7 + 1;
   const src = full || (srv && srv.timetable) || null;
@@ -18260,10 +18269,10 @@ function mtLessons(cls, d){
   return L.filter(x => x && x.n).map(x => ({ num: x.n, t: x.t || "", name: (DATA.subjects[x.s] || { name: x.s }).name || String(x.s || ""), teacher: x.teacher || "", room: roomShort(x.room || "") }));
 }
 function mtSrvLoad(cls){
-  if(cls === myCls() || MT.srv[cls] !== undefined) return;
+  if(cls === myCls() || MTS.full[cls] || MT.srv[cls] !== undefined) return;
   MT.srv[cls] = null;
   if(typeof DB === "undefined" || !DB){ MT.srv[cls] = false; return; }
-  DB.doc(schKey(cls)).get().then(s => { MT.srv[cls] = s && s.exists ? s.data() : false; if(MT.tab === "week" && mtCls() === cls) renderMtd(); })
+  DB.doc(schKey(cls)).get().then(s => { MT.srv[cls] = s && s.exists ? s.data() : false; if(!$id("mtd").hidden && (MT.tab === "subs" || mtCls() === cls)) renderMtd(); })
     .catch(() => { MT.srv[cls] = false; if(mtCls() === cls) renderMtd(); });
 }
 const mtOvKey = (cls, iso, num) => cls + "|" + iso + "|" + num;
@@ -18287,7 +18296,7 @@ function mtWeekHtml(){
   };
   const selCard = () => {
     if(!MT.sel) return `<section class="panel mt-card"><div class="panel-head"><h2>Урок</h2></div><p class="vc-note" style="margin:0">Нажмите на урок в сетке — здесь откроется карточка с действиями: замена, кабинет, отмена.</p></section>`;
-    const { iso, num } = MT.sel, d = new Date(iso + "T12:00:00");
+    const { iso, num } = MT.sel, d = new Date(iso + "T00:00:00");
     const L = mtLessons(cls, d).find(x => +x.num === +num), ov = MTS.ov[mtOvKey(cls, iso, num)] || {};
     return `<section class="panel mt-card"><div class="panel-head"><h2>${esc(L ? L.name : "Окно")}</h2><span class="aside">${esc(WD[d.getDay()])} ${d.getDate()} · ${num}-й урок</span></div>
       <div class="kv"><span>Время</span><span>${esc(hhmm((L && L.t || times[num] || "").split("-")[0] || "")) || "—"}</span></div>
@@ -18318,20 +18327,20 @@ function mtWeekHtml(){
 function mtStaffList(){
   const out = [];
   try { (STAFF || []).forEach(s => { if(s && s.name && (s.role === "teacher" || !s.role)) out.push({ name: s.name, subj: (s.v && s.v.subj) || s.subj || "" }); }); } catch(e) {}
-  if(!out.length){ const seen = new Set(); Object.values(DATA.weeks || {}).forEach(w => Object.values(w).forEach(L => L.forEach(x => String(x.teacher || "").split("/").forEach(t => { t = t.trim(); if(t && !seen.has(t)){ seen.add(t); out.push({ name: t, subj: (DATA.subjects[x.s] || {}).name || "" }); } })))); }
+  if(!out.length){ const seen = new Set(); Object.values(DATA.weeks || {}).forEach(w => Object.values(w || {}).forEach(L => (L || []).forEach(x => String(x.teacher || "").split("/").forEach(t => { t = t.trim(); if(t && !seen.has(t)){ seen.add(t); out.push({ name: t, subj: (DATA.subjects[x.s] || {}).name || "" }); } })))); }
   return out;
 }
 function mtBusy(iso, num){
-  const busy = new Set(), d = new Date(iso + "T12:00:00");
+  const busy = new Set(), d = new Date(iso + "T00:00:00");
   JR_CLS.forEach(c => { mtLessons(c, d).forEach(x => { if(+x.num === +num) String(x.teacher).split("/").forEach(t => busy.add(t.trim().split(" ")[0])); }); });
   return busy;
 }
 function mtSubsHtml(){
-  const cls = mtCls();
+  JR_CLS.forEach(mtSrvLoad);
   const card = (a, ai) => {
-    const d = new Date(a.iso + "T12:00:00");
+    const d = new Date(a.iso + "T00:00:00");
     const rows = [];
-    JR_CLS.forEach(c => { mtLessons(c, d).forEach(x => { if(String(x.teacher || "").split("/").some(t => t.trim() && a.who.startsWith(t.trim().split(" ")[0]))) rows.push({ ...x, cls: c }); }); });
+    JR_CLS.forEach(c => { mtLessons(c, d).forEach(x => { if(String(x.teacher || "").split("/").some(t => t.trim() && a.who.split(" ")[0] === t.trim().split(" ")[0])) rows.push({ ...x, cls: c }); }); });
     const row = r => {
       const k = mtOvKey(r.cls, a.iso, r.num), ov = MTS.ov[k];
       const busy = mtBusy(a.iso, r.num);
@@ -18368,6 +18377,7 @@ function mtPrevHtml(){
 }
 function renderMtd(){
   const el = $id("mtd"); if(!el) return;
+  const ro = vcLv("subs") === "v"; el.classList.toggle("mt-ro", ro);
   const tabs = [["week", "Неделя"], ["subs", "Замены"], ["imp", "Загрузка"]];
   el.innerHTML = vcHead("Расписание школы", "Замены и загрузка",
     `<div class="vc-sub"><span class="vc-seg" role="tablist">${tabs.map(([k, t]) => `<button type="button" role="tab" aria-pressed="${MT.tab === k}" data-mt-tab="${k}">${t}</button>`).join("")}</span></div>`) +
@@ -18406,7 +18416,7 @@ function mtReplaceModal(){
   o.addEventListener("click", e => {
     if(e.target.closest("[data-cf-no]")){ tgModalClose(); return; }
     const x = e.target.closest("[data-mtr-w]"); if(!x) return;
-    MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: x.dataset.mtrW, off: false };
+    MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: x.dataset.mtrW }; delete MTS.ov[k].off;
     mtLog(cls + ", " + num + "-й урок: замена — " + fioShort(x.dataset.mtrW)); mtSave(); tgModalClose(); renderMtd();
   });
 }
@@ -18454,6 +18464,7 @@ async function mtParseFile(f){
 document.addEventListener("click", e => {
   const g = s => e.target.closest(s); let x;
   if(!g("#mtd") && !g("#tgm")) return;
+  if(g("#mtd.mt-ro") && g("[data-mt-rep],[data-mt-room],[data-mt-off],[data-mt-undo],[data-mt-pub],[data-mt-abs],[data-mt-absdel],[data-mt-set],[data-mt-unset],[data-mt-cancel],[data-mt-apply]")){ tgToast("У вашей роли только просмотр замен"); return; }
   if((x = g("[data-mt-tab]"))){ MT.tab = x.dataset.mtTab; MT.sel = null; renderMtd(); return; }
   if((x = g("[data-mt-wk]"))){ const v = +x.dataset.mtWk; MT.wk = v === 0 ? 0 : MT.wk + v; MT.sel = null; renderMtd(); return; }
   if((x = g("[data-mt-cls]"))){ MT.cls = x.dataset.mtCls; MT.sel = null; renderMtd(); return; }
@@ -18465,7 +18476,7 @@ document.addEventListener("click", e => {
   if((x = g("[data-mt-c]"))){ const [iso, num] = x.dataset.mtC.split("|"); MT.sel = MT.sel && MT.sel.iso === iso && +MT.sel.num === +num ? null : { iso, num: +num }; renderMtd(); return; }
   if(g("[data-mt-rep]")){ mtReplaceModal(); return; }
   if(g("[data-mt-room]")){ mtRoomModal(); return; }
-  if(g("[data-mt-off]")){ if(!MT.sel) return; const k = mtOvKey(mtCls(), MT.sel.iso, MT.sel.num); const ov = MTS.ov[k] || {}; ov.off = !ov.off; MTS.ov[k] = ov; mtLog(mtCls() + ", " + MT.sel.num + "-й урок: " + (ov.off ? "отменён" : "возвращён")); mtSave(); renderMtd(); return; }
+  if(g("[data-mt-off]")){ if(!MT.sel) return; const k = mtOvKey(mtCls(), MT.sel.iso, MT.sel.num); const ov = MTS.ov[k] || {}; ov.off = !ov.off; if(!ov.off) delete ov.off; if(Object.keys(ov).length) MTS.ov[k] = ov; else delete MTS.ov[k]; mtLog(mtCls() + ", " + MT.sel.num + "-й урок: " + (ov.off ? "отменён" : "возвращён")); mtSave(); renderMtd(); return; }
   if(g("[data-mt-undo]")){ if(!MT.sel) return; delete MTS.ov[mtOvKey(mtCls(), MT.sel.iso, MT.sel.num)]; mtSave(); renderMtd(); return; }
   if(g("[data-mt-pub]")){
     const cls = mtCls(), ov = Object.fromEntries(Object.entries(MTS.ov).filter(([k]) => k.startsWith(cls + "|")));
@@ -18475,11 +18486,10 @@ document.addEventListener("click", e => {
   }
   if(g("[data-mt-abs]")){ mtAbsModal(); return; }
   if((x = g("[data-mt-absdel]"))){ MTS.abs.splice(+x.dataset.mtAbsdel, 1); mtSave(); renderMtd(); return; }
-  if((x = g("[data-mt-set]"))){ const [k, who] = x.dataset.mtSet.split("|"); MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: who, off: false }; mtLog(k.split("|")[0] + ": замена — " + fioShort(who)); mtSave(); renderMtd(); return; }
-  if((x = g("[data-mt-unset]"))){ const k = x.dataset.mtUnset; const ov = MTS.ov[k]; if(ov){ delete ov.teacher; if(!Object.keys(ov).length) delete MTS.ov[k]; } mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-set]"))){ const sv = x.dataset.mtSet, sp = sv.lastIndexOf("|"), k = sv.slice(0, sp), who = sv.slice(sp + 1); MTS.ov[k] = { ...(MTS.ov[k] || {}), teacher: who }; delete MTS.ov[k].off; mtLog(k.split("|")[0] + ": замена — " + fioShort(who)); mtSave(); renderMtd(); return; }
+  if((x = g("[data-mt-unset]"))){ const k = x.dataset.mtUnset; const ov = MTS.ov[k]; if(ov){ delete ov.teacher; if(!ov.off) delete ov.off; if(!Object.keys(ov).length) delete MTS.ov[k]; } mtSave(); renderMtd(); return; }
   if((x = g("[data-mt-cancel]"))){ const k = x.dataset.mtCancel; MTS.ov[k] = { ...(MTS.ov[k] || {}), off: true }; mtLog(k.split("|")[0] + ", " + k.split("|")[2] + "-й урок: отменён"); mtSave(); renderMtd(); return; }
-  if((x = g("[data-mt-gocls]"))){ e.preventDefault(); const [c, iso, num] = x.dataset.mtGocls.split("|"); MT.cls = c; MT.tab = "week"; MT.wk = Math.round((mondayOf(new Date(iso + "T12:00:00")) - mondayOf(TODAY)) / (7 * DAY)); MT.sel = { iso, num: +num }; renderMtd(); return; }
-  if((x = g("[data-mt-src]"))){ MT.src = x.dataset.mtSrc; renderMtd(); return; }
+  if((x = g("[data-mt-gocls]"))){ e.preventDefault(); const [c, iso, num] = x.dataset.mtGocls.split("|"); MT.cls = c; MT.tab = "week"; MT.wk = Math.round((mondayOf(new Date(iso + "T00:00:00")) - mondayOf(TODAY)) / (7 * DAY)); MT.sel = { iso, num: +num }; renderMtd(); return; }
   if((x = g("[data-mt-pcls]"))){ if(MT.prev){ MT.prev.cls = x.dataset.mtPcls; renderMtd(); } return; }
   if(g("[data-mt-apply]")){
     const p = MT.prev; if(!p) return;
