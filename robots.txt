@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yadro-ed.ru/sitemap.xml

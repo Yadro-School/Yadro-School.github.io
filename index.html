@@ -108,9 +108,13 @@
 }
 </style></head><body>
 <title>Ядро</title>
-<link rel="icon" type="image/svg+xml" href="images/favicon.svg">
-<link rel="icon" href="favicon.ico" sizes="32x32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="description" content="Электронный дневник лицея: расписание с заменами, оценки и средний балл, домашка, онлайн-уроки и учебники — в одном месте, на телефоне и компьютере.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Ядро"><meta property="og:title" content="Ядро — электронный дневник">
+<meta property="og:description" content="Расписание с заменами, оценки, домашка, онлайн-уроки и учебники лицея в одном месте."><meta property="og:url" content="https://yadro-ed.ru/"><meta property="og:image" content="https://yadro-ed.ru/icon-512.png">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" type="image/svg+xml" href="/images/favicon.svg"><link rel="icon" type="image/png" sizes="120x120" href="/favicon-120.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">
+
+
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&family=Inter:wght@100..900&family=Montserrat:wght@100..900&family=Onest:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap">
 <style>
@@ -14449,7 +14453,7 @@ document.addEventListener("scroll", e => { if(e.target && e.target.id === "tg-bo
 window.addEventListener("resize", () => mmClose(true));
 
 /* ================= Агент «Проверка обновлений» ================= */
-const BUILD = "663";
+const BUILD = "664";
 try { document.title = "Ядро · сборка " + BUILD; } catch(e) {}
 const REG = { at: 0, res: [], build: BUILD };
 const REG_CHECKS = [
