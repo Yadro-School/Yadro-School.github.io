@@ -9699,7 +9699,7 @@ function mkMech(all){
   const fixT = []; all.forEach(a => { const R = AGR.runs[a.id] || []; R.forEach((r, i) => { if(r.st !== "fail" || r.t < Date.now() - 864e5) return; const nx = R.slice(i + 1).find(q => q.st === "ok"); if(nx) fixT.push(nx.t - r.t); }); });
   const avg = fixT.length ? Math.round(fixT.reduce((a, b) => a + b, 0) / fixT.length / 6e4) : null;
   const li = x => { const open = AG3.mx === x.key, tag = x.fixed ? ["ok", "Исправлено"] : x.st === "fail" ? ["w", "Нужен ты"] : ["w", "Замечание"];
-    return `<li class="mx-i${!x.fixed && x.st === "fail" ? " need" : ""}${open ? " open" : ""}"><button type="button" class="mx-r" data-mx3="${esc(x.key)}" aria-expanded="${open}"><i class="zd ${x.st === "fail" ? "r" : "y"}"></i><span><b>${esc(x.a.name)}${x.n > 1 ? " · ×" + x.n : ""}</b><small>${ag3hm(x.t)} · ${esc(x.note)}</small></span><em class="${tag[0]}">${tag[1]}</em><svg class="mx-ch" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>${open ? `<div class="mx-d"><p class="mx-why">${x.fixed ? "Следующий запуск прошёл без ошибок. Делать ничего не нужно." : "Сам пока не чинит: агенты ещё не на сервере. Ниже готовый промпт — скопируй и отправь Claude."}</p>${x.fixed ? "" : `<pre class="mx-pr">${esc(ag3Prompt(x))}</pre>`}<div class="mx-b">${x.fixed ? "" : `<button type="button" class="pr" data-mx3-cp="${esc(x.key)}">Скопировать промпт</button>`}<button type="button" data-mx3-ag="${esc(x.a.id)}">Открыть агента</button></div></div>` : ""}</li>`; };
+    return `<li class="mx-i${!x.fixed && x.st === "fail" ? " need" : ""}${open ? " open" : ""}"><button type="button" class="mx-r" data-mx3="${esc(x.key)}" aria-expanded="${open}"><i class="zd ${x.st === "fail" ? "r" : "y"}"></i><span><b>${esc(x.a.name)}${x.n > 1 ? " · ×" + x.n : ""}</b><small>${ag3hm(x.t)} · ${esc(x.note)}</small></span><em class="${tag[0]}">${tag[1]}</em><svg class="mx-ch" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>${open ? `<div class="mx-d"><p class="mx-why">${x.fixed ? "Следующий запуск прошёл без ошибок. Делать ничего не нужно." : "<b>Что случилось:</b> " + esc(mxDiag(x.note).what) + ". <b>Что делать:</b> " + esc(mxDiag(x.note).fix)}</p>${x.fixed ? "" : `<pre class="mx-pr">${esc(ag3Prompt(x))}</pre>`}<div class="mx-b">${x.fixed ? "" : `<button type="button" class="pr" data-mx3-cp="${esc(x.key)}">Скопировать промпт</button>`}<button type="button" data-mx3-ag="${esc(x.a.id)}">Открыть агента</button></div></div>` : ""}</li>`; };
   return `<section class="mx" id="mx3"><div class="mx-h"><span class="mx-av"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/><path d="M5 5l3 3M4 9l1-1M9 4 8 5"/></svg><i></i></span><div class="mx-t"><b>Механик</b><small>Следит за ${all.length} ${plural(all.length, ["агентом", "агентами", "агентами"])}${MXS.mode === "auto" ? " · чинить сам начнёт на сервере" : ""}</small></div>
     <div class="mx-sg" role="group"><button type="button" class="${MXS.mode === "auto" ? "on" : ""}" data-mxm="auto" title="Когда агенты переедут на сервер, Механик будет чинить сам">Чинит сам</button><button type="button" class="${MXS.mode === "ask" ? "on" : ""}" data-mxm="ask" title="Механик только сообщает и готовит промпт">Спрашивает меня</button></div><button type="button" class="mx-tg${MXS.tg ? " on" : ""}" data-mxtg title="Сообщения Механика в Telegram-бот — задача плана"><svg viewBox="0 0 24 24"><path d="M21 4 3 11l6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg>Пишет в Telegram</button></div>
     <div class="mx-k"><div><b>${I.length}</b><small>${plural(I.length, ["сбой", "сбоя", "сбоев"])} за сутки</small></div><div class="ok"><b>${fx}</b><small>исправлено</small></div><div class="w"><b>${need}</b><small>ждёт тебя</small></div><div><b>${avg != null ? avg + " мин" : "—"}</b><small>среднее время починки</small></div></div>
@@ -9725,30 +9725,73 @@ document.addEventListener("keydown", e => { const r = e.target.closest && e.targ
 const mxFlash = el => { if(!el || document.documentElement.dataset.motion === "off") return; el.classList.remove("mx-flash"); void el.offsetWidth; el.classList.add("mx-flash"); setTimeout(() => el.classList.remove("mx-flash"), 1600); };
 function mxClose(){ const m = document.getElementById("mx-mod"); if(m){ m.classList.remove("on"); setTimeout(() => m.remove(), document.documentElement.dataset.motion === "off" ? 0 : 200); } document.removeEventListener("keydown", mxKey); }
 function mxKey(e){ if(e.key === "Escape") mxClose(); }
+/* Механик: понятный разбор сбоя (сборка 665). Причина и шаги берутся из заметки агента, без ИИ.
+   «Перезапустить и проверить» запускает агента и сразу пишет, прошёл он или нет. */
+const MX_KNOWN = [
+  [/SESSION_SECRET|GITHUB_TOKEN|TG_TOKEN|не принял токен|нет прав на репозиторий|ключ/i, "На сервере не настроен ключ или доступ", "Поменять настройку может только владелец в Яндекс Облаке. Перезапуск не поможет.", "owner"],
+  [/Google|таблиц/i, "Google-таблица с расписанием недоступна", "Откройте таблицу: «Доступ» → «Все, у кого есть ссылка». Затем нажмите «Перезапустить и проверить».", "restart"],
+  [/RESOURCE_EXHAUSTED|лимит|перегруж|занят|YDB|база/i, "База данных перегружена", "Обычно проходит за несколько минут. Нажмите «Перезапустить и проверить».", "restart"],
+  [/abort|нет ответа|не уложилась|fetch failed|timeout|таймаут|ECONN|ENOTFOUND|HTTP 5|50[234]|сеть|network/i, "Внешний сайт или сервис не ответил", "Обычно это временно. Нажмите «Перезапустить и проверить». Если сбой вернулся, подождите час.", "restart"],
+  [/SMTP|письмо не ушло|письмо не отправ|почта не отвеча|почта.*(ошибк|не ушл)/i, "Письма с кодами не отправляются", "Проверьте почтовый ящик отправителя и его пароль в настройках функции. Это делает владелец.", "owner"],
+  [/Telegram|телеграм/i, "Telegram не принимает сообщения", "Перезапуск не поможет. Проверьте привязку бота во вкладке «Безопасность».", "owner"]
+];
+const mxDiag = note => {
+  const n = String(note || ""), h = MX_KNOWN.find(x => x[0].test(n));
+  return h ? { what: h[1], fix: h[2], kind: h[3] } : { what: "по заметке не видно, что именно сломалось", fix: "Нажмите «Перезапустить и проверить». Если сбой вернётся, скопируйте промпт и отправьте Claude.", kind: "restart" };
+};
+let MXV = { key: "", gid: "", slot: null, ids: null, run: "", res: null, ctx: "" };
+function mxBody(){
+  const all = [...BUILTIN(), ...AG.list];
+  const list = ag3Inc(all).filter(x => !MXV.ids || MXV.ids.has(x.a.id));
+  const left = list.filter(x => !x.fixed).length, done = list.length - left;
+  MXV.ctx = list.map(x => `Агент «${x.a.name}»: ${x.note}, последний раз в ${ag3hm(x.t)}, ${x.fixed ? "исправлено" : "не исправлено"}`).join("; ");
+  const row = x => {
+    const d = mxDiag(x.note), j = agJob(x.a.id), busy = MXV.run === x.a.id || !!(AGR.srv && AGR.srv[x.a.id]);
+    const res = MXV.res && MXV.res.id === x.a.id ? `<p class="mxm-res ${MXV.res.ok ? "ok" : "w"}">${MXV.res.ok ? "Проверка прошла: агент работает." : "Проверка не прошла: " + esc(MXV.res.note || "сбой") + "."}</p>` : "";
+    const body = x.fixed
+      ? `<p class="mxm-why">Следующий запуск прошёл без ошибок. Делать ничего не нужно.</p>`
+      : `<p class="mxm-why"><b>Что случилось:</b> ${esc(d.what)}.</p><p class="mxm-why"><b>Что делать:</b> ${esc(d.fix)}</p>`;
+    const run = !x.fixed && j && d.kind === "restart" ? `<button type="button" class="pr" data-mx-run="${esc(x.a.id)}" ${busy ? "disabled" : ""} data-tip="Перезапустить и проверить|Агент выполнится на сервере сейчас, результат будет здесь">${busy ? "Проверяю…" : "Перезапустить и проверить"}</button>` : "";
+    const cp = x.fixed ? "" : `<button type="button" data-mxm-cp="${esc(ag3Prompt({ a: x.a, t: x.t, note: x.note, n: x.n }))}" data-tip="Промпт для Claude|Скопировать текст и отправить Claude">Промпт для Claude</button>`;
+    return `<li class="mxm-r2${x.fixed ? " fx" : ""}"><div class="mxm-r2h"><i class="${x.st}"></i><b>${esc(x.a.name)}</b><small>${ag3hm(x.t)}${x.n > 1 ? " · " + x.n + " раза" : ""}</small><em class="${x.fixed ? "ok" : "w"}">${x.fixed ? "Исправлено" : x.st === "fail" ? "Сбой" : "Замечание"}</em></div>${body}${res}<div class="mxm-b">${run}${cp}</div>${x.fixed ? "" : `<small class="mxm-note">Заметка агента: ${esc(x.note)}</small>`}</li>`;
+  };
+  const sum = `<div class="mxm-sum"><span><b>${left}</b> не исправлено</span><span><b>${done}</b> исправлено</span><button type="button" class="zb" data-mxm-ref data-tip="Обновить|Заново загрузить историю запусков">Обновить</button></div>`;
+  const ask = AIX[MXV.key] ? aixBox(MXV.key) : `<div class="mxm-ask"><button type="button" class="zb" data-mxm-ask data-tip="Спросить помощника|Вопрос по этим сбоям, ответ по заметкам агентов">Спросить помощника</button></div>`;
+  return sum + (list.length ? `<ul class="mxm-l">${list.map(row).join("")}</ul>` : `<p class="mk-nodata">${AGR.loaded ? "Сбоев за сутки нет: всё работает." : "Загружаю историю запусков…"}</p>`) + ask;
+}
+function mxRepaint(){ const c = document.querySelector("#mx-mod .mxm-c"); if(c && MXV.key) c.innerHTML = mxBody(); }
 function mxOpen(gid, slot){
-  const all = [...BUILTIN(), ...AG.list], bad = (slot && slot.bad) || [], H = 1800000;
-  const span = slot ? `${ag3hm(slot.t)}–${ag3hm(slot.t + H)}` : "";
-  const runs0 = bad.length ? bad : ag3Inc(all).filter(x => !x.fixed).slice(0, 3).map(x => ({ a: x.a, r: { t: x.t, st: x.st, note: x.note } }));
-  const runs = []; runs0.forEach(x => { const o = runs.find(y => y.a.id === x.a.id && (y.r.note || "") === (x.r.note || "")); if(o){ o.n = (o.n || 1) + 1; if(x.r.t > o.r.t) o.r = x.r; } else runs.push({ ...x, n: 1 }); });
-  const after = r => { const R = AGR.runs[r.a.id] || []; const nx = R.find(q => q.t > r.r.t && q.st === "ok"); return nx ? "после этого прошёл в " + ag3hm(nx.t) : "успешного запуска после сбоя ещё не было"; };
-  const ctx = runs.length ? runs.map(x => `Агент «${x.a.name}» (${x.a.cat || "агент"}), ${x.n > 1 ? x.n + " раза подряд, последний" : "запуск"} в ${ag3hm(x.r.t)}: ${x.r.st === "fail" ? "сбой" : "замечание"} — ${x.r.note || AGR_T[x.r.st]}${x.r.ms != null ? `, ответ ${x.r.ms} мс` : ""}; ${after(x)}.`).join(" ") + (slot ? ` Всего запусков в эти полчаса: ${slot.n}.` : "") : "Сбоев за сутки нет.";
-  const key = "m:" + gid + ":" + (slot ? slot.t : "now");
-  if(!AIX[key]) AIX[key] = { ctx, m: [], busy: false, err: "", kind: "mech" };
-  const row = x => { const j = agJob(x.a.id); return `<li class="mxm-r"><i class="${x.r.st}"></i><span><b>${esc(x.a.name)}</b><small>${ag3hm(x.r.t)} · ${esc(x.r.note || AGR_T[x.r.st])}${x.r.ms != null ? " · " + x.r.ms + " мс" : ""}${x.n > 1 ? " · " + x.n + " раза" : ""}</small><small class="mxm-af">${esc(after(x))}</small></span><span class="mxm-b">${j ? `<button type="button" class="zb pr" data-ag-srun="${esc(x.a.id)}" data-tip="Запустить ещё раз|Агент выполнится на сервере сейчас">Перезапустить</button>` : ""}<button type="button" class="zb" data-mxm-cp="${esc(ag3Prompt({ a: x.a, t: x.r.t, note: x.r.note || AGR_T[x.r.st], n: 1 }))}" data-tip="Промпт для исправления|Скопировать и отправить Claude">Промпт</button></span></li>`; };
-  const html = `<div class="mxm" id="mx-mod" role="dialog" aria-modal="true" aria-label="Механик"><div class="mxm-bg" data-mxm-x></div><div class="mxm-p">
-    <div class="mxm-h"><span class="mx3-av" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/></svg></span><div><b>Механик</b><small>${slot ? "Сбой " + span : "Сбои за сутки"}</small></div><button type="button" class="zaix-x" data-mxm-x aria-label="Закрыть" data-tip="Закрыть">✕</button></div>
-    <div class="mxm-c">${runs.length ? `<ul class="mxm-l">${runs.map(row).join("")}</ul>` : `<p class="mk-nodata">Сбоев нет — всё работает.</p>`}
-    ${aixBox(key)}</div></div></div>`;
+  const H = 1800000;
+  MXV = { key: "m:" + gid + ":" + (slot ? slot.t : "now"), gid, slot: slot || null, ids: slot && slot.bad ? new Set(slot.bad.map(x => x.a.id)) : null, run: "", res: null, ctx: "" };
+  const sub = slot ? "Сбой " + ag3hm(slot.t) + "–" + ag3hm(slot.t + H) : "Сбои за последние сутки";
   const old = document.getElementById("mx-mod"); if(old) old.remove();
+  const html = `<div class="mxm" id="mx-mod" role="dialog" aria-modal="true" aria-label="Механик"><div class="mxm-bg" data-mxm-x></div><div class="mxm-p">
+    <div class="mxm-h"><span class="mx3-av" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 13l-1.5 1.5-2.6-.4-6.8 6.8a2.1 2.1 0 0 1-3-3l6.8-6.8-.4-2.6L15 7z"/></svg></span><div><b>Механик</b><small>${sub}</small></div><button type="button" class="zaix-x" data-mxm-x aria-label="Закрыть" data-tip="Закрыть">✕</button></div>
+    <div class="mxm-c">${mxBody()}</div></div></div>`;
   const L = mkLayer("mech", ""); L.insertAdjacentHTML("beforeend", html);
   const m = document.getElementById("mx-mod"); requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add("on")));
   document.addEventListener("keydown", mxKey);
-  aixPaint(key); if(!AIX[key].m.length && !AIX[key].busy && runs.length) aixAsk(key);
 }
 document.addEventListener("click", e => {
   let b;
   if(e.target.closest("[data-mxm-x]")){ mxClose(); return; }
   if((b = e.target.closest("[data-mxm-cp]"))){ ag3Copy(b, b.dataset.mxmCp); return; }
+  if(e.target.closest("[data-mxm-ref]")){
+    tgCall("ag_runs").then(j => { AGR.runs = (j && j.runs) || {}; AGR.jobs = (j && j.jobs) || []; AGR.stop = (j && j.stop) || null; })
+      .catch(er => tgToast("Не обновилось: " + ((er && er.message) || "нет связи"))).finally(mxRepaint);
+    return;
+  }
+  if(e.target.closest("[data-mxm-ask]")){ if(!AIX[MXV.key]) AIX[MXV.key] = { ctx: MXV.ctx, m: [], busy: false, err: "", kind: "mech" }; mxRepaint(); aixAsk(MXV.key); return; }
+  if((b = e.target.closest("[data-mx-run]"))){
+    const id = b.dataset.mxRun; if(AGR.srv && AGR.srv[id]) return;
+    AGR.srv = AGR.srv || {}; AGR.srv[id] = "run"; MXV.run = id; MXV.res = null; mxRepaint();
+    tgCall("ag_run", { id }).then(x => {
+      if(x.run){ (AGR.runs[id] = AGR.runs[id] || []).push(x.run); }
+      MXV.res = { id, ok: !!(x.run && x.run.st === "ok"), note: x.run ? (x.run.note || AGR_T[x.run.st] || "") : "агент запущен, но ответ пустой" };
+    }).catch(er => { MXV.res = { id, ok: false, note: (er && er.message) || "не получилось запустить" }; })
+      .finally(() => { delete AGR.srv[id]; MXV.run = ""; mxRepaint(); renderAgents(); });
+    return;
+  }
 });
 function ag3PopHide(){ const p = document.getElementById("ag3-pop"); if(p) p.hidden = true; if(AG3.sel){ AG3.sel.classList.remove("sel"); AG3.sel = null; } }
 function ag3PopShow(i){
@@ -17523,6 +17566,17 @@ function ydSupport(){
 #mk-layer .mxm .zaix{margin-top:12px}
 .mx-flash{animation:mxfl 1.6s ease}@keyframes mxfl{0%,60%{box-shadow:inset 0 0 0 2px var(--acc,#C25E3A)}100%{box-shadow:none}}
 :root[data-motion="off"] #mk-layer .mxm-bg,:root[data-motion="off"] #mk-layer .mxm-p,:root[data-motion="off"] .mx-flash{transition:none!important;animation:none!important}
+#mk-layer .mxm-sum{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--mut);padding:0 2px 10px}#mk-layer .mxm-sum b{font-weight:500;color:var(--ink)}#mk-layer .mxm-sum .zb{margin-left:auto}
+#mk-layer .mxm-r2{display:grid;gap:7px;padding:12px;border-radius:14px;background:var(--pl)}#mk-layer .mxm-r2.fx{opacity:.75}
+#mk-layer .mxm-r2h{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center}
+#mk-layer .mxm-r2h i{width:8px;height:8px;border-radius:99px;background:var(--warn)}#mk-layer .mxm-r2h i.fail{background:var(--bad)}
+#mk-layer .mxm-r2h b{font-weight:500;font-size:14px}#mk-layer .mxm-r2h small{font-size:12px;color:var(--mut)}
+#mk-layer .mxm-r2h em{font-style:normal;font-size:12px;padding:3px 10px;border-radius:99px;white-space:nowrap}
+#mk-layer .mxm-r2h em.ok{color:var(--ok);box-shadow:inset 0 0 0 1.5px var(--ok)}#mk-layer .mxm-r2h em.w{color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc)}
+#mk-layer .mxm-why{margin:0;font-size:13px;line-height:1.45}
+#mk-layer .mxm-res{margin:0;font-size:13px;line-height:1.45;font-weight:500}#mk-layer .mxm-res.ok{color:var(--ok)}#mk-layer .mxm-res.w{color:var(--acc)}
+#mk-layer .mxm-note{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis}
+#mk-layer .mxm-ask{padding-top:12px}
 @media(max-width:600px){#mk-layer .mxm{padding:8px;place-items:end center}#mk-layer .mxm-p{max-height:88vh}#mk-layer .mxm-r{grid-template-columns:8px minmax(0,1fr)}#mk-layer .mxm-b{grid-column:2;justify-content:flex-start}}
 </style>
 <style id="imp-css655">
@@ -17756,6 +17810,14 @@ document.addEventListener("error", function(e){
 .mt-grid{grid-template-columns:56px repeat(6,minmax(120px,1fr));overflow-x:auto;padding-bottom:4px}
 .vc-row{grid-template-columns:58px minmax(0,1fr) auto;gap:10px}
 }
+/* Кнопки в стиле стекла (макет утверждён 21.11.2026). Пока только общий класс .btn: светлая и тёмная тема, основная и опасная, отключённая. */
+.btn{position:relative;border-radius:999px;border:1px solid rgba(35,33,30,.12);background:rgba(255,255,255,.45);-webkit-backdrop-filter:blur(12px) saturate(1.6);backdrop-filter:blur(12px) saturate(1.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 0 rgba(0,0,0,.06),0 6px 18px rgba(35,33,30,.10);color:var(--ink);transition:transform .15s,box-shadow .2s}
+html[data-theme="dark"] .btn{background:rgba(255,255,255,.07);border-color:rgba(237,235,230,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.25),0 6px 18px rgba(0,0,0,.30)}
+.btn.primary{background:linear-gradient(180deg,color-mix(in srgb,var(--pen) 92%,#fff 8%),var(--pen));border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 8px 20px color-mix(in srgb,var(--pen) 30%,transparent)}
+.btn.danger{background:linear-gradient(180deg,color-mix(in srgb,var(--toxic) 92%,#fff 8%),var(--toxic));border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 8px 20px color-mix(in srgb,var(--toxic) 25%,transparent)}
+.btn:not(:disabled):hover{transform:translateY(-1px)}
+.btn:not(:disabled):active{transform:scale(.97)}
+:root[data-motion="off"] .btn{transition:none!important;transform:none!important}
 </style>
 <script>
 /* ===== сборка 661: онлайн-уроки, библиотека учебников, замены и загрузка расписания ===== */
